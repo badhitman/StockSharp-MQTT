@@ -11,7 +11,7 @@ namespace StockSharpMauiApp.Components.Shared;
 public partial class TestComponent : BlazorBusyComponentBaseModel
 {
     [Inject]
-    IStockSharpDriverService SsMainRepo { get; set; } = default!;
+    IStockSharpDataService SsMainRepo { get; set; } = default!;
 
 
     List<BoardStockSharpModel>? myBoards;
