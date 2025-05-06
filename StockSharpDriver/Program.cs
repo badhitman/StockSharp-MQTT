@@ -77,7 +77,7 @@ public class Program
             .ConfigureServices((bx, services) =>
             {
                 IConfigurationRoot config = new ConfigurationBuilder()
-                 .SetBasePath(System.IO.Directory.GetCurrentDirectory()) //From NuGet Package Microsoft.Extensions.Configuration.Json
+                 .SetBasePath(Directory.GetCurrentDirectory())
                  .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                  .Build();
 
@@ -121,6 +121,8 @@ public class Program
 
                 services
                     .AddScoped<ILogsService, LogsNavigationImpl>()
+                    .AddSingleton<IStockSharpDataService, StockSharpDataService>()
+                    .AddScoped<IStockSharpDriverService, StockSharpDriverService>()
                     .AddScoped<UpdateHandler>()
                     .AddScoped<ReceiverService>()
                     .AddHostedService<PollingService>()
@@ -144,8 +146,6 @@ public class Program
                 //
                 services
                     .AddSingleton<IStockSharpEventsService, StockSharpEventsServiceTransmission>()
-                    .AddSingleton<IStockSharpDataService, StockSharpDataService>()
-                    .AddScoped<IStockSharpDriverService, StockSharpDriverService>()
                 ;
 
                 services.StockSharpRegisterMqListeners();
