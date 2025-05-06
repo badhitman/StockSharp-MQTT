@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "StockSharpDriver": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "TransmissionQueueNamePrefix": "StockSharpDriver"
+      },
+      "dotnetRunMessages": true
+    }
+  }
+}
