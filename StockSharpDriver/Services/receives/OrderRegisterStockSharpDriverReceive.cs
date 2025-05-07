@@ -9,7 +9,7 @@ namespace Transmission.Receives.StockSharpDriver;
 /// <summary>
 /// OrderRegisterStockSharpDriverReceive
 /// </summary>
-public class OrderRegisterStockSharpDriverReceive(IStockSharpDataService ssRepo)
+public class OrderRegisterStockSharpDriverReceive(IStockSharpDriverService ssRepo)
     : IMQTTReceive<CreateOrderRequestModel, ResponseBaseModel>
 {
     /// <inheritdoc/>

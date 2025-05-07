@@ -14,7 +14,7 @@ namespace StockSharpDriver;
 /// <summary>
 /// StockSharpDataService
 /// </summary>
-public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, Connector connector) : IStockSharpDataService
+public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IStockSharpDataService
 {
     /// <inheritdoc/>
     public int SaveBoard(BoardStockSharpModel req)
@@ -279,40 +279,6 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         await context.SaveChangesAsync(cancellationToken: cancellationToken);
 
         return ResponseBaseModel.CreateSuccess("Запрос выполнен");
-    }
-
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> OrderRegisterAsync(CreateOrderRequestModel req, CancellationToken cancellationToken = default)
-    {
-        ExchangeBoard board = req.Instrument.Board is null
-        ? null
-            : connector.ExchangeBoards.FirstOrDefault(x => x.Code == req.Instrument.Board.Code && (x.Exchange.Name == req.Instrument.Board.Exchange.Name || x.Exchange.CountryCode.ToString() == req.Instrument.Board.Exchange.CountryCode.ToString()));
-        Security currentSec = connector.Securities.FirstOrDefault(x => x.Name == req.Instrument.Name && x.Code == req.Instrument.Code && x.Board.Code == board.Code && x.Board.Exchange.Name == board.Exchange.Name && x.Board.Exchange.CountryCode == board.Exchange.CountryCode);
-        if (currentSec is null)
-            return Task.FromResult(ResponseBaseModel.CreateError($"Инструмент не найден: {req.Instrument}"));
-
-        Portfolio selectedPortfolio = connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.Portfolio.ClientCode && x.Name == req.Portfolio.Name);
-        if (selectedPortfolio is null)
-            return Task.FromResult(ResponseBaseModel.CreateError($"Портфель не найден: {req.Portfolio}"));
-
-        Order order = new()
-        {
-            // устанавливается тип заявки, в данном примере лимитный
-            Type = (OrderTypes)Enum.Parse(typeof(OrderTypes), Enum.GetName(req.OrderType)),
-            // устанавливается портфель для исполнения заявки
-            Portfolio = selectedPortfolio,
-            // устанавливается объём заявки
-            Volume = req.Volume,
-            // устанавливается цена заявки
-            Price = req.Price,
-            // устанавливается инструмент
-            Security = currentSec,
-            // устанавливается направление заявки, в данном примере покупка
-            Side = (Sides)Enum.Parse(typeof(Sides), Enum.GetName(req.Side))
-        };
-
-        connector.RegisterOrder(order);
-        return Task.FromResult(ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию"));
     }
 
     /// <inheritdoc/>

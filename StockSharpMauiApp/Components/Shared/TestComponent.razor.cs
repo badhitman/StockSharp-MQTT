@@ -13,6 +13,9 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
     [Inject]
     IStockSharpDataService SsMainRepo { get; set; } = default!;
 
+    [Inject]
+    IStockSharpDriverService SsDrvRepo { get; set; } = default!;
+
 
     List<BoardStockSharpModel>? myBoards;
     BoardStockSharpModel? SelectedBoard { get; set; }
@@ -67,7 +70,7 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
             Side = orderSideCreate,
             Volume = VolumeNewOrder.Value,
         };
-        ResponseBaseModel res = await SsMainRepo.OrderRegisterAsync(req);
+        ResponseBaseModel res = await SsDrvRepo.OrderRegisterAsync(req);
         SnackbarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
     }
