@@ -57,7 +57,7 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Exchanges");
                 });
 
-            modelBuilder.Entity("SharedLib.FixMessageAdapterModelDB", b =>
+            modelBuilder.Entity("SharedLib.FixMessageAdapterModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

@@ -14,6 +14,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     public async Task<TResponseModel<int>> UpdateOrCreateAdapterAsync(FixMessageAdapterModel req, CancellationToken cancellationToken = default)
     {
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        FixMessageAdapterModel ad = ctx.Adapters.FirstOrDefault(x => x.Id == req.Id);
         throw new NotImplementedException();
     }
 
