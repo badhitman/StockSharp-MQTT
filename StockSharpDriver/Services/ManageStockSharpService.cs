@@ -11,22 +11,22 @@ namespace StockSharpDriver;
 public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IManageStockSharpService
 {
     /// <inheritdoc/>
-    public async Task<TResponseModel<int>> UpdateOrCreateAdapterAsync(FixMessageAdapterModel req, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<int>> UpdateOrCreateAdapterAsync(FixMessageAdapterModelDB req, CancellationToken cancellationToken = default)
     {
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        FixMessageAdapterModel ad = ctx.Adapters.FirstOrDefault(x => x.Id == req.Id);
+        FixMessageAdapterModelDB ad = ctx.Adapters.FirstOrDefault(x => x.Id == req.Id);
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<FixMessageAdapterModel>> AdaptersSelectAsync(TPaginationRequestStandardModel<AdaptersRequestModel> req, CancellationToken cancellationToken = default)
+    public async Task<TPaginationResponseModel<FixMessageAdapterModelDB>> AdaptersSelectAsync(TPaginationRequestStandardModel<AdaptersRequestModel> req, CancellationToken cancellationToken = default)
     {
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> DeleteAdapterAsync(FixMessageAdapterModel req, CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> DeleteAdapterAsync(FixMessageAdapterModelDB req, CancellationToken cancellationToken = default)
     {
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         throw new NotImplementedException();

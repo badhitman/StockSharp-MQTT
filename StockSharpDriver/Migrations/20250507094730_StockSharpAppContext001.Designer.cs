@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250507094527_StockSharpAppContext001")]
+    [Migration("20250507094730_StockSharpAppContext001")]
     partial class StockSharpAppContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -59,7 +59,7 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Exchanges");
                 });
 
-            modelBuilder.Entity("SharedLib.FixMessageAdapterModel", b =>
+            modelBuilder.Entity("SharedLib.FixMessageAdapterModelDB", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
