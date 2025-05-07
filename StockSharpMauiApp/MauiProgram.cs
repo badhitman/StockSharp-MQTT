@@ -43,11 +43,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName));
         //
         builder.Services
+            .AddScoped<IDataStockSharpService, DataStockSharpTransmission>()
             .AddScoped<IDriverStockSharpService, StockSharpDriverTransmission>()
             .AddScoped<IManageStockSharpService, ManageStockSharpTransmission>()
             .AddScoped<ILogsService, LogsServiceTransmission>()
             ;
-        //IDataStockSharpService
+        //
         #endregion
         return builder.Build();
     }
