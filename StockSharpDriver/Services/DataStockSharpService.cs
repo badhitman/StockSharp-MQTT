@@ -14,7 +14,7 @@ namespace StockSharpDriver;
 /// <summary>
 /// StockSharpDataService
 /// </summary>
-public class StockSharpDataService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, Connector connector) : IStockSharpDataService
+public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, Connector connector) : IStockSharpDataService
 {
     /// <inheritdoc/>
     public int SaveBoard(BoardStockSharpModel req)
@@ -334,6 +334,6 @@ public class StockSharpDataService(IDbContextFactory<StockSharpAppContext> tools
     public Task<ResponseBaseModel> PingAsync(CancellationToken cancellationToken = default)
     {
         //StockSharp.Algo.Connector Connector = new();
-        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(StockSharpDriverService)}"));
+        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(DriverStockSharpService)}"));
     }
 }

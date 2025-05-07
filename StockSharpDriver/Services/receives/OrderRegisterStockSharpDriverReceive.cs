@@ -13,7 +13,7 @@ public class OrderRegisterStockSharpDriverReceive(IStockSharpDataService ssRepo)
     : IMQTTReceive<CreateOrderRequestModel, ResponseBaseModel>
 {
     /// <inheritdoc/>
-    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.OrderRegisterSelectStockSharpReceive;
+    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.OrderRegisterStockSharpReceive;
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> ResponseHandleActionAsync(CreateOrderRequestModel req, CancellationToken token = default)

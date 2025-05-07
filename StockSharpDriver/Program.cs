@@ -119,10 +119,11 @@ public class Program
                             return new TelegramBotClient(options, httpClient);
                         });
 
-                services
+                services// : 
                     .AddScoped<ILogsService, LogsNavigationImpl>()
-                    .AddSingleton<IStockSharpDataService, StockSharpDataService>()
-                    .AddScoped<IStockSharpDriverService, StockSharpDriverService>()
+                    .AddSingleton<IManageStockSharpService, ManageStockSharpService>()
+                    .AddSingleton<IStockSharpDataService, DataStockSharpService>()
+                    .AddSingleton<IStockSharpDriverService, DriverStockSharpService>()
                     .AddScoped<UpdateHandler>()
                     .AddScoped<ReceiverService>()
                     .AddHostedService<PollingService>()

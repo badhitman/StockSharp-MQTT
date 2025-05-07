@@ -45,6 +45,10 @@ public abstract partial class StockSharpAppLayerContext : DbContext
         base.OnConfiguring(options);
     }
 
+    /// <inheritdoc/>
+    public DbSet<FixMessageAdapterModelDB> Adapters { get; set; }
+
+    /// <inheritdoc/>
     public DbSet<OrderStockSharpModelDB> Orders { get; set; }
 
     /// <inheritdoc/>

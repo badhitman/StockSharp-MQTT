@@ -19,7 +19,7 @@ public class ConnectionStockSharpWorker(IStockSharpDriverService driverRepo, ILo
             // _logger.LogDebug($"`tic-tac`");
             await Task.Delay(200, stoppingToken);
         }
-        _logger.LogInformation($"Service stopped!");
         await driverRepo.Disconnect(null);
+        _logger.LogInformation($"Service stopped!");
     }
 }

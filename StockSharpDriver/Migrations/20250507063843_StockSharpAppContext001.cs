@@ -10,6 +10,50 @@ namespace StockSharpDriver.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Adapters",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    AdapterTypeName = table.Column<string>(type: "TEXT", nullable: true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    IsOffline = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsResetCounter = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsDemo = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Password = table.Column<string>(type: "TEXT", nullable: true),
+                    Login = table.Column<string>(type: "TEXT", nullable: true),
+                    TargetCompId = table.Column<string>(type: "TEXT", nullable: true),
+                    DateFormat = table.Column<string>(type: "TEXT", nullable: true),
+                    SenderCompId = table.Column<string>(type: "TEXT", nullable: true),
+                    Address = table.Column<string>(type: "TEXT", nullable: true),
+                    TimeStampFormat = table.Column<string>(type: "TEXT", nullable: true),
+                    TimeFormat = table.Column<string>(type: "TEXT", nullable: true),
+                    YearMonthFormat = table.Column<string>(type: "TEXT", nullable: true),
+                    ClientVersion = table.Column<string>(type: "TEXT", nullable: true),
+                    OverrideExecIdByNative = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DoNotSendAccount = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CancelOnDisconnect = table.Column<bool>(type: "INTEGER", nullable: false),
+                    SupportUnknownExecutions = table.Column<bool>(type: "INTEGER", nullable: false),
+                    TargetHost = table.Column<string>(type: "TEXT", nullable: true),
+                    ValidateRemoteCertificates = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CheckCertificateRevocation = table.Column<bool>(type: "INTEGER", nullable: false),
+                    SslCertificate = table.Column<string>(type: "TEXT", nullable: true),
+                    SslProtocol = table.Column<int>(type: "INTEGER", nullable: false),
+                    ClientCode = table.Column<string>(type: "TEXT", nullable: true),
+                    ExchangeBoard = table.Column<string>(type: "TEXT", nullable: true),
+                    WriteTimeout = table.Column<TimeSpan>(type: "TEXT", nullable: false),
+                    ReadTimeout = table.Column<TimeSpan>(type: "TEXT", nullable: false),
+                    Accounts = table.Column<string>(type: "TEXT", nullable: true),
+                    EnqueueSubscriptions = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Adapters", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Exchanges",
                 columns: table => new
                 {
@@ -179,6 +223,21 @@ namespace StockSharpDriver.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Adapters_IsOffline",
+                table: "Adapters",
+                column: "IsOffline");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Adapters_LastUpdatedAtUTC",
+                table: "Adapters",
+                column: "LastUpdatedAtUTC");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Adapters_Name",
+                table: "Adapters",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Boards_Code",
                 table: "Boards",
                 column: "Code");
@@ -296,6 +355,9 @@ namespace StockSharpDriver.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Adapters");
+
             migrationBuilder.DropTable(
                 name: "Orders");
 

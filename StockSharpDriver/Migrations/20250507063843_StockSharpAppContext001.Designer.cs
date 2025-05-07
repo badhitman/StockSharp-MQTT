@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250428074456_StockSharpAppContext001")]
+    [Migration("20250507063843_StockSharpAppContext001")]
     partial class StockSharpAppContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,6 +57,119 @@ namespace StockSharpDriver.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("Exchanges");
+                });
+
+            modelBuilder.Entity("SharedLib.FixMessageAdapterModelDB", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Accounts")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AdapterTypeName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("CancelOnDisconnect")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CheckCertificateRevocation")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ClientCode")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClientVersion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUTC")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DateFormat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("DoNotSendAccount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("EnqueueSubscriptions")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ExchangeBoard")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDemo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsOffline")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsResetCounter")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastUpdatedAtUTC")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Login")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("OverrideExecIdByNative")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeSpan>("ReadTimeout")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SenderCompId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SslCertificate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SslProtocol")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("SupportUnknownExecutions")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TargetCompId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TargetHost")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TimeFormat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TimeStampFormat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ValidateRemoteCertificates")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<TimeSpan>("WriteTimeout")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("YearMonthFormat")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsOffline");
+
+                    b.HasIndex("LastUpdatedAtUTC");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Adapters");
                 });
 
             modelBuilder.Entity("SharedLib.InstrumentStockSharpModelDB", b =>

@@ -16,11 +16,14 @@ namespace StockSharpDriver;
 /// <summary>
 /// StockSharpDriverService 
 /// </summary>
-public class StockSharpDriverService(IStockSharpDataService dataRepo, IStockSharpEventsService eventTrans, ILogger<StockSharpDriverService> _logger, Connector connector) : IStockSharpDriverService
+public class DriverStockSharpService(IStockSharpDataService dataRepo, IStockSharpEventsService eventTrans, ILogger<DriverStockSharpService> _logger, Connector connector) : IStockSharpDriverService
 {
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(CancellationToken? cancellationToken = default)
     {
+        if (!connector.CanConnect)
+            return ResponseBaseModel.CreateError("can`t connect");
+
         connector.Connected += ConnectedHandle;
         connector.ConnectedEx += ConnectedExHandle;
         connector.Disconnected += DisconnectedHandle;
@@ -77,7 +80,7 @@ public class StockSharpDriverService(IStockSharpDataService dataRepo, IStockShar
             Address = "localhost:5001".To<EndPoint>(),
             //Login = "quik",
             //Password = "quik".To<SecureString>(),
-            IsDemo = true,
+            IsDemo = true, 
         };
         connector.Adapter.InnerAdapters.Add(luaFixMarketDataMessageAdapter);
         connector.Adapter.InnerAdapters.Add(luaFixTransactionMessageAdapter);
@@ -364,6 +367,6 @@ public class StockSharpDriverService(IStockSharpDataService dataRepo, IStockShar
     /// <inheritdoc/>
     public Task<ResponseBaseModel> PingAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(StockSharpDriverService)}"));
+        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(DriverStockSharpService)}"));
     }
 }
