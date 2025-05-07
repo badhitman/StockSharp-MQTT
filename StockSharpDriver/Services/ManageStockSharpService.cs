@@ -61,7 +61,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
 
         IQueryable<FixMessageAdapterModelDB> q = ctx.Adapters.AsQueryable();
 
-        if (req.Payload.OfflineFilter is not null)
+        if (req.Payload?.OfflineFilter is not null)
             q = q.Where(x => x.IsOffline == req.Payload.OfflineFilter);
 
         res.TotalRowsCount = await q.CountAsync(cancellationToken: cancellationToken);

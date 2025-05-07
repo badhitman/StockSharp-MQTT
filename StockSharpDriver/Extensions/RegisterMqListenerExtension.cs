@@ -2,10 +2,10 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using SharedLib;
-using MQTTCallLib;
 using Transmission.Receives.StockSharpDriver;
 using Transmission.Receives.storage;
+using MQTTCallLib;
+using SharedLib;
 
 namespace StockSharpService;
 
@@ -23,6 +23,11 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<GoToPageForRowReceive, TPaginationRequestStandardModel<int>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<MetadataLogsReceive, PeriodDatesTimesModel, TResponseModel<LogsMetadataResponseModel>>()
             .RegisterMqListener<LogsSelectReceive, TPaginationRequestStandardModel<LogsSelectRequestModel>, TPaginationResponseModel<NLogRecordModelDB>>()
+
+            .RegisterMqListener<UpdateOrCreateAdapterStockSharpDriverReceive, FixMessageAdapterModelDB, TResponseModel<FixMessageAdapterModelDB>>()
+            .RegisterMqListener<AdaptersSelectStockSharpDriverReceive, TPaginationRequestStandardModel<AdaptersRequestModel>, TPaginationResponseModel<FixMessageAdapterModelDB>>()
+            .RegisterMqListener<AdaptersGetStockSharpDriverReceive, int[], TResponseModel<FixMessageAdapterModelDB[]>>()
+            .RegisterMqListener<DeleteAdapterStockSharpDriverReceive, FixMessageAdapterModelDB, ResponseBaseModel>()
 
             .RegisterMqListener<PingStockSharpDriverReceive, object, ResponseBaseModel>()
             .RegisterMqListener<GetPortfoliosStockSharpDriverReceive, int[], TResponseModel<List<PortfolioStockSharpModel>>>()

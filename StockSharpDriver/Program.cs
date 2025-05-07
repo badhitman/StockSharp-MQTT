@@ -120,6 +120,9 @@ public class Program
                         });
 
                 services
+                    .AddSingleton<IDataStockSharpService, DataStockSharpService>()
+                    .AddSingleton<IDriverStockSharpService, DriverStockSharpService>()
+                    .AddSingleton<IManageStockSharpService, ManageStockSharpService>()
                     .AddScoped<ILogsService, LogsNavigationImpl>()
                     .AddScoped<UpdateHandler>()
                     .AddScoped<ReceiverService>()
@@ -144,8 +147,6 @@ public class Program
                 //
                 services
                     .AddSingleton<IStockSharpEventsService, StockSharpEventsServiceTransmission>()
-                    .AddSingleton<IDataStockSharpService, DataStockSharpService>()
-                    .AddScoped<IDriverStockSharpService, DriverStockSharpService>()
                 ;
 
                 services.StockSharpRegisterMqListeners();
