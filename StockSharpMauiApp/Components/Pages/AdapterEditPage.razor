@@ -1,6 +1,8 @@
-﻿@page "/adapter/{Id}/edit"
+﻿@page "/adapter/{Id:int}/edit"
 
-<AdapterEditPage Id="Id" />
+@using BlazorLib.Components.StockSharp
+
+<AdapterEditComponent Id="Id" />
 
 @code {
     [Parameter]
