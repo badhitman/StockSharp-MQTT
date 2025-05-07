@@ -11,6 +11,12 @@ namespace StockSharpDriver;
 public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IManageStockSharpService
 {
     /// <inheritdoc/>
+    public async Task<TResponseModel<int>> UpdateOrCreateAdapterAsync(FixMessageAdapterModel req, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <inheritdoc/>
     public async Task<TPaginationResponseModel<FixMessageAdapterModel>> AdaptersSelectAsync(TPaginationRequestStandardModel<AdaptersRequestModel> req, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -18,12 +24,6 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> DeleteAdapterAsync(FixMessageAdapterModel req, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc/>
-    public async Task<TResponseModel<int>> UpdateOrCreateAdapterAsync(FixMessageAdapterModel req, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

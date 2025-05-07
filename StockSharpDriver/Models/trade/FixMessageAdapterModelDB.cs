@@ -11,6 +11,7 @@ namespace SharedLib;
 /// FixMessageAdapterModelDB
 /// </summary>
 [Index(nameof(LastUpdatedAtUTC)), Index(nameof(Name)), Index(nameof(IsOffline))]
+[Index(nameof(AdapterTypeName), nameof(IsOffline), IsUnique = true)]
 public class FixMessageAdapterModelDB : FixMessageAdapterModel, IBaseStockSharpModel
 {
     /// <summary>

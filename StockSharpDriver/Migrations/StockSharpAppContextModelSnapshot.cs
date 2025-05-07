@@ -167,6 +167,9 @@ namespace StockSharpDriver.Migrations
 
                     b.HasIndex("Name");
 
+                    b.HasIndex("AdapterTypeName", "IsOffline")
+                        .IsUnique();
+
                     b.ToTable("Adapters");
                 });
 
