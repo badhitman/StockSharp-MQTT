@@ -9,7 +9,7 @@ namespace Transmission.Receives.StockSharpDriver;
 /// <summary>
 /// InstrumentFavoriteToggleReceive
 /// </summary>
-public class InstrumentFavoriteToggleReceive(IStockSharpDataService ssRepo)
+public class InstrumentFavoriteToggleReceive(IDataStockSharpService ssRepo)
     : IMQTTReceive<InstrumentTradeStockSharpViewModel, ResponseBaseModel>
 {
     /// <inheritdoc/>

@@ -77,7 +77,7 @@ public class Program
             .ConfigureServices((bx, services) =>
             {
                 IConfigurationRoot config = new ConfigurationBuilder()
-                 .SetBasePath(Directory.GetCurrentDirectory())
+                 .SetBasePath(System.IO.Directory.GetCurrentDirectory()) //From NuGet Package Microsoft.Extensions.Configuration.Json
                  .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                  .Build();
 
@@ -119,11 +119,8 @@ public class Program
                             return new TelegramBotClient(options, httpClient);
                         });
 
-                services// : 
+                services
                     .AddScoped<ILogsService, LogsNavigationImpl>()
-                    .AddSingleton<IManageStockSharpService, ManageStockSharpService>()
-                    .AddSingleton<IStockSharpDataService, DataStockSharpService>()
-                    .AddSingleton<IStockSharpDriverService, DriverStockSharpService>()
                     .AddScoped<UpdateHandler>()
                     .AddScoped<ReceiverService>()
                     .AddHostedService<PollingService>()
@@ -147,6 +144,8 @@ public class Program
                 //
                 services
                     .AddSingleton<IStockSharpEventsService, StockSharpEventsServiceTransmission>()
+                    .AddSingleton<IDataStockSharpService, DataStockSharpService>()
+                    .AddScoped<IStockSharpDriverService, DriverStockSharpService>()
                 ;
 
                 services.StockSharpRegisterMqListeners();

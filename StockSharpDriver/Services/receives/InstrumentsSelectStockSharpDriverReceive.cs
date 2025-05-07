@@ -9,7 +9,7 @@ namespace Transmission.Receives.StockSharpDriver;
 /// <summary>
 /// InstrumentsSelectStockSharpDriverReceive
 /// </summary>
-public class InstrumentsSelectStockSharpDriverReceive(IStockSharpDataService ssRepo)
+public class InstrumentsSelectStockSharpDriverReceive(IDataStockSharpService ssRepo)
     : IMQTTReceive<TPaginationRequestStandardModel<InstrumentsRequestModel>, TPaginationResponseModel<InstrumentTradeStockSharpViewModel>>
 {
     /// <inheritdoc/>

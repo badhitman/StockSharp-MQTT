@@ -47,7 +47,7 @@ public static class MauiProgram
             .AddScoped<IManageStockSharpService, ManageStockSharpTransmission>()
             .AddScoped<ILogsService, LogsServiceTransmission>()
             ;
-        //IStockSharpDataService
+        //IDataStockSharpService
         #endregion
         return builder.Build();
     }

@@ -14,7 +14,7 @@ namespace StockSharpDriver;
 /// <summary>
 /// StockSharpDataService
 /// </summary>
-public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IStockSharpDataService
+public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IDataStockSharpService
 {
     /// <inheritdoc/>
     public Task<TResponseModel<int>> SaveBoard(BoardStockSharpModel req)
