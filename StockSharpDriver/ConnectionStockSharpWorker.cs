@@ -66,7 +66,7 @@ public class ConnectionStockSharpWorker(
         Connector.SubscriptionStopped += SubscriptionStoppedHandle;
         Connector.TickTradeReceived += TickTradeReceivedHandle;
         Connector.ValuesChanged += ValuesChangedHandle;
-
+        /*
         LuaFixMarketDataMessageAdapter luaFixMarketDataMessageAdapter = default!;
         LuaFixTransactionMessageAdapter luaFixTransactionMessageAdapter = default!;
 
@@ -87,7 +87,7 @@ public class ConnectionStockSharpWorker(
         Connector.Adapter.InnerAdapters.Add(luaFixMarketDataMessageAdapter);
         Connector.Adapter.InnerAdapters.Add(luaFixTransactionMessageAdapter);
 
-        Connector.Connect();
+        Connector.Connect();*/
         while (!stoppingToken.IsCancellationRequested)
         {
             // _logger.LogDebug($"`tic-tac`");
