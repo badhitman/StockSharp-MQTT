@@ -223,12 +223,6 @@ namespace StockSharpDriver.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Adapters_AdapterTypeName_IsOffline",
-                table: "Adapters",
-                columns: new[] { "AdapterTypeName", "IsOffline" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Adapters_IsOffline",
                 table: "Adapters",
                 column: "IsOffline");
