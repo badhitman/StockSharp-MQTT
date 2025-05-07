@@ -145,7 +145,7 @@ public class Program
                 services
                     .AddSingleton<IStockSharpEventsService, StockSharpEventsServiceTransmission>()
                     .AddSingleton<IDataStockSharpService, DataStockSharpService>()
-                    .AddScoped<IStockSharpDriverService, DriverStockSharpService>()
+                    .AddScoped<IDriverStockSharpService, DriverStockSharpService>()
                 ;
 
                 services.StockSharpRegisterMqListeners();

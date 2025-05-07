@@ -14,7 +14,7 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
     IDataStockSharpService SsMainRepo { get; set; } = default!;
 
     [Inject]
-    IStockSharpDriverService SsDrvRepo { get; set; } = default!;
+    IDriverStockSharpService SsDrvRepo { get; set; } = default!;
 
 
     List<BoardStockSharpModel>? myBoards;

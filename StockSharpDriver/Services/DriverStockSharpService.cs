@@ -17,7 +17,7 @@ namespace StockSharpDriver;
 /// <summary>
 /// StockSharpDriverService 
 /// </summary>
-public class DriverStockSharpService(IDataStockSharpService dataRepo, IStockSharpEventsService eventTrans, ILogger<DriverStockSharpService> _logger, Connector connector) : IStockSharpDriverService
+public class DriverStockSharpService(IDataStockSharpService dataRepo, IStockSharpEventsService eventTrans, ILogger<DriverStockSharpService> _logger, Connector connector) : IDriverStockSharpService
 {
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(CancellationToken? cancellationToken = default)

@@ -9,7 +9,7 @@ namespace Transmission.Receives.StockSharpDriver;
 /// <summary>
 /// PingStockSharpDriver
 /// </summary>
-public class PingStockSharpDriverReceive(IStockSharpDriverService ssRepo)
+public class PingStockSharpDriverReceive(IDriverStockSharpService ssRepo)
     : IMQTTReceive<object, ResponseBaseModel>
 {
     /// <inheritdoc/>
