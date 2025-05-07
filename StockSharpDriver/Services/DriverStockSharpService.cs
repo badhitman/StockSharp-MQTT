@@ -154,7 +154,7 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo,
     }
 
     /// <inheritdoc/>
-    public Task<AboutConnectResponseModel> AboutConnect(CancellationToken? cancellationToken = null)
+    public Task<AboutConnectResponseModel> AboutConnection(CancellationToken? cancellationToken = null)
     {
         AboutConnectResponseModel res = new()
         {

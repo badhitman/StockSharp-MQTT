@@ -18,9 +18,9 @@ public class AboutConnectStockSharpDriverReceive(IDriverStockSharpService ssRepo
     /// <inheritdoc/>
     public async Task<AboutConnectResponseModel> ResponseHandleActionAsync(object req, CancellationToken token = default)
     {
-        if (req is null)
-            throw new ArgumentNullException(nameof(req));
+        //if (req is null)
+        //    throw new ArgumentNullException(nameof(req));
 
-        return await ssRepo.AboutConnect(token);
+        return await ssRepo.AboutConnection(token);
     }
 }

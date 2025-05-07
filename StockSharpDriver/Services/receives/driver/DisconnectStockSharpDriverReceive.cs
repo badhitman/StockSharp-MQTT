@@ -18,8 +18,8 @@ public class DisconnectStockSharpDriverReceive(IDriverStockSharpService ssRepo)
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> ResponseHandleActionAsync(object req, CancellationToken token = default)
     {
-        if (req is null)
-            throw new ArgumentNullException(nameof(req));
+        //if (req is null)
+        //    throw new ArgumentNullException(nameof(req));
 
         return await ssRepo.Disconnect(token);
     }
