@@ -34,7 +34,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
                 res.AddError($"Адаптер #{req.Id} не найден");
                 return res;
             }
-            if (await ctx.Adapters.AnyAsync(x => x.AdapterTypeName == req.AdapterTypeName && !x.IsOffline && x.Id != req.Id, cancellationToken: cancellationToken))
+            if (await ctx.Adapters.AnyAsync(x => x.Address == req.Address && x.AdapterTypeName == req.AdapterTypeName && !x.IsOffline && x.Id != req.Id, cancellationToken: cancellationToken))
             {
                 res.AddError($"Адаптер [{req.AdapterTypeName}] уже действует. Для активации данного адаптера - деактивируйте действующий");
                 return res;
