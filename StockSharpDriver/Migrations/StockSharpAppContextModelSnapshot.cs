@@ -66,8 +66,8 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("Accounts")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("AdapterTypeName")
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("AdapterTypeName")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Address")
                         .HasColumnType("TEXT");
@@ -160,6 +160,8 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AdapterTypeName");
 
                     b.HasIndex("IsOffline");
 

@@ -17,7 +17,7 @@ namespace StockSharpDriver.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    AdapterTypeName = table.Column<string>(type: "TEXT", nullable: true),
+                    AdapterTypeName = table.Column<int>(type: "INTEGER", nullable: true),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
                     IsOffline = table.Column<bool>(type: "INTEGER", nullable: false),
                     IsResetCounter = table.Column<bool>(type: "INTEGER", nullable: false),
@@ -221,6 +221,11 @@ namespace StockSharpDriver.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Adapters_AdapterTypeName",
+                table: "Adapters",
+                column: "AdapterTypeName");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Adapters_IsOffline",

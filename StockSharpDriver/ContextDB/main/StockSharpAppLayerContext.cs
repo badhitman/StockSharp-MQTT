@@ -48,6 +48,9 @@ public abstract partial class StockSharpAppLayerContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<FixMessageAdapterModelDB>()
+        .HasKey(b => b.Id);
+
+        modelBuilder.Entity<FixMessageAdapterModelDB>()
         .HasIndex(b => b.LastUpdatedAtUTC);
 
         modelBuilder.Entity<FixMessageAdapterModelDB>()
@@ -55,7 +58,11 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
         modelBuilder.Entity<FixMessageAdapterModelDB>()
         .HasIndex(b => b.IsOffline);
+
+        modelBuilder.Entity<FixMessageAdapterModelDB>()
+        .HasIndex(b => b.AdapterTypeName);
     }
+
 
     /// <inheritdoc/>
     public DbSet<FixMessageAdapterModelDB> Adapters { get; set; }

@@ -80,7 +80,7 @@ public class DriverStockSharpService(IStockSharpDataService dataRepo, IStockShar
             Address = "localhost:5001".To<EndPoint>(),
             //Login = "quik",
             //Password = "quik".To<SecureString>(),
-            IsDemo = true, 
+            IsDemo = true,
         };
         connector.Adapter.InnerAdapters.Add(luaFixMarketDataMessageAdapter);
         connector.Adapter.InnerAdapters.Add(luaFixTransactionMessageAdapter);
