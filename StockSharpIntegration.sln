@@ -30,7 +30,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution elements", "Solution elements", "{754FC069-D67B-A9D7-50A1-8D1CA196D8F1}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
-		..\secrets_StockSharpDriver\telegram-bot.Development.json = ..\secrets_StockSharpDriver\telegram-bot.Development.json
+		..\..\..\..\secrets_StockSharpDriver\telegram-bot.Development.json = ..\..\..\..\secrets_StockSharpDriver\telegram-bot.Development.json
 	EndProjectSection
 EndProject
 Global
