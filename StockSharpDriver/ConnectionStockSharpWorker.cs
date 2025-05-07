@@ -17,7 +17,7 @@ public class ConnectionStockSharpWorker(
     //StockSharpClientConfigModel conf,
     IDataStockSharpService dataRepo,
     ILogger<ConnectionStockSharpWorker> _logger,
-    IStockSharpEventsService eventTrans,
+    IEventsStockSharpService eventTrans,
     Connector Connector) : BackgroundService
 {
     /// <inheritdoc/>

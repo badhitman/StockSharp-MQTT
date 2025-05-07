@@ -23,12 +23,13 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<GoToPageForRowReceive, TPaginationRequestStandardModel<int>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<MetadataLogsReceive, PeriodDatesTimesModel, TResponseModel<LogsMetadataResponseModel>>()
             .RegisterMqListener<LogsSelectReceive, TPaginationRequestStandardModel<LogsSelectRequestModel>, TPaginationResponseModel<NLogRecordModelDB>>()
-
+            .RegisterMqListener<AboutConnectStockSharpDriverReceive, object, AboutConnectResponseModel>()
+            .RegisterMqListener<DisconnectStockSharpDriverReceive, object, ResponseBaseModel>()
+            .RegisterMqListener<ConnectStockSharpDriverReceive, object, ResponseBaseModel>()
             .RegisterMqListener<UpdateOrCreateAdapterStockSharpDriverReceive, FixMessageAdapterModelDB, TResponseModel<FixMessageAdapterModelDB>>()
             .RegisterMqListener<AdaptersSelectStockSharpDriverReceive, TPaginationRequestStandardModel<AdaptersRequestModel>, TPaginationResponseModel<FixMessageAdapterModelDB>>()
             .RegisterMqListener<AdaptersGetStockSharpDriverReceive, int[], TResponseModel<FixMessageAdapterModelDB[]>>()
             .RegisterMqListener<DeleteAdapterStockSharpDriverReceive, FixMessageAdapterModelDB, ResponseBaseModel>()
-
             .RegisterMqListener<PingStockSharpDriverReceive, object, ResponseBaseModel>()
             .RegisterMqListener<GetPortfoliosStockSharpDriverReceive, int[], TResponseModel<List<PortfolioStockSharpModel>>>()
             .RegisterMqListener<GetBoardsStockSharpDriverReceive, int[], TResponseModel<List<BoardStockSharpModel>>>()

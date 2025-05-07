@@ -2,22 +2,24 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using StockSharp.Algo;
-using SharedLib;
-using Newtonsoft.Json;
 using StockSharp.BusinessEntities;
-using System.Diagnostics.Tracing;
 using StockSharp.Fix.Quik.Lua;
+using StockSharp.Messages;
+using StockSharp.Algo;
+using Newtonsoft.Json;
 using Ecng.Common;
 using System.Net;
-using StockSharp.Messages;
+using SharedLib;
 
 namespace StockSharpDriver;
 
 /// <summary>
 /// StockSharpDriverService 
 /// </summary>
-public class DriverStockSharpService(IDataStockSharpService dataRepo, IStockSharpEventsService eventTrans, ILogger<DriverStockSharpService> _logger, Connector connector) : IDriverStockSharpService
+public class DriverStockSharpService(IDataStockSharpService dataRepo,
+    IEventsStockSharpService eventTrans,
+    ILogger<DriverStockSharpService> _logger,
+    Connector connector) : IDriverStockSharpService
 {
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(CancellationToken? cancellationToken = default)
@@ -151,6 +153,16 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo, IStockShar
         return ResponseBaseModel.CreateInfo("connection closed");
     }
 
+    /// <inheritdoc/>
+    public Task<AboutConnectResponseModel> AboutConnect(CancellationToken? cancellationToken = null)
+    {
+        AboutConnectResponseModel res = new()
+        {
+            CanConnect = connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(connector.ConnectionState)),
+        };
+        return Task.FromResult(res);
+    }
 
     /// <inheritdoc/>
     public Task<ResponseBaseModel> OrderRegisterAsync(CreateOrderRequestModel req, CancellationToken cancellationToken = default)
@@ -185,6 +197,7 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo, IStockShar
         connector.RegisterOrder(order);
         return Task.FromResult(ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию"));
     }
+
 
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {

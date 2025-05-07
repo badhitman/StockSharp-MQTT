@@ -146,7 +146,7 @@ public class Program
                 services.AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName));
                 //
                 services
-                    .AddSingleton<IStockSharpEventsService, StockSharpEventsServiceTransmission>()
+                    .AddSingleton<IEventsStockSharpService, StockSharpEventsServiceTransmission>()
                 ;
 
                 services.StockSharpRegisterMqListeners();
