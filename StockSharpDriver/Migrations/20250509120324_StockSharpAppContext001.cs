@@ -17,9 +17,9 @@ namespace StockSharpDriver.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    AdapterTypeName = table.Column<int>(type: "INTEGER", nullable: true),
+                    AdapterTypeName = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
-                    IsOffline = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsOnline = table.Column<bool>(type: "INTEGER", nullable: false),
                     IsResetCounter = table.Column<bool>(type: "INTEGER", nullable: false),
                     IsDemo = table.Column<bool>(type: "INTEGER", nullable: false),
                     Password = table.Column<string>(type: "TEXT", nullable: true),
@@ -228,9 +228,9 @@ namespace StockSharpDriver.Migrations
                 column: "AdapterTypeName");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Adapters_IsOffline",
+                name: "IX_Adapters_IsOnline",
                 table: "Adapters",
-                column: "IsOffline");
+                column: "IsOnline");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Adapters_LastUpdatedAtUTC",

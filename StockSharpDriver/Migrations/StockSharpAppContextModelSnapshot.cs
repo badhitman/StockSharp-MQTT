@@ -66,7 +66,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("Accounts")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("AdapterTypeName")
+                    b.Property<int>("AdapterTypeName")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Address")
@@ -102,7 +102,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<bool>("IsDemo")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsOffline")
+                    b.Property<bool>("IsOnline")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsResetCounter")
@@ -163,7 +163,7 @@ namespace StockSharpDriver.Migrations
 
                     b.HasIndex("AdapterTypeName");
 
-                    b.HasIndex("IsOffline");
+                    b.HasIndex("IsOnline");
 
                     b.HasIndex("LastUpdatedAtUTC");
 
