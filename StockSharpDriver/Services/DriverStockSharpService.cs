@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
+using System.Security;
 
 namespace StockSharpDriver;
 
@@ -32,7 +33,7 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo,
         {
             Payload = new()
             {
-                OnlineOnly = false
+                OnlineOnly = true
             },
             PageNum = 0,
             PageSize = int.MaxValue,
@@ -40,7 +41,7 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo,
 
         TPaginationResponseModel<FixMessageAdapterModelDB> adapters = await manageRepo.AdaptersSelectAsync(reqAs);
 
-        if(adapters.Response is null || adapters.Response.Count == 0)
+        if (adapters.Response is null || adapters.Response.Count == 0)
             return ResponseBaseModel.CreateError("adapters - is empty");
 
         connector.Connected += ConnectedHandle;
@@ -87,25 +88,49 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo,
         connector.TickTradeReceived += TickTradeReceivedHandle;
         connector.ValuesChanged += ValuesChangedHandle;
 
-        LuaFixMarketDataMessageAdapter luaFixMarketDataMessageAdapter = new(connector.TransactionIdGenerator)
+        adapters.Response.ForEach(x =>
         {
-            Address = "localhost:5001".To<EndPoint>(),
-            //Login = "quik",
-            //Password = "quik".To<SecureString>(),
-            IsDemo = true,
-        };
-        LuaFixTransactionMessageAdapter luaFixTransactionMessageAdapter = new(connector.TransactionIdGenerator)
-        {
-            Address = "localhost:5001".To<EndPoint>(),
-            //Login = "quik",
-            //Password = "quik".To<SecureString>(),
-            IsDemo = true,
-        };
-        connector.Adapter.InnerAdapters.Add(luaFixMarketDataMessageAdapter);
-        connector.Adapter.InnerAdapters.Add(luaFixTransactionMessageAdapter);
+            try
+            {
+                IPEndPoint _cep = GlobalToolsStandard.CreateIPEndPoint(x.Address);
+                SecureString secure = new();
+                foreach (char c in x.Password)
+                    secure.AppendChar(c);
+
+                switch (Enum.GetName(typeof(AdaptersTypesNames), x.AdapterTypeName))
+                {
+                    case nameof(LuaFixMarketDataMessageAdapter):
+                        LuaFixMarketDataMessageAdapter luaFixMarketDataMessageAdapter = new(connector.TransactionIdGenerator)
+                        {
+                            Address = x.Address.To<EndPoint>(), //"localhost:5001".To<EndPoint>(),
+                            Login = x.Login,
+                            Password = secure,
+                            IsDemo = true,
+                        };
+                        connector.Adapter.InnerAdapters.Add(luaFixMarketDataMessageAdapter);
+                        break;
+                    case nameof(LuaFixTransactionMessageAdapter):
+                        LuaFixTransactionMessageAdapter luaFixTransactionMessageAdapter = new(connector.TransactionIdGenerator)
+                        {
+                            Address = x.Address.To<EndPoint>(),
+                            Login = x.Login,
+                            Password = secure,
+                            IsDemo = true,
+                        };
+                        connector.Adapter.InnerAdapters.Add(luaFixTransactionMessageAdapter);
+                        break;
+                    default:
+                        _logger.LogError($"error detect adapter [{x.AdapterTypeName}]");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка добавления адаптера");
+            }
+        });
 
         await connector.ConnectAsync(cancellationToken ?? CancellationToken.None);
-
         return ResponseBaseModel.CreateInfo("connection started");
     }
 
