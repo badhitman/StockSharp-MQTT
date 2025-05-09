@@ -3,8 +3,6 @@
 ////////////////////////////////////////////////
 
 using Microsoft.EntityFrameworkCore;
-using StockSharp.BusinessEntities;
-using StockSharp.Messages;
 using StockSharp.Algo;
 using SharedLib;
 using DbcLib;

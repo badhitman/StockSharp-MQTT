@@ -17,6 +17,7 @@ namespace StockSharpDriver;
 /// StockSharpDriverService 
 /// </summary>
 public class DriverStockSharpService(IDataStockSharpService dataRepo,
+    IManageStockSharpService manageRepo,
     IEventsStockSharpService eventTrans,
     ILogger<DriverStockSharpService> _logger,
     Connector connector) : IDriverStockSharpService
@@ -26,6 +27,21 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo,
     {
         if (!connector.CanConnect)
             return ResponseBaseModel.CreateError("can`t connect");
+
+        TPaginationRequestStandardModel<AdaptersRequestModel> reqAs = new()
+        {
+            Payload = new()
+            {
+                OnlineOnly = false
+            },
+            PageNum = 0,
+            PageSize = int.MaxValue,
+        };
+
+        TPaginationResponseModel<FixMessageAdapterModelDB> adapters = await manageRepo.AdaptersSelectAsync(reqAs);
+
+        if(adapters.Response is null || adapters.Response.Count == 0)
+            return ResponseBaseModel.CreateError("adapters - is empty");
 
         connector.Connected += ConnectedHandle;
         connector.ConnectedEx += ConnectedExHandle;
