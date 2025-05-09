@@ -18,7 +18,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
         if (req.Id < 1)
         {
             req.Id = 0;
-            req.IsOffline = true;
+            req.IsOnline = false;
             req.CreatedAtUTC = DateTime.UtcNow;
             req.LastUpdatedAtUTC = DateTime.UtcNow;
             res.AddInfo("Создание нового адаптера");
@@ -34,7 +34,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
                 res.AddError($"Адаптер #{req.Id} не найден");
                 return res;
             }
-            if (await ctx.Adapters.AnyAsync(x => x.Address == req.Address && x.AdapterTypeName == req.AdapterTypeName && !x.IsOffline && x.Id != req.Id, cancellationToken: cancellationToken))
+            if (await ctx.Adapters.AnyAsync(x => x.Address == req.Address && x.AdapterTypeName == req.AdapterTypeName && x.IsOnline && x.Id != req.Id, cancellationToken: cancellationToken))
             {
                 res.AddError($"Адаптер [{req.AdapterTypeName}] уже действует. Для активации данного адаптера - деактивируйте действующий");
                 return res;
@@ -62,7 +62,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
         IQueryable<FixMessageAdapterModelDB> q = ctx.Adapters.AsQueryable();
 
         if (req.Payload?.OnlineOnly is not null)
-            q = q.Where(x => x.IsOffline == !req.Payload.OnlineOnly);
+            q = q.Where(x => x.IsOnline == req.Payload.OnlineOnly);
 
         res.TotalRowsCount = await q.CountAsync(cancellationToken: cancellationToken);
         res.Response = await q.Skip(req.PageSize * req.PageNum).Take(req.PageSize).ToListAsync(cancellationToken: cancellationToken);

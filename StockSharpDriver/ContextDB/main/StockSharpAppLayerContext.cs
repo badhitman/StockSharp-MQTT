@@ -57,7 +57,7 @@ public abstract partial class StockSharpAppLayerContext : DbContext
         .HasIndex(b => b.Name);
 
         modelBuilder.Entity<FixMessageAdapterModelDB>()
-        .HasIndex(b => b.IsOffline);
+        .HasIndex(b => b.IsOnline);
 
         modelBuilder.Entity<FixMessageAdapterModelDB>()
         .HasIndex(b => b.AdapterTypeName);
