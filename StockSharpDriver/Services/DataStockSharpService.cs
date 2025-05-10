@@ -127,10 +127,11 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         return Task.FromResult(new TResponseModel<int>() { Response = portDb.Id });
     }
 
-    public Task<TResponseModel<int>> SaveOrder(OrderStockSharpModel req)
+    /// <inheritdoc/>
+    public async Task<TResponseModel<int>> SaveOrder(OrderStockSharpModel req)
     {
-        using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        OrderStockSharpModelDB orderDb = context.Orders.FirstOrDefault(x => x.TransactionId == req.TransactionId);
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
+        OrderStockSharpModelDB orderDb = await context.Orders.FirstOrDefaultAsync(x => x.TransactionId == req.TransactionId);
 
         InstrumentStockSharpModelDB instrumentDb = null;
         if (!string.IsNullOrWhiteSpace(req.Instrument.Name))
@@ -146,7 +147,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
                 x.ClientCode == req.Portfolio.ClientCode &&
                 x.Currency == req.Portfolio.Currency);
 
-            portfolioDb ??= context.Portfolios.First(x => x.Id == SavePortfolio(req.Portfolio).Result.Response);
+            portfolioDb ??= await context.Portfolios.FirstAsync(x => x.Id == SavePortfolio(req.Portfolio).Result.Response);
         }
 
         if (orderDb is null)
@@ -167,8 +168,18 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             context.Update(orderDb);
         }
         context.SaveChanges();
-        return Task.FromResult(new TResponseModel<int>() { Response = orderDb.IdPK });
+        return new TResponseModel<int>() { Response = orderDb.IdPK };
     }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> SaveTrade(MyTradeStockSharpModel myTrade)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
+        MyTradeStockSharpModelDB myTradeDb = await context.MyTrades.FirstOrDefaultAsync();
+
+        throw new NotImplementedException();
+    }
+
 
     /// <inheritdoc/>
     public async Task<TResponseModel<List<InstrumentTradeStockSharpModel>>> GetInstrumentsAsync(int[] ids = null, CancellationToken cancellationToken = default)

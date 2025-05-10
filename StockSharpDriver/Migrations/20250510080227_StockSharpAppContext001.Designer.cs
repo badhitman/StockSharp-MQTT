@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250509120324_StockSharpAppContext001")]
+    [Migration("20250510080227_StockSharpAppContext001")]
     partial class StockSharpAppContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,8 +28,14 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("Code")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("CreatedAtUTC")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("ExchangeId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastUpdatedAtUTC")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -275,6 +281,49 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Instruments");
                 });
 
+            modelBuilder.Entity("SharedLib.MyTradeStockSharpModelDB", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("Commission")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CommissionCurrency")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUTC")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("Initiator")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastUpdatedAtUTC")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("OrderIdPK")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("PnL")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("Position")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("Slippage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("Yield")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderIdPK");
+
+                    b.ToTable("MyTrades");
+                });
+
             modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>
                 {
                     b.Property<int>("IdPK")
@@ -496,6 +545,15 @@ namespace StockSharpDriver.Migrations
                         .IsRequired();
 
                     b.Navigation("Board");
+                });
+
+            modelBuilder.Entity("SharedLib.MyTradeStockSharpModelDB", b =>
+                {
+                    b.HasOne("SharedLib.OrderStockSharpModelDB", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderIdPK");
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>

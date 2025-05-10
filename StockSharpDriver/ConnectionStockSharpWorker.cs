@@ -66,28 +66,7 @@ public class ConnectionStockSharpWorker(
         Connector.SubscriptionStopped += SubscriptionStoppedHandle;
         Connector.TickTradeReceived += TickTradeReceivedHandle;
         Connector.ValuesChanged += ValuesChangedHandle;
-        /*
-        LuaFixMarketDataMessageAdapter luaFixMarketDataMessageAdapter = default!;
-        LuaFixTransactionMessageAdapter luaFixTransactionMessageAdapter = default!;
-
-        luaFixMarketDataMessageAdapter = new(Connector.TransactionIdGenerator)
-        {
-            Address = "localhost:5001".To<EndPoint>(),
-            //Login = "quik",
-            //Password = "quik".To<SecureString>(),
-            IsDemo = true,
-        };
-        luaFixTransactionMessageAdapter = new(Connector.TransactionIdGenerator)
-        {
-            Address = "localhost:5001".To<EndPoint>(),
-            //Login = "quik",
-            //Password = "quik".To<SecureString>(),
-            IsDemo = true,
-        };
-        Connector.Adapter.InnerAdapters.Add(luaFixMarketDataMessageAdapter);
-        Connector.Adapter.InnerAdapters.Add(luaFixTransactionMessageAdapter);
-
-        Connector.Connect();*/
+        
         while (!stoppingToken.IsCancellationRequested)
         {
             // _logger.LogDebug($"`tic-tac`");
@@ -154,57 +133,62 @@ public class ConnectionStockSharpWorker(
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
         _logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}");
-        ConnectorValuesChangedEventPayloadModel req = new()
+        ConnectorValuesChangedEventPayloadModel valueChangeEvent = new()
         {
             OffsetSlave = dtOffsetSlave,
             OffsetMaster = dtOffsetMaster,
             DataPayload = [.. dataPayload.Select(x => new KeyValuePair<Level1FieldsStockSharpEnum, object>((Level1FieldsStockSharpEnum)Enum.Parse(typeof(Level1FieldsStockSharpEnum), Enum.GetName(x.Key)!), x.Value))],
             Instrument = new InstrumentTradeStockSharpModel().Bind(instrument),
         };
-        //dataRepo.SaveInstrument(req.Instrument);
-        eventTrans.ValuesChangedEvent(req);
+        //
+        eventTrans.ValuesChangedEvent(valueChangeEvent);
     }
 
     void SecurityReceivedHandle(Subscription subscription, Security sec)
     {
         _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec)}");
-        InstrumentTradeStockSharpModel req = new InstrumentTradeStockSharpModel().Bind(sec);
-        dataRepo.SaveInstrument(req);
-        eventTrans.InstrumentReceived(req);
+        InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(sec);
+        dataRepo.SaveInstrument(instrument);
+        eventTrans.InstrumentReceived(instrument);
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
     {
         _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
-        PortfolioStockSharpModel req = new PortfolioStockSharpModel().Bind(port);
-        dataRepo.SavePortfolio(req);
-        eventTrans.PortfolioReceived(req);
+        PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
+        dataRepo.SavePortfolio(portfolio);
+        eventTrans.PortfolioReceived(portfolio);
     }
 
     void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)
     {
         _logger.LogWarning($"Call > `{nameof(BoardReceivedHandle)}`: {JsonConvert.SerializeObject(boardExchange)}");
-        BoardStockSharpModel req = new BoardStockSharpModel().Bind(boardExchange);
-        dataRepo.SaveBoard(req);
-        eventTrans.BoardReceived(req);
+        BoardStockSharpModel board = new BoardStockSharpModel().Bind(boardExchange);
+        dataRepo.SaveBoard(board);
+        eventTrans.BoardReceived(board);
     }
 
     void OrderReceivedHandle(Subscription subscription, Order oreder)
     {
         _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(oreder)}");
-        OrderStockSharpModel req = new OrderStockSharpModel().Bind(oreder);
-        dataRepo.SaveOrder(req);
-        eventTrans.OrderReceived(req);
+        OrderStockSharpModel order = new OrderStockSharpModel().Bind(oreder);
+        dataRepo.SaveOrder(order);
+        eventTrans.OrderReceived(order);
     }
 
+    void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
+    {
+        _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
+        MyTradeStockSharpModel myTrade = new MyTradeStockSharpModel().Bind(tr);
+        dataRepo.SaveTrade(myTrade);
+        eventTrans.OwnTradeReceived(myTrade);
+    }
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
     {
         _logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos)}");
-    }
-    void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
-    {
-        _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
+        PositionStockSharpModel position = new PositionStockSharpModel().Bind(pos);
+        eventTrans.PositionReceived(position);
     }
 
     #region Exception`s

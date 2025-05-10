@@ -61,6 +61,7 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
         modelBuilder.Entity<FixMessageAdapterModelDB>()
         .HasIndex(b => b.AdapterTypeName);
+
     }
 
 
@@ -78,6 +79,9 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
     /// <inheritdoc/>
     public DbSet<InstrumentStockSharpModelDB> Instruments { get; set; }
+
+    /// <inheritdoc/>
+    public DbSet<MyTradeStockSharpModelDB> MyTrades { get; set; }
 
     /// <inheritdoc/>
     public DbSet<PortfolioTradeModelDB> Portfolios { get; set; } = default!;

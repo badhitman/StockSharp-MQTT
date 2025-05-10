@@ -4,6 +4,7 @@
 
 using StockSharp.BusinessEntities;
 using SharedLib;
+using StockSharp.Fix.Native;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -122,6 +123,61 @@ public static class BindsStockSharpModelsExtensions
         main.Name = inc.Name;
         main.DepoName = inc.DepoName;
         //
+        return main;
+    }
+
+    /// <inheritdoc/>
+    public static MyTradeStockSharpModel Bind(this MyTradeStockSharpModel main, MyTrade inc)
+    {
+        main.Commission = inc.Commission;
+        main.Position = inc.Position;
+        main.CommissionCurrency = inc.CommissionCurrency;
+        main.Initiator = inc.Initiator;
+        main.Yield = inc.Yield;
+        main.Slippage = inc.Slippage;
+        main.PnL = inc.PnL;
+        main.Order = new OrderStockSharpModel().Bind(inc.Order);
+        //
+        return main;
+    }
+
+    public static PositionStockSharpModel Bind(this PositionStockSharpModel main, Position inc)
+    {
+        main.PortfolioName = inc.PortfolioName;
+        main.BeginValue = inc.BeginValue;
+        main.CurrentValue = inc.CurrentValue;
+        main.BlockedValue = inc.BlockedValue;
+        main.CurrentPrice = inc.CurrentPrice;
+        main.AveragePrice = inc.AveragePrice;
+        main.UnrealizedPnL = inc.UnrealizedPnL;
+        main.RealizedPnL = inc.RealizedPnL;
+        main.VariationMargin = inc.VariationMargin;
+        main.Commission = inc.Commission;
+        main.SettlementPrice = inc.SettlementPrice;
+        main.LastChangeTime = inc.LastChangeTime;
+        main.LocalTime = inc.LocalTime;
+        main.Description = inc.Description;
+        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value));
+        main.ExpirationDate = inc.ExpirationDate;
+        main.ClientCode = inc.ClientCode;
+        main.Portfolio = inc.Portfolio is null ? null : new PortfolioStockSharpModel().Bind(inc.Portfolio);
+        main.Instrument = new InstrumentTradeStockSharpModel().Bind(inc.Security);
+        main.DepoName = inc.DepoName;
+        main.LimitType = inc.LimitType is null ? null : (TPlusLimitsEnum)Enum.Parse(typeof(TPlusLimitsEnum), Enum.GetName(inc.LimitType.Value)); // inc.LimitType;
+        main.StrategyId = inc.StrategyId;
+        main.Side = inc.Side is null ? null : (SidesEnum)Enum.Parse(typeof(SidesEnum), Enum.GetName(inc.Side.Value));
+        main.Leverage = inc.Leverage;
+        main.CommissionTaker = inc.CommissionTaker;
+        main.CommissionMaker = inc.CommissionMaker;
+        main.BuyOrdersCount = inc.BuyOrdersCount;
+        main.SellOrdersCount = inc.SellOrdersCount;
+        main.BuyOrdersMargin = inc.BuyOrdersMargin;
+        main.SellOrdersMargin = inc.SellOrdersMargin;
+        main.OrdersMargin = inc.OrdersMargin;
+        main.OrdersCount = inc.OrdersCount;
+        main.TradesCount = inc.TradesCount;
+        main.LiquidationPrice = inc.LiquidationPrice;
+
         return main;
     }
 }

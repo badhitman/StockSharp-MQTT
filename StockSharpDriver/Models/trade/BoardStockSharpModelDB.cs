@@ -11,13 +11,19 @@ namespace SharedLib;
 /// Площадка
 /// </summary>
 [Index(nameof(Code))]
-public class BoardStockSharpModelDB : BoardStockSharpModel
+public class BoardStockSharpModelDB : BoardStockSharpModel, IBaseStockSharpModel
 {
     /// <summary>
     /// Идентификатор/Key
     /// </summary>
     [Key]
     public int Id { get; set; }
+
+    /// <inheritdoc/>
+    public DateTime LastUpdatedAtUTC { get; set; }
+
+    /// <inheritdoc/>
+    public DateTime CreatedAtUTC { get; set; }
 
     /// <summary>
     /// Exchange

@@ -73,6 +73,8 @@ namespace StockSharpDriver.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ExchangeId = table.Column<int>(type: "INTEGER", nullable: true),
                     Code = table.Column<string>(type: "TEXT", nullable: true)
                 },
@@ -222,6 +224,33 @@ namespace StockSharpDriver.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "MyTrades",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    OrderIdPK = table.Column<int>(type: "INTEGER", nullable: true),
+                    Commission = table.Column<decimal>(type: "TEXT", nullable: true),
+                    CommissionCurrency = table.Column<string>(type: "TEXT", nullable: true),
+                    Slippage = table.Column<decimal>(type: "TEXT", nullable: true),
+                    PnL = table.Column<decimal>(type: "TEXT", nullable: true),
+                    Position = table.Column<decimal>(type: "TEXT", nullable: true),
+                    Initiator = table.Column<bool>(type: "INTEGER", nullable: true),
+                    Yield = table.Column<decimal>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MyTrades", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MyTrades_Orders_OrderIdPK",
+                        column: x => x.OrderIdPK,
+                        principalTable: "Orders",
+                        principalColumn: "IdPK");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Adapters_AdapterTypeName",
                 table: "Adapters",
@@ -303,6 +332,11 @@ namespace StockSharpDriver.Migrations
                 column: "UnderlyingSecurityId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_MyTrades_OrderIdPK",
+                table: "MyTrades",
+                column: "OrderIdPK");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orders_BoardId",
                 table: "Orders",
                 column: "BoardId");
@@ -362,6 +396,9 @@ namespace StockSharpDriver.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Adapters");
+
+            migrationBuilder.DropTable(
+                name: "MyTrades");
 
             migrationBuilder.DropTable(
                 name: "Orders");
