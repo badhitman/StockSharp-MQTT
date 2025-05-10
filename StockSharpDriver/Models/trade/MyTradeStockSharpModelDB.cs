@@ -26,4 +26,7 @@ public class MyTradeStockSharpModelDB : MyTradeStockSharpModel, IBaseStockSharpM
 
     /// <inheritdoc/>
     public new OrderStockSharpModelDB Order { get; set; }
+
+    /// <inheritdoc/>
+    public int OrderId { get; set; }
 }

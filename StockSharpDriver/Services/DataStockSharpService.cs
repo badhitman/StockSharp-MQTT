@@ -172,12 +172,21 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> SaveTrade(MyTradeStockSharpModel myTrade)
+    public async Task<TResponseModel<int>> SaveTrade(MyTradeStockSharpModel myTrade)
     {
+        TResponseModel<int> res = new();
+        if (myTrade.Order is null)
+        {
+            res.AddError("myTrade.Order is null");
+            return res;
+        }
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
-        MyTradeStockSharpModelDB myTradeDb = await context.MyTrades.FirstOrDefaultAsync();
-
-        throw new NotImplementedException();
+        MyTradeStockSharpModelDB myTradeDb = new MyTradeStockSharpModelDB().Bind(myTrade);
+        myTradeDb.OrderId = SaveOrder(myTrade.Order).Result.Response;
+        await context.MyTrades.AddAsync(myTradeDb);
+        await context.SaveChangesAsync();
+        res.Response = myTradeDb.Id;
+        return res;
     }
 
 

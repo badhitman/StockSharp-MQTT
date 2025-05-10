@@ -122,4 +122,20 @@ public static class BindsStockSharpModelsExtensionsDB
         //
         return main;
     }
+
+    /// <inheritdoc/>
+    public static MyTradeStockSharpModelDB Bind(this MyTradeStockSharpModelDB main,MyTradeStockSharpModel inc)
+    {
+        main.Yield = inc.Yield;
+        main.Slippage = inc.Slippage;
+        main.PnL = inc.PnL;
+        main.Initiator = inc.Initiator;
+        main.Position = inc.Position;
+        main.Commission = inc.Commission;
+        main.CommissionCurrency = inc.CommissionCurrency;
+        main.LastUpdatedAtUTC = DateTime.UtcNow;
+        main.CreatedAtUTC = DateTime.UtcNow;
+        //
+        return main;
+    }
 }
