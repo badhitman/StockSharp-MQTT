@@ -286,7 +286,6 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
         eventTrans.OrderReceived(req);
     }
 
-
     void PositionReceivedHandle(Subscription subscription, Position pos)
     {
         _logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos)}");
@@ -296,58 +295,28 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
         _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
     }
 
-    #region Exception`s
-    void LookupSecuritiesResultHandle(StockSharp.Messages.SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
-
-        foreach (Security sec in securities)
-            dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
-    }
-
-    void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
-
-        //foreach (Portfolio port in portfolios)
-        //    dataRepo.SavePortfolio(new PortfolioStockSharpModel().Bind(port));
-    }
-
-    void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(SubscriptionFailedHandle)}`: [{nameof(arg)}:{arg}]");
-    }
-    void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(SubscriptionStoppedHandle)}`");
-    }
-    void MassOrderCancelFailed2Handle(long arg, Exception ex, DateTimeOffset dt)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailed2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
-    }
-    void MassOrderCancelFailedHandle(long arg, Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
-    }
-    void ConnectionErrorExHandle(StockSharp.Messages.IMessageAdapter sender, Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
-    }
-    void ConnectionErrorHandle(Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorHandle)}`");
-    }
-    void ErrorHandle(Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(ErrorHandle)}`");
-    }
-    void ChangePasswordResultHandle(long arg, Exception ex)
-    {
-        _logger.LogError(ex, $"Call > `{nameof(ChangePasswordResultHandle)}`: {arg}");
-    }
-    #endregion
-
     #region todo
+    void OrderBookReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderBookMessage orderBM)
+    {
+        _logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
+    }
+    void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
+    {
+        _logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
+    }
+    void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
+    {
+        _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+    }
+    void OrderCancelFailReceivedHandle(Subscription subscription, OrderFail orderF)
+    {
+        _logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+    }
+    void OrderEditFailReceivedHandle(Subscription subscription, OrderFail orderF)
+    {
+        _logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+    }
+
     void TickTradeReceivedHandle(Subscription subscription, StockSharp.Messages.ITickTradeMessage msg)
     {
         _logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg)}");
@@ -364,26 +333,7 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
     {
         _logger.LogWarning($"Call > `{nameof(ParentRemovedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
-    void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
-    {
-        _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
-    }
-    void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
-    {
-        _logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
-    }
-    void OrderEditFailReceivedHandle(Subscription subscription, OrderFail orderF)
-    {
-        _logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
-    }
-    void OrderCancelFailReceivedHandle(Subscription subscription, OrderFail orderF)
-    {
-        _logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
-    }
-    void OrderBookReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderBookMessage orderBM)
-    {
-        _logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
-    }
+
     void NewsReceivedHandle(Subscription subscription, News sender)
     {
         _logger.LogWarning($"Call > `{nameof(NewsReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
@@ -451,6 +401,57 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
     void SubscriptionReceivedHandle(Subscription subscription, object sender)
     {
         _logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+    }
+    #endregion
+
+    #region Exception`s
+    void LookupSecuritiesResultHandle(StockSharp.Messages.SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
+
+        foreach (Security sec in securities)
+            dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
+    }
+
+    void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
+
+        //foreach (Portfolio port in portfolios)
+        //    dataRepo.SavePortfolio(new PortfolioStockSharpModel().Bind(port));
+    }
+
+    void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(SubscriptionFailedHandle)}`: [{nameof(arg)}:{arg}]");
+    }
+    void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(SubscriptionStoppedHandle)}`");
+    }
+    void MassOrderCancelFailed2Handle(long arg, Exception ex, DateTimeOffset dt)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailed2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
+    }
+    void MassOrderCancelFailedHandle(long arg, Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
+    }
+    void ConnectionErrorExHandle(StockSharp.Messages.IMessageAdapter sender, Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
+    }
+    void ConnectionErrorHandle(Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorHandle)}`");
+    }
+    void ErrorHandle(Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(ErrorHandle)}`");
+    }
+    void ChangePasswordResultHandle(long arg, Exception ex)
+    {
+        _logger.LogError(ex, $"Call > `{nameof(ChangePasswordResultHandle)}`: {arg}");
     }
     #endregion
 
