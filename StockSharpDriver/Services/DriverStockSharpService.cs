@@ -17,7 +17,7 @@ namespace StockSharpDriver;
 /// <summary>
 /// StockSharpDriverService 
 /// </summary>
-public class DriverStockSharpService(IDataStockSharpService dataRepo,
+public class DriverStockSharpService(IFlushStockSharpService dataRepo,
     IManageStockSharpService manageRepo,
     IEventsStockSharpService eventTrans,
     ILogger<DriverStockSharpService> _logger,
@@ -250,7 +250,7 @@ public class DriverStockSharpService(IDataStockSharpService dataRepo,
             DataPayload = [.. dataPayload.Select(x => new KeyValuePair<Level1FieldsStockSharpEnum, object>((Level1FieldsStockSharpEnum)Enum.Parse(typeof(Level1FieldsStockSharpEnum), Enum.GetName(x.Key)!), x.Value))],
             Instrument = new InstrumentTradeStockSharpModel().Bind(instrument),
         };
-        //dataRepo.SaveInstrument(req.Instrument);
+        dataRepo.SaveInstrument(req.Instrument);
         eventTrans.ValuesChangedEvent(req);
     }
 
