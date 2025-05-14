@@ -90,7 +90,9 @@ public static class BindsStockSharpModelsExtensions
         main.OptionType = inc.OptionType is null ? null : (OptionInstrumentTradeTypesEnum)Enum.Parse(typeof(OptionInstrumentTradeTypesEnum), Enum.GetName(inc.OptionType.Value));
         main.OptionStyle = inc.OptionStyle is null ? null : (OptionTradeInstrumentStylesEnum)Enum.Parse(typeof(OptionTradeInstrumentStylesEnum), Enum.GetName(inc.OptionStyle.Value));
 
-        main.Board = new BoardStockSharpModel().Bind(inc.Board);
+        main.Board = inc.Board is null
+            ? null
+            : new BoardStockSharpModel().Bind(inc.Board);
 
         return main;
     }
@@ -163,7 +165,14 @@ public static class BindsStockSharpModelsExtensions
         main.Portfolio = inc.Portfolio is null ? null : new PortfolioStockSharpModel().Bind(inc.Portfolio);
         main.Instrument = new InstrumentTradeStockSharpModel().Bind(inc.Security);
         main.DepoName = inc.DepoName;
-        main.LimitType = inc.LimitType is null ? null : (TPlusLimitsEnum)Enum.Parse(typeof(TPlusLimitsEnum), Enum.GetName(inc.LimitType.Value)); // inc.LimitType;
+
+        if (inc.LimitType is not null)
+        {
+            string _gn = Enum.GetName(inc.LimitType.Value);
+            if (_gn != null)
+                main.LimitType = inc.LimitType is null ? null : (TPlusLimitsEnum)Enum.Parse(typeof(TPlusLimitsEnum), _gn);
+        }
+
         main.StrategyId = inc.StrategyId;
         main.Side = inc.Side is null ? null : (SidesEnum)Enum.Parse(typeof(SidesEnum), Enum.GetName(inc.Side.Value));
         main.Leverage = inc.Leverage;

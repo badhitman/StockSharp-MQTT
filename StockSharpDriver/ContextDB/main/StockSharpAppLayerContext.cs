@@ -29,9 +29,7 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
         if (_fi.Directory?.Exists != true)
             Directory.CreateDirectory(Path.GetDirectoryName(DbPath)!);
-        //if ()
-        //    Database.EnsureCreated();
-        //else
+        
         Database.Migrate();
     }
 

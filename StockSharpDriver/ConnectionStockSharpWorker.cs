@@ -6,23 +6,21 @@ using StockSharp.BusinessEntities;
 using StockSharp.Algo;
 using Newtonsoft.Json;
 using SharedLib;
-using StockSharp.Fix.Quik.Lua;
-using Ecng.Common;
-using System.Net;
 
 namespace StockSharpDriver;
 
 /// <inheritdoc/>
 public class ConnectionStockSharpWorker(
     //StockSharpClientConfigModel conf,
-    //IDataStockSharpService dataRepo,
+    IFlushStockSharpService dataRepo,
     ILogger<ConnectionStockSharpWorker> _logger,
-    //IEventsStockSharpService eventTrans,
+    IEventsStockSharpService eventTrans,
     Connector Connector) : BackgroundService
 {
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        #region events +
         Connector.Connected += ConnectedHandle;
         Connector.ConnectedEx += ConnectedExHandle;
         Connector.Disconnected += DisconnectedHandle;
@@ -66,6 +64,7 @@ public class ConnectionStockSharpWorker(
         Connector.SubscriptionStopped += SubscriptionStoppedHandle;
         Connector.TickTradeReceived += TickTradeReceivedHandle;
         Connector.ValuesChanged += ValuesChangedHandle;
+        #endregion
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -83,50 +82,6 @@ public class ConnectionStockSharpWorker(
         }
 
         await Connector.DisconnectAsync(stoppingToken);
-
-        Connector.Connected -= ConnectedHandle;
-        Connector.ConnectedEx -= ConnectedExHandle;
-        Connector.Disconnected -= DisconnectedHandle;
-        Connector.BoardReceived -= BoardReceivedHandle;
-        Connector.CandleReceived -= CandleReceivedHandle;
-        Connector.ConnectionLost -= ConnectionLostHandle;
-        Connector.ConnectionError -= ConnectionErrorHandle;
-        Connector.DataTypeReceived -= DataTypeReceivedHandle;
-        Connector.ConnectionErrorEx -= ConnectionErrorExHandle;
-        Connector.ConnectionRestored -= ConnectionRestoredHandle;
-        Connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
-        Connector.ChangePasswordResult -= ChangePasswordResultHandle;
-        Connector.DisconnectedEx -= DisconnectedExHandle;
-        Connector.Disposed -= DisposedHandle;
-        Connector.Error -= ErrorHandle;
-        Connector.Level1Received -= Level1ReceivedHandle;
-        Connector.Log -= LogHandle;
-        Connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
-        Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
-        Connector.MassOrderCanceled -= MassOrderCanceledHandle;
-        Connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
-        Connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
-        Connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
-        Connector.NewMessage -= NewMessageHandle;
-        Connector.NewsReceived -= NewsReceivedHandle;
-        Connector.OrderBookReceived -= OrderBookReceivedHandle;
-        Connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
-        Connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
-        Connector.OrderLogReceived -= OrderLogReceivedHandle;
-        Connector.OrderReceived -= OrderReceivedHandle;
-        Connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
-        Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
-        Connector.ParentRemoved -= ParentRemovedHandle;
-        Connector.PortfolioReceived -= PortfolioReceivedHandle;
-        Connector.PositionReceived -= PositionReceivedHandle;
-        Connector.SecurityReceived -= SecurityReceivedHandle;
-        Connector.SubscriptionFailed -= SubscriptionFailedHandle;
-        Connector.SubscriptionOnline -= SubscriptionOnlineHandle;
-        Connector.SubscriptionReceived -= SubscriptionReceivedHandle;
-        Connector.SubscriptionStarted -= SubscriptionStartedHandle;
-        Connector.SubscriptionStopped -= SubscriptionStoppedHandle;
-        Connector.TickTradeReceived -= TickTradeReceivedHandle;
-        Connector.ValuesChanged -= ValuesChangedHandle;
     }
 
 
@@ -141,54 +96,54 @@ public class ConnectionStockSharpWorker(
             Instrument = new InstrumentTradeStockSharpModel().Bind(instrument),
         };
         //
-        //eventTrans.ValuesChangedEvent(valueChangeEvent);
+        eventTrans.ValuesChangedEvent(valueChangeEvent);
     }
 
     void SecurityReceivedHandle(Subscription subscription, Security sec)
     {
         _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec)}");
         InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(sec);
-        //dataRepo.SaveInstrument(instrument);
-        //eventTrans.InstrumentReceived(instrument);
+        dataRepo.SaveInstrument(instrument);
+        eventTrans.InstrumentReceived(instrument);
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
     {
         _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
         PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
-        //dataRepo.SavePortfolio(portfolio);
-        //eventTrans.PortfolioReceived(portfolio);
+        dataRepo.SavePortfolio(portfolio);
+        eventTrans.PortfolioReceived(portfolio);
     }
 
     void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)
     {
         _logger.LogWarning($"Call > `{nameof(BoardReceivedHandle)}`: {JsonConvert.SerializeObject(boardExchange)}");
         BoardStockSharpModel board = new BoardStockSharpModel().Bind(boardExchange);
-        //dataRepo.SaveBoard(board);
-        //eventTrans.BoardReceived(board);
+        dataRepo.SaveBoard(board);
+        eventTrans.BoardReceived(board);
     }
 
     void OrderReceivedHandle(Subscription subscription, Order oreder)
     {
         _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(oreder)}");
         OrderStockSharpModel order = new OrderStockSharpModel().Bind(oreder);
-        //dataRepo.SaveOrder(order);
-        //eventTrans.OrderReceived(order);
+        dataRepo.SaveOrder(order);
+        eventTrans.OrderReceived(order);
     }
 
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
         _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
         MyTradeStockSharpModel myTrade = new MyTradeStockSharpModel().Bind(tr);
-        //dataRepo.SaveTrade(myTrade);
-        //eventTrans.OwnTradeReceived(myTrade);
+        dataRepo.SaveTrade(myTrade);
+        eventTrans.OwnTradeReceived(myTrade);
     }
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
     {
         _logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos)}");
         PositionStockSharpModel position = new PositionStockSharpModel().Bind(pos);
-        //eventTrans.PositionReceived(position);
+        eventTrans.PositionReceived(position);
     }
 
     #region Exception`s
@@ -306,6 +261,53 @@ public class ConnectionStockSharpWorker(
     void DisconnectedHandle()
     {
         _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
+
+
+        #region events -
+        Connector.Connected -= ConnectedHandle;
+        Connector.ConnectedEx -= ConnectedExHandle;
+        Connector.Disconnected -= DisconnectedHandle;
+        Connector.BoardReceived -= BoardReceivedHandle;
+        Connector.CandleReceived -= CandleReceivedHandle;
+        Connector.ConnectionLost -= ConnectionLostHandle;
+        Connector.ConnectionError -= ConnectionErrorHandle;
+        Connector.DataTypeReceived -= DataTypeReceivedHandle;
+        Connector.ConnectionErrorEx -= ConnectionErrorExHandle;
+        Connector.ConnectionRestored -= ConnectionRestoredHandle;
+        Connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
+        Connector.ChangePasswordResult -= ChangePasswordResultHandle;
+        Connector.DisconnectedEx -= DisconnectedExHandle;
+        Connector.Disposed -= DisposedHandle;
+        Connector.Error -= ErrorHandle;
+        Connector.Level1Received -= Level1ReceivedHandle;
+        Connector.Log -= LogHandle;
+        Connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
+        Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
+        Connector.MassOrderCanceled -= MassOrderCanceledHandle;
+        Connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
+        Connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
+        Connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
+        Connector.NewMessage -= NewMessageHandle;
+        Connector.NewsReceived -= NewsReceivedHandle;
+        Connector.OrderBookReceived -= OrderBookReceivedHandle;
+        Connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
+        Connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
+        Connector.OrderLogReceived -= OrderLogReceivedHandle;
+        Connector.OrderReceived -= OrderReceivedHandle;
+        Connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
+        Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
+        Connector.ParentRemoved -= ParentRemovedHandle;
+        Connector.PortfolioReceived -= PortfolioReceivedHandle;
+        Connector.PositionReceived -= PositionReceivedHandle;
+        Connector.SecurityReceived -= SecurityReceivedHandle;
+        Connector.SubscriptionFailed -= SubscriptionFailedHandle;
+        Connector.SubscriptionOnline -= SubscriptionOnlineHandle;
+        Connector.SubscriptionReceived -= SubscriptionReceivedHandle;
+        Connector.SubscriptionStarted -= SubscriptionStartedHandle;
+        Connector.SubscriptionStopped -= SubscriptionStoppedHandle;
+        Connector.TickTradeReceived -= TickTradeReceivedHandle;
+        Connector.ValuesChanged -= ValuesChangedHandle;
+        #endregion
     }
     void DataTypeReceivedHandle(Subscription subscription, StockSharp.Messages.DataType argDt)
     {
@@ -321,7 +323,7 @@ public class ConnectionStockSharpWorker(
     }
     void ConnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ConnectedExHandle)}`: {JsonConvert.SerializeObject(new { sender.Name, sender.Categories, ((StockSharp.Fix.FixMessageAdapter)sender).Address })}");
+        _logger.LogWarning($"Call > `{nameof(ConnectedExHandle)}`: {JsonConvert.SerializeObject(new { sender.Name, sender.Categories })}");
     }
     void ConnectedHandle()
     {

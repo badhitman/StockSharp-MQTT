@@ -6,29 +6,24 @@ using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
 using StockSharp.Algo;
-using Newtonsoft.Json;
+using System.Security;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
-using System.Security;
 
 namespace StockSharpDriver;
 
 /// <summary>
-/// StockSharpDriverService 
+/// DriverStockSharpService 
 /// </summary>
-public class DriverStockSharpService(IFlushStockSharpService dataRepo,
+public class DriverStockSharpService(
     IManageStockSharpService manageRepo,
-    IEventsStockSharpService eventTrans,
     ILogger<DriverStockSharpService> _logger,
     Connector connector) : IDriverStockSharpService
 {
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(CancellationToken? cancellationToken = default)
     {
-        if (!connector.CanConnect)
-            return ResponseBaseModel.CreateError("can`t connect");
-
         TPaginationRequestStandardModel<AdaptersRequestModel> reqAs = new()
         {
             Payload = new()
@@ -38,12 +33,21 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
             PageNum = 0,
             PageSize = int.MaxValue,
         };
-
-        TPaginationResponseModel<FixMessageAdapterModelDB> adapters = await manageRepo.AdaptersSelectAsync(reqAs);
+        TPaginationResponseModel<FixMessageAdapterModelDB> adapters;
+        try
+        {
+            adapters = await manageRepo.AdaptersSelectAsync(reqAs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $" {nameof(manageRepo.AdaptersSelectAsync)}");
+            return ResponseBaseModel.CreateError(ex);
+        }
 
         if (adapters.Response is null || adapters.Response.Count == 0)
             return ResponseBaseModel.CreateError("adapters - is empty");
 
+        #region event +
         connector.Connected += ConnectedHandle;
         connector.ConnectedEx += ConnectedExHandle;
         connector.Disconnected += DisconnectedHandle;
@@ -87,15 +91,18 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
         connector.SubscriptionStopped += SubscriptionStoppedHandle;
         connector.TickTradeReceived += TickTradeReceivedHandle;
         connector.ValuesChanged += ValuesChangedHandle;
+        #endregion
 
+        ResponseBaseModel res = new();
         adapters.Response.ForEach(x =>
         {
             try
             {
                 IPEndPoint _cep = GlobalToolsStandard.CreateIPEndPoint(x.Address);
                 SecureString secure = new();
-                foreach (char c in x.Password)
-                    secure.AppendChar(c);
+                if (x.Password is not null)
+                    foreach (char c in x.Password)
+                        secure.AppendChar(c);
 
                 switch (Enum.GetName(typeof(AdaptersTypesNames), x.AdapterTypeName))
                 {
@@ -127,15 +134,20 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Ошибка добавления адаптера");
+                res.Messages.InjectException(ex);
             }
         });
 
+        if (!connector.CanConnect)
+            return ResponseBaseModel.CreateError("can`t connect");
+
         await connector.ConnectAsync(cancellationToken ?? CancellationToken.None);
-        return ResponseBaseModel.CreateInfo("connection started");
+        res.AddInfo($"connection: {connector.ConnectionState}");
+        return res;
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> Disconnect(CancellationToken? cancellationToken = default)
+    public Task<ResponseBaseModel> Disconnect(CancellationToken? cancellationToken = default)
     {
         connector.CancelOrders();
 
@@ -145,53 +157,9 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
 
-        await connector.DisconnectAsync(cancellationToken ?? CancellationToken.None);
+        connector.Disconnect();
 
-        connector.Connected -= ConnectedHandle;
-        connector.ConnectedEx -= ConnectedExHandle;
-        connector.Disconnected -= DisconnectedHandle;
-        connector.BoardReceived -= BoardReceivedHandle;
-        connector.CandleReceived -= CandleReceivedHandle;
-        connector.ConnectionLost -= ConnectionLostHandle;
-        connector.ConnectionError -= ConnectionErrorHandle;
-        connector.DataTypeReceived -= DataTypeReceivedHandle;
-        connector.ConnectionErrorEx -= ConnectionErrorExHandle;
-        connector.ConnectionRestored -= ConnectionRestoredHandle;
-        connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
-        connector.ChangePasswordResult -= ChangePasswordResultHandle;
-        connector.DisconnectedEx -= DisconnectedExHandle;
-        connector.Disposed -= DisposedHandle;
-        connector.Error -= ErrorHandle;
-        connector.Level1Received -= Level1ReceivedHandle;
-        connector.Log -= LogHandle;
-        connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
-        connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
-        connector.MassOrderCanceled -= MassOrderCanceledHandle;
-        connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
-        connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
-        connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
-        connector.NewMessage -= NewMessageHandle;
-        connector.NewsReceived -= NewsReceivedHandle;
-        connector.OrderBookReceived -= OrderBookReceivedHandle;
-        connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
-        connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
-        connector.OrderLogReceived -= OrderLogReceivedHandle;
-        connector.OrderReceived -= OrderReceivedHandle;
-        connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
-        connector.OwnTradeReceived -= OwnTradeReceivedHandle;
-        connector.ParentRemoved -= ParentRemovedHandle;
-        connector.PortfolioReceived -= PortfolioReceivedHandle;
-        connector.PositionReceived -= PositionReceivedHandle;
-        connector.SecurityReceived -= SecurityReceivedHandle;
-        connector.SubscriptionFailed -= SubscriptionFailedHandle;
-        connector.SubscriptionOnline -= SubscriptionOnlineHandle;
-        connector.SubscriptionReceived -= SubscriptionReceivedHandle;
-        connector.SubscriptionStarted -= SubscriptionStartedHandle;
-        connector.SubscriptionStopped -= SubscriptionStoppedHandle;
-        connector.TickTradeReceived -= TickTradeReceivedHandle;
-        connector.ValuesChanged -= ValuesChangedHandle;
-
-        return ResponseBaseModel.CreateInfo("connection closed");
+        return Task.FromResult(ResponseBaseModel.CreateInfo("connection closed"));
     }
 
     /// <inheritdoc/>
@@ -242,180 +210,227 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
 
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
-        _logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}");
-        ConnectorValuesChangedEventPayloadModel req = new()
-        {
-            OffsetSlave = dtOffsetSlave,
-            OffsetMaster = dtOffsetMaster,
-            DataPayload = [.. dataPayload.Select(x => new KeyValuePair<Level1FieldsStockSharpEnum, object>((Level1FieldsStockSharpEnum)Enum.Parse(typeof(Level1FieldsStockSharpEnum), Enum.GetName(x.Key)!), x.Value))],
-            Instrument = new InstrumentTradeStockSharpModel().Bind(instrument),
-        };
-        dataRepo.SaveInstrument(req.Instrument);
-        eventTrans.ValuesChangedEvent(req);
+        //_logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}");
+        //ConnectorValuesChangedEventPayloadModel req = new()
+        //{
+        //    OffsetSlave = dtOffsetSlave,
+        //    OffsetMaster = dtOffsetMaster,
+        //    DataPayload = [.. dataPayload.Select(x => new KeyValuePair<Level1FieldsStockSharpEnum, object>((Level1FieldsStockSharpEnum)Enum.Parse(typeof(Level1FieldsStockSharpEnum), Enum.GetName(x.Key)!), x.Value))],
+        //    Instrument = new InstrumentTradeStockSharpModel().Bind(instrument),
+        //};
+        //dataRepo.SaveInstrument(req.Instrument);
+        //eventTrans.ValuesChangedEvent(req);
     }
 
     void SecurityReceivedHandle(Subscription subscription, Security sec)
     {
-        _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec)}");
-        InstrumentTradeStockSharpModel req = new InstrumentTradeStockSharpModel().Bind(sec);
-        dataRepo.SaveInstrument(req);
-        eventTrans.InstrumentReceived(req);
+        //_logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec)}");
+        //InstrumentTradeStockSharpModel req = new InstrumentTradeStockSharpModel().Bind(sec);
+        //dataRepo.SaveInstrument(req);
+        //eventTrans.InstrumentReceived(req);
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
     {
-        _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
-        PortfolioStockSharpModel req = new PortfolioStockSharpModel().Bind(port);
-        dataRepo.SavePortfolio(req);
-        eventTrans.PortfolioReceived(req);
+        //_logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
+        //PortfolioStockSharpModel req = new PortfolioStockSharpModel().Bind(port);
+        //dataRepo.SavePortfolio(req);
+        //eventTrans.PortfolioReceived(req);
     }
 
     void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)
     {
-        _logger.LogWarning($"Call > `{nameof(BoardReceivedHandle)}`: {JsonConvert.SerializeObject(boardExchange)}");
-        BoardStockSharpModel req = new BoardStockSharpModel().Bind(boardExchange);
-        dataRepo.SaveBoard(req);
-        eventTrans.BoardReceived(req);
+        //_logger.LogWarning($"Call > `{nameof(BoardReceivedHandle)}`: {JsonConvert.SerializeObject(boardExchange)}");
+        //BoardStockSharpModel req = new BoardStockSharpModel().Bind(boardExchange);
+        //dataRepo.SaveBoard(req);
+        //eventTrans.BoardReceived(req);
     }
 
     void OrderReceivedHandle(Subscription subscription, Order oreder)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(oreder)}");
-        OrderStockSharpModel req = new OrderStockSharpModel().Bind(oreder);
-        dataRepo.SaveOrder(req);
-        eventTrans.OrderReceived(req);
+        //_logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(oreder)}");
+        //OrderStockSharpModel req = new OrderStockSharpModel().Bind(oreder);
+        //dataRepo.SaveOrder(req);
+        //eventTrans.OrderReceived(req);
     }
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
     {
-        _logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos)}");
+        //_logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos)}");
     }
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
-        _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
+        //_logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
     }
 
     #region todo
     void OrderBookReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderBookMessage orderBM)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
+        //_logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
     }
     void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
+        //_logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
     }
     void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+        //_logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
     }
     void OrderCancelFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+        //_logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
     }
     void OrderEditFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+        //_logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
     }
 
     void TickTradeReceivedHandle(Subscription subscription, StockSharp.Messages.ITickTradeMessage msg)
     {
-        _logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg)}");
+        //_logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg)}");
     }
     void SubscriptionStartedHandle(Subscription subscription)
     {
-        _logger.LogWarning($"Call > `{nameof(SubscriptionStartedHandle)}`");
+        //_logger.LogWarning($"Call > `{nameof(SubscriptionStartedHandle)}`");
     }
     void SubscriptionOnlineHandle(Subscription subscription)
     {
-        _logger.LogWarning($"Call > `{nameof(SubscriptionOnlineHandle)}`");
+        //_logger.LogWarning($"Call > `{nameof(SubscriptionOnlineHandle)}`");
     }
     void ParentRemovedHandle(Ecng.Logging.ILogSource sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ParentRemovedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogWarning($"Call > `{nameof(ParentRemovedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
 
     void NewsReceivedHandle(Subscription subscription, News sender)
     {
-        _logger.LogWarning($"Call > `{nameof(NewsReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogWarning($"Call > `{nameof(NewsReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     void MassOrderCanceled2Handle(long arg, DateTimeOffset dt)
     {
-        _logger.LogWarning($"Call > `{nameof(MassOrderCanceled2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
+        //_logger.LogWarning($"Call > `{nameof(MassOrderCanceled2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
     }
     void MassOrderCanceledHandle(long sender)
     {
-        _logger.LogWarning($"Call > `{nameof(MassOrderCanceledHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogWarning($"Call > `{nameof(MassOrderCanceledHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     void Level1ReceivedHandle(Subscription subscription, StockSharp.Messages.Level1ChangeMessage levelCh)
     {
-        _logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
+        //_logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
     }
     void DisposedHandle()
     {
-        _logger.LogWarning($"Call > `{nameof(DisposedHandle)}`");
+        //_logger.LogWarning($"Call > `{nameof(DisposedHandle)}`");
     }
     void DisconnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`: {JsonConvert.SerializeObject(sender)}");
+
+        #region event -
+        connector.Connected -= ConnectedHandle;
+        connector.ConnectedEx -= ConnectedExHandle;
+        connector.Disconnected -= DisconnectedHandle;
+        connector.BoardReceived -= BoardReceivedHandle;
+        connector.CandleReceived -= CandleReceivedHandle;
+        connector.ConnectionLost -= ConnectionLostHandle;
+        connector.ConnectionError -= ConnectionErrorHandle;
+        connector.DataTypeReceived -= DataTypeReceivedHandle;
+        connector.ConnectionErrorEx -= ConnectionErrorExHandle;
+        connector.ConnectionRestored -= ConnectionRestoredHandle;
+        connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
+        connector.ChangePasswordResult -= ChangePasswordResultHandle;
+        connector.DisconnectedEx -= DisconnectedExHandle;
+        connector.Disposed -= DisposedHandle;
+        connector.Error -= ErrorHandle;
+        connector.Level1Received -= Level1ReceivedHandle;
+        connector.Log -= LogHandle;
+        connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
+        connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
+        connector.MassOrderCanceled -= MassOrderCanceledHandle;
+        connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
+        connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
+        connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
+        connector.NewMessage -= NewMessageHandle;
+        connector.NewsReceived -= NewsReceivedHandle;
+        connector.OrderBookReceived -= OrderBookReceivedHandle;
+        connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
+        connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
+        connector.OrderLogReceived -= OrderLogReceivedHandle;
+        connector.OrderReceived -= OrderReceivedHandle;
+        connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
+        connector.OwnTradeReceived -= OwnTradeReceivedHandle;
+        connector.ParentRemoved -= ParentRemovedHandle;
+        connector.PortfolioReceived -= PortfolioReceivedHandle;
+        connector.PositionReceived -= PositionReceivedHandle;
+        connector.SecurityReceived -= SecurityReceivedHandle;
+        connector.SubscriptionFailed -= SubscriptionFailedHandle;
+        connector.SubscriptionOnline -= SubscriptionOnlineHandle;
+        connector.SubscriptionReceived -= SubscriptionReceivedHandle;
+        connector.SubscriptionStarted -= SubscriptionStartedHandle;
+        connector.SubscriptionStopped -= SubscriptionStoppedHandle;
+        connector.TickTradeReceived -= TickTradeReceivedHandle;
+        connector.ValuesChanged -= ValuesChangedHandle;
+        #endregion
+
     }
     void DisconnectedHandle()
     {
-        _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
+         _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
     }
     void DataTypeReceivedHandle(Subscription subscription, StockSharp.Messages.DataType argDt)
     {
-        _logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
+        //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
     }
     void ConnectionRestoredHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ConnectionRestoredHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogWarning($"Call > `{nameof(ConnectionRestoredHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     void ConnectionLostHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ConnectionLostHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogWarning($"Call > `{nameof(ConnectionLostHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     void ConnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ConnectedExHandle)}`: {JsonConvert.SerializeObject(new { sender.Name, sender.Categories, ((StockSharp.Fix.FixMessageAdapter)sender).Address })}");
+        //_logger.LogWarning($"Call > `{nameof(ConnectedExHandle)}`: {JsonConvert.SerializeObject(new { sender.Name, sender.Categories })}");
     }
     void ConnectedHandle()
     {
-        _logger.LogWarning($"Call > `{nameof(ConnectedHandle)}`");
+        //_logger.LogWarning($"Call > `{nameof(ConnectedHandle)}`");
     }
     void CandleReceivedHandle(Subscription subscription, StockSharp.Messages.ICandleMessage candleMessage)
     {
-        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`: {JsonConvert.SerializeObject(candleMessage)}");
+        //_logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`: {JsonConvert.SerializeObject(candleMessage)}");
     }
     void LogHandle(Ecng.Logging.LogMessage senderLog)
     {
-        _logger.LogTrace($"Call > `{nameof(LogHandle)}`: {senderLog}");
+        //_logger.LogTrace($"Call > `{nameof(LogHandle)}`: {senderLog}");
     }
     void CurrentTimeChangedHandle(TimeSpan sender)
     {
-        _logger.LogTrace($"Call > `{nameof(CurrentTimeChangedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogTrace($"Call > `{nameof(CurrentTimeChangedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     void NewMessageHandle(StockSharp.Messages.Message msg)
     {
-        _logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg)}");
+        //_logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg)}");
     }
     void SubscriptionReceivedHandle(Subscription subscription, object sender)
     {
-        _logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        //_logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     #endregion
 
     #region Exception`s
     void LookupSecuritiesResultHandle(StockSharp.Messages.SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
+        // _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
 
-        foreach (Security sec in securities)
-            dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
+        // foreach (Security sec in securities)
+        //    dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
     }
 
     void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
+        // _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
 
         //foreach (Portfolio port in portfolios)
         //    dataRepo.SavePortfolio(new PortfolioStockSharpModel().Bind(port));
@@ -423,35 +438,35 @@ public class DriverStockSharpService(IFlushStockSharpService dataRepo,
 
     void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
     {
-        _logger.LogError(ex, $"Call > `{nameof(SubscriptionFailedHandle)}`: [{nameof(arg)}:{arg}]");
+        // _logger.LogError(ex, $"Call > `{nameof(SubscriptionFailedHandle)}`: [{nameof(arg)}:{arg}]");
     }
     void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(SubscriptionStoppedHandle)}`");
+        // _logger.LogError(ex, $"Call > `{nameof(SubscriptionStoppedHandle)}`");
     }
     void MassOrderCancelFailed2Handle(long arg, Exception ex, DateTimeOffset dt)
     {
-        _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailed2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
+        //_logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailed2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
     }
     void MassOrderCancelFailedHandle(long arg, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
+        //_logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
     }
     void ConnectionErrorExHandle(StockSharp.Messages.IMessageAdapter sender, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
+        //_logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
     }
     void ConnectionErrorHandle(Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorHandle)}`");
+        // _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorHandle)}`");
     }
     void ErrorHandle(Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(ErrorHandle)}`");
+        // _logger.LogError(ex, $"Call > `{nameof(ErrorHandle)}`");
     }
     void ChangePasswordResultHandle(long arg, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(ChangePasswordResultHandle)}`: {arg}");
+        // _logger.LogError(ex, $"Call > `{nameof(ChangePasswordResultHandle)}`: {arg}");
     }
     #endregion
 
