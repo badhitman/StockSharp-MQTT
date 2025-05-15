@@ -264,11 +264,11 @@ public class DriverStockSharpService(
     }
 
     #region todo
-    void OrderBookReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderBookMessage orderBM)
+    void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
         //_logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
     }
-    void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
+    void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
     {
         //_logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
     }
@@ -285,7 +285,7 @@ public class DriverStockSharpService(
         //_logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
     }
 
-    void TickTradeReceivedHandle(Subscription subscription, StockSharp.Messages.ITickTradeMessage msg)
+    void TickTradeReceivedHandle(Subscription subscription, ITickTradeMessage msg)
     {
         //_logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg)}");
     }
@@ -314,7 +314,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(MassOrderCanceledHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
-    void Level1ReceivedHandle(Subscription subscription, StockSharp.Messages.Level1ChangeMessage levelCh)
+    void Level1ReceivedHandle(Subscription subscription, Level1ChangeMessage levelCh)
     {
         //_logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
     }
@@ -322,7 +322,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(DisposedHandle)}`");
     }
-    void DisconnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
+    void DisconnectedExHandle(IMessageAdapter sender)
     {
         //_logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`: {JsonConvert.SerializeObject(sender)}");
 
@@ -375,21 +375,21 @@ public class DriverStockSharpService(
     }
     void DisconnectedHandle()
     {
-         _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
+        _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
     }
-    void DataTypeReceivedHandle(Subscription subscription, StockSharp.Messages.DataType argDt)
+    void DataTypeReceivedHandle(Subscription subscription, DataType argDt)
     {
         //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
     }
-    void ConnectionRestoredHandle(StockSharp.Messages.IMessageAdapter sender)
+    void ConnectionRestoredHandle(IMessageAdapter sender)
     {
         //_logger.LogWarning($"Call > `{nameof(ConnectionRestoredHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
-    void ConnectionLostHandle(StockSharp.Messages.IMessageAdapter sender)
+    void ConnectionLostHandle(IMessageAdapter sender)
     {
         //_logger.LogWarning($"Call > `{nameof(ConnectionLostHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
-    void ConnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
+    void ConnectedExHandle(IMessageAdapter sender)
     {
         //_logger.LogWarning($"Call > `{nameof(ConnectedExHandle)}`: {JsonConvert.SerializeObject(new { sender.Name, sender.Categories })}");
     }
@@ -397,7 +397,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(ConnectedHandle)}`");
     }
-    void CandleReceivedHandle(Subscription subscription, StockSharp.Messages.ICandleMessage candleMessage)
+    void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
     {
         //_logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`: {JsonConvert.SerializeObject(candleMessage)}");
     }
@@ -409,7 +409,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogTrace($"Call > `{nameof(CurrentTimeChangedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
-    void NewMessageHandle(StockSharp.Messages.Message msg)
+    void NewMessageHandle(Message msg)
     {
         //_logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg)}");
     }
@@ -420,7 +420,7 @@ public class DriverStockSharpService(
     #endregion
 
     #region Exception`s
-    void LookupSecuritiesResultHandle(StockSharp.Messages.SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
+    void LookupSecuritiesResultHandle(SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
         // _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
 
@@ -428,7 +428,7 @@ public class DriverStockSharpService(
         //    dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
     }
 
-    void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
+    void LookupPortfoliosResultHandle(PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
     {
         // _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
 
@@ -452,7 +452,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
     }
-    void ConnectionErrorExHandle(StockSharp.Messages.IMessageAdapter sender, Exception ex)
+    void ConnectionErrorExHandle(IMessageAdapter sender, Exception ex)
     {
         //_logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
     }

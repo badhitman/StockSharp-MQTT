@@ -24,6 +24,7 @@ public class ConnectionStockSharpWorker(
         Connector.Connected += ConnectedHandle;
         Connector.ConnectedEx += ConnectedExHandle;
         Connector.Disconnected += DisconnectedHandle;
+        Connector.DisconnectedEx += DisconnectedExHandle;
         Connector.BoardReceived += BoardReceivedHandle;
         Connector.CandleReceived += CandleReceivedHandle;
         Connector.ConnectionLost += ConnectionLostHandle;
@@ -33,7 +34,6 @@ public class ConnectionStockSharpWorker(
         Connector.ConnectionRestored += ConnectionRestoredHandle;
         Connector.CurrentTimeChanged += CurrentTimeChangedHandle;
         Connector.ChangePasswordResult += ChangePasswordResultHandle;
-        Connector.DisconnectedEx += DisconnectedExHandle;
         Connector.Disposed += DisposedHandle;
         Connector.Error += ErrorHandle;
         Connector.Level1Received += Level1ReceivedHandle;
@@ -256,7 +256,7 @@ public class ConnectionStockSharpWorker(
     }
     void DisconnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`");
     }
     void DisconnectedHandle()
     {
