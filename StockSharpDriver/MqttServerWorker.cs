@@ -47,12 +47,8 @@ public class MqttServerWorker : BackgroundService
 
             switch (logLevel)
             {
-                case MqttNetLogLevel.Verbose:
-                    logger.LogDebug(message);
-                    break;
-
-                case MqttNetLogLevel.Info:
-                    //logger.LogInformation(message);
+                case MqttNetLogLevel.Verbose | MqttNetLogLevel.Info:
+                    //logger.LogDebug(message);
                     break;
 
                 case MqttNetLogLevel.Warning:

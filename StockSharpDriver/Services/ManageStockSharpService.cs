@@ -65,7 +65,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             q = q.Where(x => x.IsOnline == req.Payload.OnlineOnly);
 
         res.TotalRowsCount = await q.CountAsync(cancellationToken: cancellationToken);
-        res.Response = await q.Skip(req.PageSize * req.PageNum).Take(req.PageSize).ToListAsync(cancellationToken: cancellationToken);
+        res.Response = await q.OrderBy(x => x.Name).ThenBy(x => x.LastUpdatedAtUTC).ThenBy(x => x.Id).Skip(req.PageSize * req.PageNum).Take(req.PageSize).ToListAsync(cancellationToken: cancellationToken);
 
         return res;
     }

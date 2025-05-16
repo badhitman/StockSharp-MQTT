@@ -79,6 +79,7 @@ public static class BindsStockSharpModelsExtensionsDB
         main.Shortable = inc.Shortable;
         main.PrimaryId = inc.PrimaryId;
         main.Name = inc.Name;
+        main.IdRemote = inc.IdRemote;
 
         main.Currency = inc.Currency;
         main.UnderlyingSecurityType = inc.UnderlyingSecurityType;
@@ -89,6 +90,7 @@ public static class BindsStockSharpModelsExtensionsDB
 
         main.NameNormalizedUpper = inc.Name.ToUpper();
         main.IdRemoteNormalizedUpper = inc.IdRemote.ToUpper();
+
 
         //main.Board = new BoardStockSharpModelDB().Bind(inc.Board);
 
