@@ -87,6 +87,9 @@ public static class BindsStockSharpModelsExtensionsDB
         main.OptionType = inc.OptionType;
         main.OptionStyle = inc.OptionStyle;
 
+        main.NameNormalizedUpper = inc.Name.ToUpper();
+        main.IdRemoteNormalizedUpper = inc.IdRemote.ToUpper();
+
         //main.Board = new BoardStockSharpModelDB().Bind(inc.Board);
 
         return main;

@@ -98,6 +98,8 @@ namespace StockSharpDriver.Migrations
                     BoardId = table.Column<int>(type: "INTEGER", nullable: false),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    NameNormalizedUpper = table.Column<string>(type: "TEXT", nullable: true),
+                    IdRemoteNormalizedUpper = table.Column<string>(type: "TEXT", nullable: true),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
                     IdRemote = table.Column<string>(type: "TEXT", nullable: true),
                     Code = table.Column<string>(type: "TEXT", nullable: true),
@@ -232,7 +234,7 @@ namespace StockSharpDriver.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    OrderIdPK = table.Column<int>(type: "INTEGER", nullable: true),
+                    OrderId = table.Column<int>(type: "INTEGER", nullable: false),
                     Commission = table.Column<decimal>(type: "TEXT", nullable: true),
                     CommissionCurrency = table.Column<string>(type: "TEXT", nullable: true),
                     Slippage = table.Column<decimal>(type: "TEXT", nullable: true),
@@ -245,10 +247,11 @@ namespace StockSharpDriver.Migrations
                 {
                     table.PrimaryKey("PK_MyTrades", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_MyTrades_Orders_OrderIdPK",
-                        column: x => x.OrderIdPK,
+                        name: "FK_MyTrades_Orders_OrderId",
+                        column: x => x.OrderId,
                         principalTable: "Orders",
-                        principalColumn: "IdPK");
+                        principalColumn: "IdPK",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -332,9 +335,9 @@ namespace StockSharpDriver.Migrations
                 column: "UnderlyingSecurityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyTrades_OrderIdPK",
+                name: "IX_MyTrades_OrderId",
                 table: "MyTrades",
-                column: "OrderIdPK");
+                column: "OrderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_BoardId",

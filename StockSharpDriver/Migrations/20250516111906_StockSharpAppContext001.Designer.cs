@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250510080227_StockSharpAppContext001")]
+    [Migration("20250516111906_StockSharpAppContext001")]
     partial class StockSharpAppContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -216,6 +216,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("IdRemote")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("IdRemoteNormalizedUpper")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("INTEGER");
 
@@ -226,6 +229,9 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NameNormalizedUpper")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("OptionStyle")
@@ -302,7 +308,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<DateTime>("LastUpdatedAtUTC")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("OrderIdPK")
+                    b.Property<int>("OrderId")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal?>("PnL")
@@ -319,7 +325,7 @@ namespace StockSharpDriver.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderIdPK");
+                    b.HasIndex("OrderId");
 
                     b.ToTable("MyTrades");
                 });
@@ -551,7 +557,9 @@ namespace StockSharpDriver.Migrations
                 {
                     b.HasOne("SharedLib.OrderStockSharpModelDB", "Order")
                         .WithMany()
-                        .HasForeignKey("OrderIdPK");
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Order");
                 });

@@ -36,8 +36,17 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpModel, IBase
     public DateTime CreatedAtUTC { get; set; }
 
     /// <inheritdoc/>
+    public string NameNormalizedUpper {  get; set; }
+
+    /// <inheritdoc/>
+    public string IdRemoteNormalizedUpper { get; set; }
+
+    /// <inheritdoc/>
     public void SetUpdate(InstrumentTradeStockSharpModel req)
     {
+        NameNormalizedUpper = Name.ToUpper();
+        IdRemoteNormalizedUpper = IdRemote.ToUpper();
+
         LastUpdatedAtUTC = DateTime.UtcNow;
         ExpiryDate = req.ExpiryDate;
         SettlementDate = req.SettlementDate;

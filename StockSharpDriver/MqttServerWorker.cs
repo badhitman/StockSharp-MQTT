@@ -52,7 +52,7 @@ public class MqttServerWorker : BackgroundService
                     break;
 
                 case MqttNetLogLevel.Info:
-                    logger.LogInformation(message);
+                    //logger.LogInformation(message);
                     break;
 
                 case MqttNetLogLevel.Warning:
