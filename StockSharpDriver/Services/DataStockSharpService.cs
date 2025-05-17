@@ -89,6 +89,12 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             .Where(x => req.FavoriteFilter == null || x.IsFavorite == req.FavoriteFilter)
             .AsQueryable();
 
+        if (req.CurrenciesFilter is not null && req.CurrenciesFilter.Length != 0)
+            q = q.Where(x => req.CurrenciesFilter.Any(y => y == x.Currency));
+
+        if (req.TypesFilter is not null && req.TypesFilter.Length != 0)
+            q = q.Where(x => req.TypesFilter.Any(y => y == x.TypeInstrument));
+
         if (!string.IsNullOrWhiteSpace(req.FindQuery))
         {
             req.FindQuery = req.FindQuery.ToUpper();
