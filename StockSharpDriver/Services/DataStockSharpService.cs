@@ -78,7 +78,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<InstrumentTradeStockSharpViewModel>> InstrumentsSelectAsync(TPaginationRequestStandardModel<InstrumentsRequestModel> req, CancellationToken cancellationToken = default)
+    public async Task<TPaginationResponseModel<InstrumentTradeStockSharpViewModel>> InstrumentsSelectAsync(InstrumentsRequestModel req, CancellationToken cancellationToken = default)
     {
         if (req.PageSize < 10)
             req.PageSize = 10;
@@ -86,8 +86,14 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<InstrumentStockSharpModelDB> q = context
             .Instruments
-            .Where(x => req.Payload.FavoriteFilter == null || x.IsFavorite == req.Payload.FavoriteFilter)
+            .Where(x => req.FavoriteFilter == null || x.IsFavorite == req.FavoriteFilter)
             .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(req.FindQuery))
+        {
+            req.FindQuery = req.FindQuery.ToUpper();
+            q = q.Where(x => EF.Functions.Like(x.IdRemoteNormalizedUpper, $"%{req.FindQuery}%") || EF.Functions.Like(x.NameNormalizedUpper, $"%{req.FindQuery}%"));
+        }
 
         List<InstrumentStockSharpModelDB> _data = await q
             .Include(x => x.Board)

@@ -86,7 +86,7 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
         TResponseModel<List<BoardStockSharpModel>> res2 = await SsMainRepo.GetBoardsAsync();
         SnackbarRepo.ShowMessagesResponse(res2.Messages);
         myBoards = res2.Response;
-        TPaginationRequestStandardModel<InstrumentsRequestModel> req = new() { PageSize = 100, Payload = new() { FavoriteFilter = true } };
+        InstrumentsRequestModel req = new() { PageSize = 100, FavoriteFilter = true };
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res3 = await SsMainRepo.InstrumentsSelectAsync(req);
         myInstruments = res3.Response;
 
