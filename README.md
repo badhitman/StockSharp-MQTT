@@ -6,11 +6,11 @@
 ![init](./StockSharpMauiApp/img/init-clear.png)
 - прежде чем подключаться - следует настроить адаптеры
 
-Адаптеры
-![adapters](./StockSharpMauiApp/img/adapters-view.png)
-
 Торговля
 ![trade view](./StockSharpMauiApp/img/trade-manage.png)
+
+Адаптеры
+![adapters](./StockSharpMauiApp/img/adapters-view.png)
 
 Инструменты
 ![instruments view](./StockSharpMauiApp/img/instruments-view.png)
