@@ -3,6 +3,7 @@
 ![logs](./StockSharpMauiApp/img/logs.png)
 ![init](./StockSharpMauiApp/img/init-clear.png)
 ![adapters](./StockSharpMauiApp/img/adapters-view.png)
+![instruments view](./StockSharpMauiApp/img/trade-manage.png)
 ![instruments view](./StockSharpMauiApp/img/instruments-view.png)
 
 Клиент-серверное решение, совместимое с BlankCRM, но имеет собственный/нативный (локальный: win/android/ios/macos/tizen) клиент. Лицензия на [StockSharp](https://stocksharp.ru/?rf=202744) приобретается отдельно.
