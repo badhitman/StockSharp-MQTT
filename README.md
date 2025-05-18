@@ -1,31 +1,31 @@
-## Интеграция StockSharp (over mqtt) - DEMO VERSION
+## StockSharp - integration (over mqtt) - DEMO VERSION
 
-Клиент-серверное решение, совместимое с BlankCRM, но имеет собственный/нативный (локальный: win/android/ios/macos/tizen) клиент. Лицензия на [StockSharp](https://stocksharp.ru/?rf=202744) приобретается отдельно.
+Client-server solution compatible with BlankCRM, but has its own/native (local: win/android/ios/macos/tizen) client. The license for the  [StockSharp](https://stocksharp.ru/?rf=202744) is purchased separately.
 
-Торговля
+Trade
 ![trade view](./StockSharpMauiApp/img/trade-manage.png)
 
-Управление подключением
+Connection management
 ![init](./StockSharpMauiApp/img/init-clear.png)
-- прежде чем подключаться - следует настроить адаптеры
+- Before connecting, you should configure the adapters
 
-Адаптеры
+Adapters
 ![adapters](./StockSharpMauiApp/img/adapters-view.png)
 
-Инструменты
+Instruments (aka Securities)
 ![instruments view](./StockSharpMauiApp/img/instruments-view.png)
 
-Логирование (заимствовано из BlankCRM)
+Logs (imported of BlankCRM)
 ![logs](./StockSharpMauiApp/img/logs.png)
 
-- Драйвер (BackEnd служба): net6 решение взаимодействует с StockSharp, логирование, транслирует события в MQTT и отвечает входящие запросы (извне). +TelegramBot, а так же встроенный MQTT сервер (на случай отсутствия отдельного/автономного mqtt сервиса).
-- MAUI-Blazor клиент: net9 GUI решение, которое взаимодействует с драйвером через MQTT
+- Dreiver (BackEnd service): net6 solution interacts with StockSharp, logging, broadcasts events in MQTT and responds to incoming requests (from the outside). +TelegramBot, as well as a built-in MQTT server (in case there is no separate/autonomous mqtt service).
+- MAUI-Blazor client: net 9 GUI solution that communicates with the driver via MQTT
 
 #### StockSharpDriver +TelegramBot
-Встроенный MQTT сервер, но можно использовать любой MQTT v5. По умолчанию используется localhost:1883, но можно настроить по своему усмотрению.
-С точки зрения событий - транслирует их все в MQTT, что бы любой клиент мог прослушать его. Изолирует "нежелательные" зависимости из оригинальной сборки StockSharp, но и не совместим с оригинальными решениями от StockSharp (Гидра, Дизайнер и т.д.).
-Встроены TelegramBot для доступа к сервису и оповещений.
+Built-in MQTT server, but you can use any MQTT v5. By default, localhost:1883 is used, but you can configure it as you wish.
+In terms of events - broadcasts them all in MQTT so that any client can listen to it. Isolates "unwanted" dependencies from the original StockSharp build, but is also not compatible with the original StockSharp solutions (Hydra, Designer, etc.).
+Built-in TelegramBot for access to the service and notifications.
 
-#### MAUI-Blazor клиент
-Демонстрация взаимодействия клиента с драйвером StockSharp (over MQTT). Чистый проект без зависимостей от StockSharp (net6, wpf, etc ...).
-Открытый исходный код заготовки для торгового бота через StockSharp коннектор.
+#### MAUI-Blazor client
+Demonstration of client interaction with StockSharp driver (over MQTT). Clean project without StockSharp dependencies (net6, wpf, etc ...).
+Open source code for a trading bot template via StockSharp connector.
