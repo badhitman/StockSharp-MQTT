@@ -1,4 +1,4 @@
-## Интеграция StockSharp (StockSharp)
+## Интеграция StockSharp
 
 Клиент-серверное решение, совместимое с BlankCRM, но имеет собственный/нативный (локальный: win/android/ios/macos/tizen) клиент. Лицензия на [StockSharp](https://stocksharp.ru/?rf=202744) приобретается отдельно.
 
