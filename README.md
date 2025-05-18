@@ -1,12 +1,22 @@
-## Интеграция StockSharp (https://github.com/StockSharp/StockSharp)
-
-![logs](./StockSharpMauiApp/img/logs.png)
-![init](./StockSharpMauiApp/img/init-clear.png)
-![adapters](./StockSharpMauiApp/img/adapters-view.png)
-![instruments view](./StockSharpMauiApp/img/trade-manage.png)
-![instruments view](./StockSharpMauiApp/img/instruments-view.png)
+## Интеграция StockSharp (StockSharp)
 
 Клиент-серверное решение, совместимое с BlankCRM, но имеет собственный/нативный (локальный: win/android/ios/macos/tizen) клиент. Лицензия на [StockSharp](https://stocksharp.ru/?rf=202744) приобретается отдельно.
+
+Управление подключением
+![init](./StockSharpMauiApp/img/init-clear.png)
+- прежде чем подключаться - следует настроить адаптеры
+
+Адаптеры
+![adapters](./StockSharpMauiApp/img/adapters-view.png)
+
+Торговля
+![trade view](./StockSharpMauiApp/img/trade-manage.png)
+
+Инструменты
+![instruments view](./StockSharpMauiApp/img/instruments-view.png)
+
+Логирование заимствовано из BlankCRM
+![logs](./StockSharpMauiApp/img/logs.png)
 
 - Драйвер (BackEnd служба): net6 решение взаимодействует с StockSharp, логирование, транслирует события в MQTT и отвечает входящие запросы (извне). +TelegramBot, а так же встроенный MQTT сервер (на случай отсутствия отдельного/автономного mqtt сервиса).
 - MAUI-Blazor клиент: net9 GUI решение, которое взаимодействует с драйвером через MQTT
