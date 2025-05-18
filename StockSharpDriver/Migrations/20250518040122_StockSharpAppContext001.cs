@@ -104,8 +104,8 @@ namespace StockSharpDriver.Migrations
                     IdRemote = table.Column<string>(type: "TEXT", nullable: true),
                     Code = table.Column<string>(type: "TEXT", nullable: true),
                     ShortName = table.Column<string>(type: "TEXT", nullable: true),
-                    TypeInstrument = table.Column<int>(type: "INTEGER", nullable: true),
-                    Currency = table.Column<int>(type: "INTEGER", nullable: true),
+                    TypeInstrument = table.Column<int>(type: "INTEGER", nullable: false),
+                    Currency = table.Column<int>(type: "INTEGER", nullable: false),
                     Class = table.Column<string>(type: "TEXT", nullable: true),
                     Multiplier = table.Column<decimal>(type: "TEXT", nullable: true),
                     Decimals = table.Column<int>(type: "INTEGER", nullable: true),
@@ -113,13 +113,13 @@ namespace StockSharpDriver.Migrations
                     SettlementDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
                     CfiCode = table.Column<string>(type: "TEXT", nullable: true),
                     FaceValue = table.Column<decimal>(type: "TEXT", nullable: true),
-                    SettlementType = table.Column<int>(type: "INTEGER", nullable: true),
-                    OptionStyle = table.Column<int>(type: "INTEGER", nullable: true),
+                    SettlementType = table.Column<int>(type: "INTEGER", nullable: false),
+                    OptionStyle = table.Column<int>(type: "INTEGER", nullable: false),
                     PrimaryId = table.Column<string>(type: "TEXT", nullable: true),
                     UnderlyingSecurityId = table.Column<string>(type: "TEXT", nullable: true),
-                    OptionType = table.Column<int>(type: "INTEGER", nullable: true),
-                    Shortable = table.Column<bool>(type: "INTEGER", nullable: true),
-                    UnderlyingSecurityType = table.Column<int>(type: "INTEGER", nullable: true)
+                    OptionType = table.Column<int>(type: "INTEGER", nullable: false),
+                    UnderlyingSecurityType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Shortable = table.Column<bool>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {

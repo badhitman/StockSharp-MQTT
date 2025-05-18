@@ -83,12 +83,12 @@ public static class BindsStockSharpModelsExtensions
         main.Name = inc.Name;
         main.IdRemote = inc.Id;
 
-        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value));
-        main.UnderlyingSecurityType = inc.UnderlyingSecurityType is null ? null : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.UnderlyingSecurityType.Value));
-        main.TypeInstrument = inc.Type is null ? null : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.Type.Value));
-        main.SettlementType = inc.SettlementType is null ? null : (SettlementTypesEnum)Enum.Parse(typeof(SettlementTypesEnum), Enum.GetName(inc.SettlementType.Value));
-        main.OptionType = inc.OptionType is null ? null : (OptionInstrumentTradeTypesEnum)Enum.Parse(typeof(OptionInstrumentTradeTypesEnum), Enum.GetName(inc.OptionType.Value));
-        main.OptionStyle = inc.OptionStyle is null ? null : (OptionTradeInstrumentStylesEnum)Enum.Parse(typeof(OptionTradeInstrumentStylesEnum), Enum.GetName(inc.OptionStyle.Value));
+        main.Currency = (int)(inc.Currency is null ? CurrenciesTypesEnum.None : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value)));
+        main.UnderlyingSecurityType = inc.UnderlyingSecurityType is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.UnderlyingSecurityType.Value));
+        main.TypeInstrument = (int)(inc.Type is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.Type.Value)));
+        main.SettlementType = inc.SettlementType is null ? SettlementTypesEnum.None : (SettlementTypesEnum)Enum.Parse(typeof(SettlementTypesEnum), Enum.GetName(inc.SettlementType.Value));
+        main.OptionType = inc.OptionType is null ? OptionInstrumentTradeTypesEnum.None : (OptionInstrumentTradeTypesEnum)Enum.Parse(typeof(OptionInstrumentTradeTypesEnum), Enum.GetName(inc.OptionType.Value));
+        main.OptionStyle = inc.OptionStyle is null ? OptionTradeInstrumentStylesEnum.None : (OptionTradeInstrumentStylesEnum)Enum.Parse(typeof(OptionTradeInstrumentStylesEnum), Enum.GetName(inc.OptionStyle.Value));
 
         main.Board = inc.Board is null
             ? null
