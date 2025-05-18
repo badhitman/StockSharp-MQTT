@@ -1,5 +1,10 @@
 ## Интеграция StockSharp (https://github.com/StockSharp/StockSharp)
 
+![logs](./StockSharpMauiApp/logs.png)
+![init](./StockSharpMauiApp/init-clear.png)
+![adapters](./StockSharpMauiApp/adapters-view.png)
+![instruments view](./StockSharpMauiApp/instruments-view.png)
+
 Клиент-серверное решение, совместимое с BlankCRM, но имеет собственный/нативный (локальный: win/android/ios/macos/tizen) клиент. Лицензия на [StockSharp](https://stocksharp.ru/?rf=202744) приобретается отдельно.
 
 - Драйвер (BackEnd служба): net6 решение взаимодействует с StockSharp, логирование, транслирует события в MQTT и отвечает входящие запросы (извне). +TelegramBot, а так же встроенный MQTT сервер (на случай отсутствия отдельного/автономного mqtt сервиса).
