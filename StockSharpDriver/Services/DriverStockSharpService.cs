@@ -10,7 +10,7 @@ using System.Security;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
-using Newtonsoft.Json;
+using System.Collections.Concurrent;
 
 namespace StockSharpDriver;
 
@@ -22,9 +22,20 @@ public class DriverStockSharpService(
     ILogger<DriverStockSharpService> _logger,
     Connector connector) : IDriverStockSharpService
 {
+    private decimal lowLimit = 0.19m;
+    private decimal highLimit = 0.25m;
+    private readonly decimal
+        lowYieldLimit = 4m,
+        highYieldLimit = 5m;
+
+    private readonly ConcurrentDictionary<string, List<Security>> BondList = [];
+
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(CancellationToken? cancellationToken = default)
     {
+        if (BondList.Any())
+            return ResponseBaseModel.CreateError($"BondList is not empty!");
+
         TPaginationRequestStandardModel<AdaptersRequestModel> reqAs = new()
         {
             Payload = new()
@@ -151,12 +162,12 @@ public class DriverStockSharpService(
     public Task<ResponseBaseModel> Disconnect(CancellationToken? cancellationToken = default)
     {
         connector.CancelOrders();
-
         foreach (Subscription sub in connector.Subscriptions)
         {
             connector.UnSubscribe(sub);
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
+        BondList.Clear();
 
         connector.Disconnect();
 
@@ -223,12 +234,14 @@ public class DriverStockSharpService(
         //eventTrans.ValuesChangedEvent(req);
     }
 
-    void SecurityReceivedHandle(Subscription subscription, Security sec)
+    void SecurityReceivedHandle(Subscription subscription, Security security)
     {
-        _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`");
+        //_logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`");
         //InstrumentTradeStockSharpModel req = new InstrumentTradeStockSharpModel().Bind(sec);
         //dataRepo.SaveInstrument(req);
         //eventTrans.InstrumentReceived(req);
+        
+        //    BondList.Add(security);
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
@@ -268,6 +281,17 @@ public class DriverStockSharpService(
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
         //_logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
+        /*
+         Security sec = connector.Securities.FirstOrDefault(s => s.ToSecurityId() == depth.SecurityId);
+
+        if ((!BondList.IsNull()) && (BondList.Contains(sec)))
+        {
+            if (OderBookList.ContainsKey(sec))
+                OderBookList[sec] = depth;
+            else
+                OderBookList.Add(sec, depth);
+        }
+         */
     }
     void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
     {
