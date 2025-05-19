@@ -10,6 +10,7 @@ using System.Security;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
+using Newtonsoft.Json;
 
 namespace StockSharpDriver;
 
@@ -224,7 +225,7 @@ public class DriverStockSharpService(
 
     void SecurityReceivedHandle(Subscription subscription, Security sec)
     {
-        //_logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec)}");
+        _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`");
         //InstrumentTradeStockSharpModel req = new InstrumentTradeStockSharpModel().Bind(sec);
         //dataRepo.SaveInstrument(req);
         //eventTrans.InstrumentReceived(req);
