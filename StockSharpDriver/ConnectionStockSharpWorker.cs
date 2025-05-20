@@ -15,55 +15,55 @@ public class ConnectionStockSharpWorker(
     IFlushStockSharpService dataRepo,
     ILogger<ConnectionStockSharpWorker> _logger,
     IEventsStockSharpService eventTrans,
-    Connector Connector) : BackgroundService
+    ConnectionLink ssLink) : BackgroundService
 {
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         #region events +
-        Connector.Connected += ConnectedHandle;
-        Connector.ConnectedEx += ConnectedExHandle;
-        Connector.Disconnected += DisconnectedHandle;
-        Connector.DisconnectedEx += DisconnectedExHandle;
-        Connector.BoardReceived += BoardReceivedHandle;
-        Connector.CandleReceived += CandleReceivedHandle;
-        Connector.ConnectionLost += ConnectionLostHandle;
-        Connector.ConnectionError += ConnectionErrorHandle;
-        Connector.DataTypeReceived += DataTypeReceivedHandle;
-        Connector.ConnectionErrorEx += ConnectionErrorExHandle;
-        Connector.ConnectionRestored += ConnectionRestoredHandle;
-        Connector.CurrentTimeChanged += CurrentTimeChangedHandle;
-        Connector.ChangePasswordResult += ChangePasswordResultHandle;
-        Connector.Disposed += DisposedHandle;
-        Connector.Error += ErrorHandle;
-        Connector.Level1Received += Level1ReceivedHandle;
-        Connector.Log += LogHandle;
-        Connector.LookupPortfoliosResult += LookupPortfoliosResultHandle;
-        Connector.LookupSecuritiesResult += LookupSecuritiesResultHandle;
-        Connector.MassOrderCanceled += MassOrderCanceledHandle;
-        Connector.MassOrderCanceled2 += MassOrderCanceled2Handle;
-        Connector.MassOrderCancelFailed += MassOrderCancelFailedHandle;
-        Connector.MassOrderCancelFailed2 += MassOrderCancelFailed2Handle;
-        Connector.NewMessage += NewMessageHandle;
-        Connector.NewsReceived += NewsReceivedHandle;
-        Connector.OrderBookReceived += OrderBookReceivedHandle;
-        Connector.OrderCancelFailReceived += OrderCancelFailReceivedHandle;
-        Connector.OrderEditFailReceived += OrderEditFailReceivedHandle;
-        Connector.OrderLogReceived += OrderLogReceivedHandle;
-        Connector.OrderReceived += OrderReceivedHandle;
-        Connector.OrderRegisterFailReceived += OrderRegisterFailReceivedHandle;
-        Connector.OwnTradeReceived += OwnTradeReceivedHandle;
-        Connector.ParentRemoved += ParentRemovedHandle;
-        Connector.PortfolioReceived += PortfolioReceivedHandle;
-        Connector.PositionReceived += PositionReceivedHandle;
-        Connector.SecurityReceived += SecurityReceivedHandle;
-        Connector.SubscriptionFailed += SubscriptionFailedHandle;
-        Connector.SubscriptionOnline += SubscriptionOnlineHandle;
-        Connector.SubscriptionReceived += SubscriptionReceivedHandle;
-        Connector.SubscriptionStarted += SubscriptionStartedHandle;
-        Connector.SubscriptionStopped += SubscriptionStoppedHandle;
-        Connector.TickTradeReceived += TickTradeReceivedHandle;
-        Connector.ValuesChanged += ValuesChangedHandle;
+        ssLink.Connector.Connected += ConnectedHandle;
+        ssLink.Connector.ConnectedEx += ConnectedExHandle;
+        ssLink.Connector.Disconnected += DisconnectedHandle;
+        ssLink.Connector.DisconnectedEx += DisconnectedExHandle;
+        ssLink.Connector.BoardReceived += BoardReceivedHandle;
+        ssLink.Connector.CandleReceived += CandleReceivedHandle;
+        ssLink.Connector.ConnectionLost += ConnectionLostHandle;
+        ssLink.Connector.ConnectionError += ConnectionErrorHandle;
+        ssLink.Connector.DataTypeReceived += DataTypeReceivedHandle;
+        ssLink.Connector.ConnectionErrorEx += ConnectionErrorExHandle;
+        ssLink.Connector.ConnectionRestored += ConnectionRestoredHandle;
+        ssLink.Connector.CurrentTimeChanged += CurrentTimeChangedHandle;
+        ssLink.Connector.ChangePasswordResult += ChangePasswordResultHandle;
+        ssLink.Connector.Disposed += DisposedHandle;
+        ssLink.Connector.Error += ErrorHandle;
+        ssLink.Connector.Level1Received += Level1ReceivedHandle;
+        ssLink.Connector.Log += LogHandle;
+        ssLink.Connector.LookupPortfoliosResult += LookupPortfoliosResultHandle;
+        ssLink.Connector.LookupSecuritiesResult += LookupSecuritiesResultHandle;
+        ssLink.Connector.MassOrderCanceled += MassOrderCanceledHandle;
+        ssLink.Connector.MassOrderCanceled2 += MassOrderCanceled2Handle;
+        ssLink.Connector.MassOrderCancelFailed += MassOrderCancelFailedHandle;
+        ssLink.Connector.MassOrderCancelFailed2 += MassOrderCancelFailed2Handle;
+        ssLink.Connector.NewMessage += NewMessageHandle;
+        ssLink.Connector.NewsReceived += NewsReceivedHandle;
+        ssLink.Connector.OrderBookReceived += OrderBookReceivedHandle;
+        ssLink.Connector.OrderCancelFailReceived += OrderCancelFailReceivedHandle;
+        ssLink.Connector.OrderEditFailReceived += OrderEditFailReceivedHandle;
+        ssLink.Connector.OrderLogReceived += OrderLogReceivedHandle;
+        ssLink.Connector.OrderReceived += OrderReceivedHandle;
+        ssLink.Connector.OrderRegisterFailReceived += OrderRegisterFailReceivedHandle;
+        ssLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
+        ssLink.Connector.ParentRemoved += ParentRemovedHandle;
+        ssLink.Connector.PortfolioReceived += PortfolioReceivedHandle;
+        ssLink.Connector.PositionReceived += PositionReceivedHandle;
+        ssLink.Connector.SecurityReceived += SecurityReceivedHandle;
+        ssLink.Connector.SubscriptionFailed += SubscriptionFailedHandle;
+        ssLink.Connector.SubscriptionOnline += SubscriptionOnlineHandle;
+        ssLink.Connector.SubscriptionReceived += SubscriptionReceivedHandle;
+        ssLink.Connector.SubscriptionStarted += SubscriptionStartedHandle;
+        ssLink.Connector.SubscriptionStopped += SubscriptionStoppedHandle;
+        ssLink.Connector.TickTradeReceived += TickTradeReceivedHandle;
+        ssLink.Connector.ValuesChanged += ValuesChangedHandle;
         #endregion
 
         while (!stoppingToken.IsCancellationRequested)
@@ -73,17 +73,19 @@ public class ConnectionStockSharpWorker(
         }
 
         _logger.LogInformation($"call - {nameof(Connector.CancelOrders)}!");
-        Connector.CancelOrders();
+        ssLink.Connector.CancelOrders();
 
-        foreach (Subscription sub in Connector.Subscriptions)
+        foreach (Subscription sub in ssLink.Connector.Subscriptions)
         {
-            Connector.UnSubscribe(sub);
+            ssLink.Connector.UnSubscribe(sub);
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
 
-        await Connector.DisconnectAsync(stoppingToken);
+        await ssLink.Connector.DisconnectAsync(stoppingToken);
     }
 
+    /// <inheritdoc/>
+    public bool IsConnected => ssLink.Connector.ConnectionState == Ecng.ComponentModel.ConnectionStates.Connected;
 
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
@@ -264,49 +266,49 @@ public class ConnectionStockSharpWorker(
 
 
         #region events -
-        Connector.Connected -= ConnectedHandle;
-        Connector.ConnectedEx -= ConnectedExHandle;
-        Connector.Disconnected -= DisconnectedHandle;
-        Connector.BoardReceived -= BoardReceivedHandle;
-        Connector.CandleReceived -= CandleReceivedHandle;
-        Connector.ConnectionLost -= ConnectionLostHandle;
-        Connector.ConnectionError -= ConnectionErrorHandle;
-        Connector.DataTypeReceived -= DataTypeReceivedHandle;
-        Connector.ConnectionErrorEx -= ConnectionErrorExHandle;
-        Connector.ConnectionRestored -= ConnectionRestoredHandle;
-        Connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
-        Connector.ChangePasswordResult -= ChangePasswordResultHandle;
-        Connector.DisconnectedEx -= DisconnectedExHandle;
-        Connector.Disposed -= DisposedHandle;
-        Connector.Error -= ErrorHandle;
-        Connector.Level1Received -= Level1ReceivedHandle;
-        Connector.Log -= LogHandle;
-        Connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
-        Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
-        Connector.MassOrderCanceled -= MassOrderCanceledHandle;
-        Connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
-        Connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
-        Connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
-        Connector.NewMessage -= NewMessageHandle;
-        Connector.NewsReceived -= NewsReceivedHandle;
-        Connector.OrderBookReceived -= OrderBookReceivedHandle;
-        Connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
-        Connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
-        Connector.OrderLogReceived -= OrderLogReceivedHandle;
-        Connector.OrderReceived -= OrderReceivedHandle;
-        Connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
-        Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
-        Connector.ParentRemoved -= ParentRemovedHandle;
-        Connector.PortfolioReceived -= PortfolioReceivedHandle;
-        Connector.PositionReceived -= PositionReceivedHandle;
-        Connector.SecurityReceived -= SecurityReceivedHandle;
-        Connector.SubscriptionFailed -= SubscriptionFailedHandle;
-        Connector.SubscriptionOnline -= SubscriptionOnlineHandle;
-        Connector.SubscriptionReceived -= SubscriptionReceivedHandle;
-        Connector.SubscriptionStarted -= SubscriptionStartedHandle;
-        Connector.SubscriptionStopped -= SubscriptionStoppedHandle;
-        Connector.TickTradeReceived -= TickTradeReceivedHandle;
-        Connector.ValuesChanged -= ValuesChangedHandle;
+        ssLink.Connector.Connected -= ConnectedHandle;
+        ssLink.Connector.ConnectedEx -= ConnectedExHandle;
+        ssLink.Connector.Disconnected -= DisconnectedHandle;
+        ssLink.Connector.BoardReceived -= BoardReceivedHandle;
+        ssLink.Connector.CandleReceived -= CandleReceivedHandle;
+        ssLink.Connector.ConnectionLost -= ConnectionLostHandle;
+        ssLink.Connector.ConnectionError -= ConnectionErrorHandle;
+        ssLink.Connector.DataTypeReceived -= DataTypeReceivedHandle;
+        ssLink.Connector.ConnectionErrorEx -= ConnectionErrorExHandle;
+        ssLink.Connector.ConnectionRestored -= ConnectionRestoredHandle;
+        ssLink.Connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
+        ssLink.Connector.ChangePasswordResult -= ChangePasswordResultHandle;
+        ssLink.Connector.DisconnectedEx -= DisconnectedExHandle;
+        ssLink.Connector.Disposed -= DisposedHandle;
+        ssLink.Connector.Error -= ErrorHandle;
+        ssLink.Connector.Level1Received -= Level1ReceivedHandle;
+        ssLink.Connector.Log -= LogHandle;
+        ssLink.Connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
+        ssLink.Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
+        ssLink.Connector.MassOrderCanceled -= MassOrderCanceledHandle;
+        ssLink.Connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
+        ssLink.Connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
+        ssLink.Connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
+        ssLink.Connector.NewMessage -= NewMessageHandle;
+        ssLink.Connector.NewsReceived -= NewsReceivedHandle;
+        ssLink.Connector.OrderBookReceived -= OrderBookReceivedHandle;
+        ssLink.Connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
+        ssLink.Connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
+        ssLink.Connector.OrderLogReceived -= OrderLogReceivedHandle;
+        ssLink.Connector.OrderReceived -= OrderReceivedHandle;
+        ssLink.Connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
+        ssLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
+        ssLink.Connector.ParentRemoved -= ParentRemovedHandle;
+        ssLink.Connector.PortfolioReceived -= PortfolioReceivedHandle;
+        ssLink.Connector.PositionReceived -= PositionReceivedHandle;
+        ssLink.Connector.SecurityReceived -= SecurityReceivedHandle;
+        ssLink.Connector.SubscriptionFailed -= SubscriptionFailedHandle;
+        ssLink.Connector.SubscriptionOnline -= SubscriptionOnlineHandle;
+        ssLink.Connector.SubscriptionReceived -= SubscriptionReceivedHandle;
+        ssLink.Connector.SubscriptionStarted -= SubscriptionStartedHandle;
+        ssLink.Connector.SubscriptionStopped -= SubscriptionStoppedHandle;
+        ssLink.Connector.TickTradeReceived -= TickTradeReceivedHandle;
+        ssLink.Connector.ValuesChanged -= ValuesChangedHandle;
         #endregion
     }
     void DataTypeReceivedHandle(Subscription subscription, StockSharp.Messages.DataType argDt)
@@ -350,4 +352,10 @@ public class ConnectionStockSharpWorker(
         _logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     #endregion
+}
+
+/// <inheritdoc/>
+public class ConnectionLink
+{
+    public Connector Connector { get; set; } = new();
 }

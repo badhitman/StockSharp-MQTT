@@ -151,7 +151,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         IQueryable<PortfolioTradeModelDB> q = ids is null || ids.Length == 0
             ? context.Portfolios.AsQueryable()
             : context.Portfolios.Where(x => ids.Contains(x.Id));
-        List<PortfolioTradeModelDB> data = await q.Include(x => x.Board).ToListAsync(cancellationToken: cancellationToken);
+        List<PortfolioTradeModelDB> data = await q.Include(x => x.Board).ThenInclude(x => x.Exchange).ToListAsync(cancellationToken: cancellationToken);
 
         return new()
         {

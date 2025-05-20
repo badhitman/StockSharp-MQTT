@@ -130,7 +130,7 @@ public class Program
                     .AddHostedService<PollingService>()
                 ;
 
-                StockSharp.Algo.Connector _connector = new();
+                ConnectionLink _connector = new();
                 _conf.Reload(bx.Configuration.GetSection("StockSharpDriverConfig").Get<StockSharpClientConfigModel>());
 
                 services
