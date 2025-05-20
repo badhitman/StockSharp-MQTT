@@ -353,9 +353,3 @@ public class ConnectionStockSharpWorker(
     }
     #endregion
 }
-
-/// <inheritdoc/>
-public class ConnectionLink
-{
-    public Connector Connector { get; set; } = new();
-}
