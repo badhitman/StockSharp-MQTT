@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using System.Collections.Concurrent;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
@@ -22,13 +21,14 @@ public class DriverStockSharpService(
     ILogger<DriverStockSharpService> _logger,
     ConnectionLink conLink) : IDriverStockSharpService
 {
+
     private decimal lowLimit = 0.19m;
     private decimal highLimit = 0.25m;
     private readonly decimal
         lowYieldLimit = 4m,
         highYieldLimit = 5m;
 
-    private readonly ConcurrentDictionary<string, List<Security>> BondList = [];
+    private readonly List<Security> BondList = [];
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(CancellationToken? cancellationToken = default)
