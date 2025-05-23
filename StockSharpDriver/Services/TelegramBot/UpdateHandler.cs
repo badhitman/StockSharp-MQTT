@@ -35,7 +35,9 @@ public class UpdateHandler(ITelegramBotClient botClient, ILogger<UpdateHandler> 
         await handler;
     }
 
+#pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
+#pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
     {
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
         if (message.Text is not { } messageText)

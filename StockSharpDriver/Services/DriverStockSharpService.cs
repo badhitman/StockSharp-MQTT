@@ -17,47 +17,108 @@ namespace StockSharpDriver;
 /// DriverStockSharpService 
 /// </summary>
 public class DriverStockSharpService(
-    IManageStockSharpService manageRepo,
     ILogger<DriverStockSharpService> _logger,
+    IManageStockSharpService manageRepo,
     ConnectionLink conLink) : IDriverStockSharpService
 {
+    readonly List<SecurityPosition> SBondPositionsList = [];
+    readonly List<SecurityPosition> SBondSizePositionsList = [];
+    readonly List<SecurityPosition> SBondSmallPositionsList = [];
+    static readonly List<long?> list = [];
+    readonly List<long?> TradesList = list;
 
-    private decimal lowLimit = 0.19m;
-    private decimal highLimit = 0.25m;
-    private readonly decimal
-        lowYieldLimit = 4m,
-        highYieldLimit = 5m;
+    readonly FileSystemWatcher fileWatcher = new();
 
-    private readonly List<Security> BondList = [];
+    Curve OfzCurve;
+
+    decimal quoteSmallStrategyBidVolume = 2000;
+    decimal quoteSmallStrategyOfferVolume = 2000;
+    decimal quoteStrategyVolume = 1000;
+    decimal skipVolume = 2500;
+    decimal quoteSizeStrategyVolume = 2000;
+
+    decimal bondPositionTraded;
+    decimal bondSizePositionTraded;
+    decimal bondSmallPositionTraded;
+    decimal bondOutOfRangePositionTraded;
+
+    Dictionary<string, Order> _ordersForQuoteBuyReregister;
+    Dictionary<string, Order> _ordersForQuoteSellReregister;
+
+    readonly Dictionary<Security, IOrderBookMessage> OderBookList = [];
+
+    decimal lowLimit = 0.19m;
+    decimal highLimit = 0.25m;
+    readonly decimal
+       lowYieldLimit = 4m,
+       highYieldLimit = 5m;
+
+    readonly List<Security> BondList = [];
+    readonly List<SBond> SBondList = [];
+
+    PortfolioStockSharpModel Portfolio;
+    List<InstrumentTradeStockSharpViewModel> Instruments;
+    List<FixMessageAdapterModelDB> Adapters;
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> Connect(CancellationToken? cancellationToken = default)
+    public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
     {
         if (BondList.Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
 
-        TPaginationRequestStandardModel<AdaptersRequestModel> reqAs = new()
+        if (req.Instruments is null || req.Instruments.Count == 0)
+            return ResponseBaseModel.CreateError("Instruments - is empty");
+
+        if (req.Portfolio is null)
+            return ResponseBaseModel.CreateError("Portfolio not set");
+
+        TPaginationRequestStandardModel<AdaptersRequestModel> adReq = new()
         {
+            PageSize = int.MaxValue,
             Payload = new()
             {
-                OnlineOnly = true
-            },
-            PageNum = 0,
-            PageSize = int.MaxValue,
+                OnlineOnly = true,
+            }
         };
-        TPaginationResponseModel<FixMessageAdapterModelDB> adapters;
-        try
-        {
-            adapters = await manageRepo.AdaptersSelectAsync(reqAs);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $" {nameof(manageRepo.AdaptersSelectAsync)}");
-            return ResponseBaseModel.CreateError(ex);
-        }
 
-        if (adapters.Response is null || adapters.Response.Count == 0)
+        TPaginationResponseModel<FixMessageAdapterModelDB> adRes = await manageRepo.AdaptersSelectAsync(adReq);
+        if (adRes.Response is null || adRes.Response.Count == 0)
             return ResponseBaseModel.CreateError("adapters - is empty");
+
+        List<FixMessageAdapterModelDB> adapters = adRes.Response;
+
+        Portfolio = req.Portfolio;
+        Instruments = req.Instruments;
+
+        /*
+         SecurityLookupWindow wnd = new()
+        {
+            ShowAllOption = connector.Adapter.IsSupportSecuritiesLookupAll(),
+            Criteria = new Security { Type = SecurityTypes.Stock, Code = "SU" }
+        };
+
+        if (!wnd.ShowModal(this))
+            return;
+
+        connector.LookupSecurities(wnd.CriteriaMessage);
+
+        //SecurityEditor.SecurityProvider = QTrader;
+        PortfolioEditor.Portfolios = new PortfolioDataSource(connector);
+
+        //Подписаться на событие появления новых портфелей
+        connector.PortfolioReceived += (Sub, portfolios) =>
+        {
+            if (portfolios.Name == PortName)
+            {
+                MyPortf = portfolios;
+            }
+        };
+
+        
+
+        connector.OrderBookReceived += TraderOnMarketDepthReceived;
+        
+         */
 
         #region event +
         conLink.Connector.Connected += ConnectedHandle;
@@ -106,7 +167,7 @@ public class DriverStockSharpService(
         #endregion
 
         ResponseBaseModel res = new();
-        adapters.Response.ForEach(x =>
+        adapters.ForEach(x =>
         {
             try
             {
@@ -169,7 +230,7 @@ public class DriverStockSharpService(
         }
         BondList.Clear();
         conLink.Connector.Disconnect();
-
+        Portfolio = null;
         return Task.FromResult(ResponseBaseModel.CreateInfo("connection closed"));
     }
 
@@ -200,17 +261,11 @@ public class DriverStockSharpService(
 
         Order order = new()
         {
-            // устанавливается тип заявки, в данном примере лимитный
             Type = (OrderTypes)Enum.Parse(typeof(OrderTypes), Enum.GetName(req.OrderType)),
-            // устанавливается портфель для исполнения заявки
             Portfolio = selectedPortfolio,
-            // устанавливается объём заявки
             Volume = req.Volume,
-            // устанавливается цена заявки
             Price = req.Price,
-            // устанавливается инструмент
             Security = currentSec,
-            // устанавливается направление заявки, в данном примере покупка
             Side = (Sides)Enum.Parse(typeof(Sides), Enum.GetName(req.Side))
         };
 
@@ -235,12 +290,10 @@ public class DriverStockSharpService(
 
     void SecurityReceivedHandle(Subscription subscription, Security security)
     {
-        //_logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`");
-        //InstrumentTradeStockSharpModel req = new InstrumentTradeStockSharpModel().Bind(sec);
-        //dataRepo.SaveInstrument(req);
-        //eventTrans.InstrumentReceived(req);
-
-        //    BondList.Add(security);
+        if (Instruments.Any(x => x.Code == security.Code) && security.Board == ExchangeBoard.MicexTqob)
+        {
+            BondList.Add(security);
+        }
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
@@ -275,6 +328,34 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
     }
+
+    #region transit
+
+    void SendRequest(string secCode, decimal price, decimal volume, Sides direction)
+    {
+        /*if (System.Windows.MessageBox.Show(
+            "Do you really want to " + (direction == Sides.Buy ? "BUY" : "SELL") + " " + volume.ToString("#") +
+            " " + secCode + " bonds @" + " " + price.ToString("#.##"), "Confirmation", MessageBoxButton.YesNo) ==
+            MessageBoxResult.Yes)
+        {
+            Order _order = new()
+            {
+                Security = conLink.Connector.Securities.FirstOrDefault(s => (s.Code == secCode) && (s.Board == ExchangeBoard.MicexTqob)),
+                Portfolio = conLink.Connector.Portfolios.FirstOrDefault(p => p.Name == PortName),
+                Side = direction,
+                Price = price,
+                Volume = volume,
+                Comment = "Manual",
+                IsMarketMaker = OfzCodes.Contains(secCode),
+                ClientCode = ClCode,
+            };
+
+            conLink.Connector.RegisterOrder(_order);
+        }*/
+    }
+
+
+    #endregion
 
     #region todo
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
