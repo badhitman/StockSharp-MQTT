@@ -11,7 +11,7 @@ namespace SharedLib;
 /// classPortfolioTradeModelDB
 /// </summary>
 [Index(nameof(IsFavorite)), Index(nameof(LastUpdatedAtUTC))]
-public class PortfolioTradeModelDB : PortfolioStockSharpModel, IBaseStockSharpModel
+public class PortfolioTradeModelDB : PortfolioStockSharpViewModel, IBaseStockSharpModel
 {
     /// <summary>
     /// Идентификатор/Key
@@ -31,12 +31,6 @@ public class PortfolioTradeModelDB : PortfolioStockSharpModel, IBaseStockSharpMo
 
     /// <inheritdoc/>
     public List<OrderStockSharpModelDB> Orders { get; set; }
-
-    /// <inheritdoc/>
-    public DateTime LastUpdatedAtUTC { get; set; }
-
-    /// <inheritdoc/>
-    public DateTime CreatedAtUTC { get; set; }
 
     /// <inheritdoc/>
     public void SetUpdate(PortfolioStockSharpModel req)

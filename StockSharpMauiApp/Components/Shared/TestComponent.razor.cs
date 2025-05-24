@@ -23,7 +23,7 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
     OrderTypesEnum orderTypeCreate = OrderTypesEnum.Market;
     SidesEnum orderSideCreate = SidesEnum.Buy;
 
-    List<PortfolioStockSharpModel>? myPortfolios;
+    List<PortfolioStockSharpViewModel>? myPortfolios;
     PortfolioStockSharpModel? SelectedPortfolio { get; set; }
     decimal? PriceNewOrder { get; set; }
     decimal? VolumeNewOrder { get; set; }
@@ -79,7 +79,7 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
     {
         await SetBusyAsync();
 
-        TResponseModel<List<PortfolioStockSharpModel>> res = await SsMainRepo.GetPortfoliosAsync();
+        TResponseModel<List<PortfolioStockSharpViewModel>> res = await SsMainRepo.GetPortfoliosAsync();
         SnackbarRepo.ShowMessagesResponse(res.Messages);
         myPortfolios = res.Response;
 

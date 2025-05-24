@@ -145,7 +145,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<PortfolioStockSharpModel>>> GetPortfoliosAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<PortfolioStockSharpViewModel>>> GetPortfoliosAsync(int[] ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<PortfolioTradeModelDB> q = ids is null || ids.Length == 0

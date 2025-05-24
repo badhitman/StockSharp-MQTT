@@ -29,7 +29,7 @@ public class DriverStockSharpService(
 
     readonly FileSystemWatcher fileWatcher = new();
 
-    object _lockLastConnectedAt = new();
+    readonly object _lockLastConnectedAt = new();
     DateTime _lastConnectedAt = DateTime.MinValue;
     DateTime LastConnectedAt
     {
