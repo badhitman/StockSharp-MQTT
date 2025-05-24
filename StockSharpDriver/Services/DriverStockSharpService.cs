@@ -241,7 +241,6 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> Disconnect(CancellationToken? cancellationToken = default)
     {
-        LastConnectedAt = DateTime.MinValue;
         conLink.Connector.CancelOrders();
         foreach (Subscription sub in conLink.Connector.Subscriptions)
         {
