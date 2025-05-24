@@ -29,6 +29,22 @@ public class DriverStockSharpService(
 
     readonly FileSystemWatcher fileWatcher = new();
 
+    object _lockLastConnectedAt = new();
+    DateTime _lastConnectedAt = DateTime.MinValue;
+    DateTime LastConnectedAt
+    {
+        get
+        {
+            lock (_lockLastConnectedAt)
+                return _lastConnectedAt;
+        }
+        set
+        {
+            lock (_lockLastConnectedAt)
+                _lastConnectedAt = value;
+        }
+    }
+
     Curve OfzCurve;
 
     decimal quoteSmallStrategyBidVolume = 2000;
@@ -59,6 +75,7 @@ public class DriverStockSharpService(
     PortfolioStockSharpModel Portfolio;
     List<InstrumentTradeStockSharpViewModel> Instruments;
     List<FixMessageAdapterModelDB> Adapters;
+    List<BoardStockSharpModel> BoardsFilter;
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
@@ -89,6 +106,8 @@ public class DriverStockSharpService(
 
         Portfolio = req.Portfolio;
         Instruments = req.Instruments;
+        BoardsFilter = req.BoardsFilter;
+        LastConnectedAt = DateTime.UtcNow;
 
         /*
          SecurityLookupWindow wnd = new()
@@ -222,6 +241,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> Disconnect(CancellationToken? cancellationToken = default)
     {
+        LastConnectedAt = DateTime.MinValue;
         conLink.Connector.CancelOrders();
         foreach (Subscription sub in conLink.Connector.Subscriptions)
         {
@@ -237,10 +257,12 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<AboutConnectResponseModel> AboutConnection(CancellationToken? cancellationToken = null)
     {
+        DateTime _lc = LastConnectedAt;
         AboutConnectResponseModel res = new()
         {
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)),
+            LastConnectedAt = _lc == DateTime.MinValue ? null : _lc,
         };
         return Task.FromResult(res);
     }
@@ -274,7 +296,7 @@ public class DriverStockSharpService(
     }
 
 
-    void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
+    void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
         //_logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}");
         //ConnectorValuesChangedEventPayloadModel req = new()
@@ -290,10 +312,8 @@ public class DriverStockSharpService(
 
     void SecurityReceivedHandle(Subscription subscription, Security security)
     {
-        if (Instruments.Any(x => x.Code == security.Code) && security.Board == ExchangeBoard.MicexTqob)
-        {
+        if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
             BondList.Add(security);
-        }
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
