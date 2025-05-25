@@ -48,6 +48,7 @@ public static class MauiProgram
             .AddScoped<IManageStockSharpService, ManageStockSharpTransmission>()
             .AddScoped<ILogsService, LogsServiceTransmission>()
             ;
+        builder.Services.AddScoped<IEventNotifyReceive<PortfolioStockSharpViewModel>, EventNotifyReceive<PortfolioStockSharpViewModel>>();
         //
         #endregion
         return builder.Build();

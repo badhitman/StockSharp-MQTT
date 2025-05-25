@@ -115,7 +115,7 @@ public class ConnectionStockSharpWorker(
         _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
         PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
         TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
-        eventTrans.PortfolioReceived(echoData.Response).Wait();
+        eventTrans.PortfolioReceived(echoData.Response);
     }
 
     void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)

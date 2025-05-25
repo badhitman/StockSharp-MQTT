@@ -77,7 +77,7 @@ public class Program
             .ConfigureServices((bx, services) =>
             {
                 IConfigurationRoot config = new ConfigurationBuilder()
-                 .SetBasePath(System.IO.Directory.GetCurrentDirectory()) //From NuGet Package Microsoft.Extensions.Configuration.Json
+                 .SetBasePath(basePath: Directory.GetCurrentDirectory()) //From NuGet Package Microsoft.Extensions.Configuration.Json
                  .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                  .Build();
 
