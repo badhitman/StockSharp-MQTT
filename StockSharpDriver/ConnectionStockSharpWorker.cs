@@ -106,7 +106,7 @@ public class ConnectionStockSharpWorker(
     {
         _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec)}");
         InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(sec);
-        dataRepo.SaveInstrument(instrument);
+        InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response;
         eventTrans.InstrumentReceived(instrument);
     }
 

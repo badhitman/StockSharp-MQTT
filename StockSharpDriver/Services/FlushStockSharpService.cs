@@ -65,7 +65,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     }
 
     /// <inheritdoc/>
-    public Task<TResponseModel<int>> SaveInstrument(InstrumentTradeStockSharpModel req)
+    public Task<TResponseModel<InstrumentTradeStockSharpViewModel>> SaveInstrument(InstrumentTradeStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
         BoardStockSharpModelDB board = null;
@@ -90,7 +90,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             context.Update(instrumentDb);
         }
         context.SaveChanges();
-        return Task.FromResult(new TResponseModel<int>() { Response = instrumentDb.Id });
+        return Task.FromResult(new TResponseModel<InstrumentTradeStockSharpViewModel>() { Response = instrumentDb });
     }
 
     /// <inheritdoc/>
@@ -134,7 +134,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
 
         InstrumentStockSharpModelDB instrumentDb = null;
         if (!string.IsNullOrWhiteSpace(req.Instrument.Name))
-            instrumentDb = context.Instruments.First(x => x.Id == SaveInstrument(req.Instrument).Result.Response);
+            instrumentDb = (InstrumentStockSharpModelDB)SaveInstrument(req.Instrument).Result.Response;
 
         PortfolioTradeModelDB portfolioDb = null;
         if (!string.IsNullOrWhiteSpace(req.Portfolio.Name))
