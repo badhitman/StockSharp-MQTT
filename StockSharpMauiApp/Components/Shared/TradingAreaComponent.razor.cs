@@ -5,6 +5,7 @@
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using SharedLib;
+using System.Diagnostics.Metrics;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -35,8 +36,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     IEnumerable<BoardStockSharpModel>? SelectedBoards { get; set; }
 
     PortfolioStockSharpModel? SelectedPortfolio { get; set; }
-
-    bool _eachDisable => AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected;
 
     async Task StartTradeAsync()
     {
@@ -111,21 +110,7 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         await SetBusyAsync(false);
     }
 
-    private void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
-    {
-        lock (instruments)
-        {
-            int _pf = instruments.FindIndex(x => x.Id == model.Id);
-            if (_pf < 0)
-                instruments.Add(model);
-            else
-                instruments[_pf].Reload(model);
-        }
-        StateHasChangedCall();
-
-    }
-
-    private void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
+    void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
     {
         lock (portfolios)
         {
@@ -136,6 +121,18 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
                 portfolios[_pf].Reload(model);
         }
         StateHasChangedCall();
+    }
+
+    void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
+    {
+        //lock (Instrument)
+        //{
+        //    if (Instrument.Id == model.Id)
+        //    {
+        //        Instrument.Reload(model);
+        //        StateHasChangedCall();
+        //    }
+        //}
     }
 
     public override void Dispose()

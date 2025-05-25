@@ -22,6 +22,9 @@ public partial class TradingRowComponent : StockSharpBaseComponent
     public required TradingAreaComponent Parent { get; set; }
 
 
+    bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
+
+
     decimal _basePrice;
     /// <inheritdoc/>
     public decimal BasePrice
