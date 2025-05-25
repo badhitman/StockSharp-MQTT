@@ -6,6 +6,7 @@ using StockSharp.BusinessEntities;
 using StockSharp.Algo;
 using Newtonsoft.Json;
 using SharedLib;
+using System.Threading.Tasks;
 
 namespace StockSharpDriver;
 
@@ -113,8 +114,8 @@ public class ConnectionStockSharpWorker(
     {
         _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
         PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
-        dataRepo.SavePortfolio(portfolio);
-        eventTrans.PortfolioReceived(portfolio);
+        TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
+        eventTrans.PortfolioReceived(echoData.Response).Wait();
     }
 
     void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)

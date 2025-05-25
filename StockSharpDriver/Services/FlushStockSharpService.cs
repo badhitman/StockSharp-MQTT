@@ -94,7 +94,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     }
 
     /// <inheritdoc/>
-    public Task<TResponseModel<int>> SavePortfolio(PortfolioStockSharpModel req)
+    public Task<TResponseModel<PortfolioStockSharpViewModel>> SavePortfolio(PortfolioStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
         BoardStockSharpModelDB board = null;
@@ -123,7 +123,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             context.Update(portDb);
         }
         context.SaveChanges();
-        return Task.FromResult(new TResponseModel<int>() { Response = portDb.Id });
+        return Task.FromResult(new TResponseModel<PortfolioStockSharpViewModel>() { Response = portDb });
     }
 
     /// <inheritdoc/>
@@ -146,7 +146,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
                 x.ClientCode == req.Portfolio.ClientCode &&
                 x.Currency == req.Portfolio.Currency);
 
-            portfolioDb ??= await context.Portfolios.FirstAsync(x => x.Id == SavePortfolio(req.Portfolio).Result.Response);
+            portfolioDb = (PortfolioTradeModelDB)SavePortfolio(req.Portfolio).Result.Response;
         }
 
         if (orderDb is null)

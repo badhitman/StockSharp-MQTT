@@ -11,7 +11,7 @@ namespace SharedLib;
 /// InstrumentTradeModelDB
 /// </summary>
 [Index(nameof(IsFavorite)), Index(nameof(IdRemote)), Index(nameof(Code)), Index(nameof(Class)), Index(nameof(CfiCode)), Index(nameof(UnderlyingSecurityId)), Index(nameof(PrimaryId)), Index(nameof(LastUpdatedAtUTC))]
-public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpModel, IBaseStockSharpModel
+public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, IBaseStockSharpModel
 {
     /// <summary>
     /// Идентификатор/Key
@@ -19,21 +19,10 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpModel, IBase
     [Key]
     public int Id { get; set; }
 
-    /// <summary>
-    /// Добавлен в "Избранное"
-    /// </summary>
-    public bool IsFavorite { get; set; }
-
     /// <inheritdoc/>
     public new BoardStockSharpModelDB Board { get; set; }
     /// <inheritdoc/>
     public int BoardId { get; set; }
-
-    /// <inheritdoc/>
-    public DateTime LastUpdatedAtUTC { get; set; }
-
-    /// <inheritdoc/>
-    public DateTime CreatedAtUTC { get; set; }
 
     /// <inheritdoc/>
     public string NameNormalizedUpper {  get; set; }
