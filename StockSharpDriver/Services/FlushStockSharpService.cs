@@ -14,57 +14,6 @@ namespace StockSharpDriver;
 public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IFlushStockSharpService
 {
     /// <inheritdoc/>
-    public Task<TResponseModel<int>> SaveBoard(BoardStockSharpModel req)
-    {
-        using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        ExchangeStockSharpModelDB exchange = null;
-        if (!string.IsNullOrWhiteSpace(req.Exchange.Name))
-        {
-            SaveExchange(req.Exchange);
-            exchange = context.Exchanges.First(x => x.Name == req.Exchange.Name && x.CountryCode == req.Exchange.CountryCode);
-        }
-        bool withOutExchange = exchange is null;
-        BoardStockSharpModelDB boardDb = context.Boards
-            .FirstOrDefault(x => x.Code == req.Code && (withOutExchange || x.ExchangeId == exchange.Id));
-        if (boardDb is null)
-        {
-            boardDb = new BoardStockSharpModelDB().Bind(req);
-
-            boardDb.ExchangeId = exchange.Id;
-            boardDb.Exchange = null;
-
-            context.Add(boardDb);
-        }
-        else
-        {
-            boardDb.SetUpdate(req);
-            context.Update(boardDb);
-        }
-        context.SaveChanges();
-        return Task.FromResult(new TResponseModel<int>() { Response = boardDb.Id });
-    }
-
-    /// <inheritdoc/>
-    public Task<TResponseModel<int>> SaveExchange(ExchangeStockSharpModel req)
-    {
-        using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        ExchangeStockSharpModelDB exchangeDb = context.Exchanges
-            .FirstOrDefault(x => x.Name == req.Name && x.CountryCode == req.CountryCode);
-        if (exchangeDb is null)
-        {
-            exchangeDb = new ExchangeStockSharpModelDB().Bind(req);
-            context.Add(exchangeDb);
-        }
-        else
-        {
-            exchangeDb.SetUpdate(req);
-            context.Update(exchangeDb);
-        }
-        context.SaveChanges();
-        return Task.FromResult(new TResponseModel<int>() { Response = exchangeDb.Id });
-    }
-
-    /// <inheritdoc/>
     public Task<TResponseModel<InstrumentTradeStockSharpViewModel>> SaveInstrument(InstrumentTradeStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
@@ -124,6 +73,57 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         }
         context.SaveChanges();
         return Task.FromResult(new TResponseModel<PortfolioStockSharpViewModel>() { Response = portDb });
+    }
+
+    /// <inheritdoc/>
+    public Task<TResponseModel<int>> SaveBoard(BoardStockSharpModel req)
+    {
+        using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
+        ExchangeStockSharpModelDB exchange = null;
+        if (!string.IsNullOrWhiteSpace(req.Exchange.Name))
+        {
+            SaveExchange(req.Exchange);
+            exchange = context.Exchanges.First(x => x.Name == req.Exchange.Name && x.CountryCode == req.Exchange.CountryCode);
+        }
+        bool withOutExchange = exchange is null;
+        BoardStockSharpModelDB boardDb = context.Boards
+            .FirstOrDefault(x => x.Code == req.Code && (withOutExchange || x.ExchangeId == exchange.Id));
+        if (boardDb is null)
+        {
+            boardDb = new BoardStockSharpModelDB().Bind(req);
+
+            boardDb.ExchangeId = exchange.Id;
+            boardDb.Exchange = null;
+
+            context.Add(boardDb);
+        }
+        else
+        {
+            boardDb.SetUpdate(req);
+            context.Update(boardDb);
+        }
+        context.SaveChanges();
+        return Task.FromResult(new TResponseModel<int>() { Response = boardDb.Id });
+    }
+
+    /// <inheritdoc/>
+    public Task<TResponseModel<int>> SaveExchange(ExchangeStockSharpModel req)
+    {
+        using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
+        ExchangeStockSharpModelDB exchangeDb = context.Exchanges
+            .FirstOrDefault(x => x.Name == req.Name && x.CountryCode == req.CountryCode);
+        if (exchangeDb is null)
+        {
+            exchangeDb = new ExchangeStockSharpModelDB().Bind(req);
+            context.Add(exchangeDb);
+        }
+        else
+        {
+            exchangeDb.SetUpdate(req);
+            context.Update(exchangeDb);
+        }
+        context.SaveChanges();
+        return Task.FromResult(new TResponseModel<int>() { Response = exchangeDb.Id });
     }
 
     /// <inheritdoc/>
