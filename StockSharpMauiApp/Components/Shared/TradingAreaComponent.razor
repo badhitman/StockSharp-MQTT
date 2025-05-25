@@ -91,7 +91,7 @@ else
         <MudSelect T="PortfolioStockSharpModel" Label="Portfolio" @bind-Value="SelectedPortfolio">
             @foreach (PortfolioStockSharpViewModel _port in portfolios)
             {
-                <MudSelectItem Disabled=@(AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected || _port.LastUpdatedAtUTC >= AboutConnection.LastConnectedAt) T="PortfolioStockSharpModel" Value="@_port">@_port</MudSelectItem>
+                <MudSelectItem Disabled=@(AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected || _port.LastUpdatedAtUTC < AboutConnection.LastConnectedAt) T="PortfolioStockSharpModel" Value="@_port">@_port</MudSelectItem>
             }
         </MudSelect>
         <MudSpacer />

@@ -69,13 +69,27 @@ public class DriverStockSharpService(
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
 
-    readonly List<Security> BondList = [];
-    readonly List<SBond> SBondList = [];
-
-    PortfolioStockSharpModel Portfolio;
     List<InstrumentTradeStockSharpViewModel> Instruments;
     List<FixMessageAdapterModelDB> Adapters;
     List<BoardStockSharpModel> BoardsFilter;
+
+    readonly List<SBond> SBondList = [];
+
+    readonly List<Security> AllBondList = [];
+    List<Security> BondList
+    {
+        get
+        {
+            List<Security> res = [];
+            lock (AllBondList)
+                foreach (Security security in AllBondList)
+                {
+                    if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
+                        res.Add(security);
+                }
+            return res;
+        }
+    }
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
@@ -85,9 +99,6 @@ public class DriverStockSharpService(
 
         if (req.Instruments is null || req.Instruments.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
-
-        if (req.Portfolio is null)
-            return ResponseBaseModel.CreateError("Portfolio not set");
 
         TPaginationRequestStandardModel<AdaptersRequestModel> adReq = new()
         {
@@ -102,9 +113,11 @@ public class DriverStockSharpService(
         if (adRes.Response is null || adRes.Response.Count == 0)
             return ResponseBaseModel.CreateError("adapters - is empty");
 
-        List<FixMessageAdapterModelDB> adapters = adRes.Response;
+        lock (AllBondList)
+        {
+            AllBondList.Clear();
+        }
 
-        Portfolio = req.Portfolio;
         Instruments = req.Instruments;
         BoardsFilter = req.BoardsFilter;
         LastConnectedAt = DateTime.UtcNow;
@@ -133,10 +146,7 @@ public class DriverStockSharpService(
             }
         };
 
-        
-
-        connector.OrderBookReceived += TraderOnMarketDepthReceived;
-        
+        connector.OrderBookReceived += TraderOnMarketDepthReceived;        
          */
 
         #region event +
@@ -184,6 +194,8 @@ public class DriverStockSharpService(
         conLink.Connector.TickTradeReceived += TickTradeReceivedHandle;
         conLink.Connector.ValuesChanged += ValuesChangedHandle;
         #endregion
+
+        List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
         ResponseBaseModel res = new();
         adapters.ForEach(x =>
@@ -247,9 +259,10 @@ public class DriverStockSharpService(
             conLink.Connector.UnSubscribe(sub);
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
-        BondList.Clear();
         conLink.Connector.Disconnect();
-        Portfolio = null;
+        BondList.Clear();
+        lock (AllBondList)
+            AllBondList.Clear();
         return Task.FromResult(ResponseBaseModel.CreateInfo("connection closed"));
     }
 
@@ -311,8 +324,9 @@ public class DriverStockSharpService(
 
     void SecurityReceivedHandle(Subscription subscription, Security security)
     {
-        if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
-            BondList.Add(security);
+        //if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
+        lock (AllBondList)
+            AllBondList.Add(security);
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)

@@ -29,7 +29,7 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
         if (_fi.Directory?.Exists != true)
             Directory.CreateDirectory(Path.GetDirectoryName(DbPath)!);
-        
+
         Database.Migrate();
     }
 
@@ -60,6 +60,11 @@ public abstract partial class StockSharpAppLayerContext : DbContext
         modelBuilder.Entity<FixMessageAdapterModelDB>()
         .HasIndex(b => b.AdapterTypeName);
 
+        modelBuilder.Entity<PortfolioTradeModelDB>()
+       .HasKey(b => b.Id);
+
+        modelBuilder.Entity<InstrumentStockSharpModelDB>()
+       .HasKey(b => b.Id);
     }
 
 

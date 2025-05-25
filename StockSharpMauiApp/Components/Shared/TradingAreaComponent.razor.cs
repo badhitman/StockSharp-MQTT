@@ -28,7 +28,7 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     int SkipSizeVolume { get; set; }
 
     List<InstrumentTradeStockSharpViewModel>? instruments;
-    List<PortfolioStockSharpViewModel>? portfolios;
+    List<PortfolioStockSharpViewModel> portfolios = [];
 
     List<BoardStockSharpModel>? allBoards;
     IEnumerable<BoardStockSharpModel>? SelectedBoards { get; set; }
@@ -62,7 +62,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         {
             BoardsFilter = SelectedBoards is null ? null : [.. SelectedBoards],
             Instruments = instruments,
-            Portfolio = SelectedPortfolio
         };
         await Connect(req);
     }
@@ -92,7 +91,12 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
             }),
             Task.Run(async () => {
                 TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
-                portfolios = res.Response;
+                lock (portfolios)
+                {
+                    portfolios.Clear();
+                    if(res.Response is not null)
+                        portfolios.AddRange(res.Response);
+                }
             })]);
 
         await SetBusyAsync(false);
@@ -100,6 +104,14 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
     private void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
     {
-        SnackbarRepo.Add(JsonConvert.SerializeObject(model));
+        lock (portfolios)
+        {
+            int _pf = portfolios.FindIndex(x => x.Id == model.Id);
+            if (_pf < 0)
+                portfolios.Add(model);
+            else
+                portfolios[_pf].Reload(model);
+        }
+        StateHasChangedCall();
     }
 }

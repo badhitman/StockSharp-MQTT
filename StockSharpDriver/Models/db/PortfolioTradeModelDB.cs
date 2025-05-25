@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace SharedLib;
@@ -13,17 +12,6 @@ namespace SharedLib;
 [Index(nameof(IsFavorite)), Index(nameof(LastUpdatedAtUTC))]
 public class PortfolioTradeModelDB : PortfolioStockSharpViewModel, IBaseStockSharpModel
 {
-    /// <summary>
-    /// Идентификатор/Key
-    /// </summary>
-    [Key]
-    public int Id { get; set; }
-
-    /// <summary>
-    /// Добавлен в "Избранное"
-    /// </summary>
-    public bool IsFavorite { get; set; }
-
     /// <inheritdoc/>
     public new BoardStockSharpModelDB Board { get; set; }
     /// <inheritdoc/>

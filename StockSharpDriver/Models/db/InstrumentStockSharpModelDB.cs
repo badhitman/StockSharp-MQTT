@@ -13,19 +13,13 @@ namespace SharedLib;
 [Index(nameof(IsFavorite)), Index(nameof(IdRemote)), Index(nameof(Code)), Index(nameof(Class)), Index(nameof(CfiCode)), Index(nameof(UnderlyingSecurityId)), Index(nameof(PrimaryId)), Index(nameof(LastUpdatedAtUTC))]
 public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, IBaseStockSharpModel
 {
-    /// <summary>
-    /// Идентификатор/Key
-    /// </summary>
-    [Key]
-    public int Id { get; set; }
-
     /// <inheritdoc/>
     public new BoardStockSharpModelDB Board { get; set; }
     /// <inheritdoc/>
     public int BoardId { get; set; }
 
     /// <inheritdoc/>
-    public string NameNormalizedUpper {  get; set; }
+    public string NameNormalizedUpper { get; set; }
 
     /// <inheritdoc/>
     public string IdRemoteNormalizedUpper { get; set; }
