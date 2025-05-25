@@ -78,7 +78,7 @@ else if (portfolios is null || allBoards is null)
     <MudAlert Severity="Severity.Info">portfolios or boards - is null</MudAlert>
 }
 else
-{
+{    
     <MudStack Row="true" Class="mb-2">
         <MudSelect T="BoardStockSharpModel" Label="Boards [restriction]" @bind-SelectedValues="SelectedBoards" MultiSelection>
             @foreach (BoardStockSharpModel _port in allBoards)
@@ -91,7 +91,7 @@ else
         <MudSelect T="PortfolioStockSharpModel" Label="Portfolio" @bind-Value="SelectedPortfolio">
             @foreach (PortfolioStockSharpViewModel _port in portfolios)
             {
-                <MudSelectItem Disabled=@(AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected || _port.LastUpdatedAtUTC < AboutConnection.LastConnectedAt) T="PortfolioStockSharpModel" Value="@_port">@_port</MudSelectItem>
+                <MudSelectItem Disabled="@(_eachDisable || _port.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt)" T="PortfolioStockSharpModel" Value="@_port">@_port</MudSelectItem>
             }
         </MudSelect>
         <MudSpacer />

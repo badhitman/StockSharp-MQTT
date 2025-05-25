@@ -6,13 +6,11 @@ using StockSharp.BusinessEntities;
 using StockSharp.Algo;
 using Newtonsoft.Json;
 using SharedLib;
-using System.Threading.Tasks;
 
 namespace StockSharpDriver;
 
 /// <inheritdoc/>
 public class ConnectionStockSharpWorker(
-    //StockSharpClientConfigModel conf,
     IFlushStockSharpService dataRepo,
     ILogger<ConnectionStockSharpWorker> _logger,
     IEventsStockSharpService eventTrans,

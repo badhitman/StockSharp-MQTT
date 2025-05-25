@@ -4,8 +4,6 @@
 
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json;
-using RemoteCallLib;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
@@ -22,18 +20,23 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     [Inject]
     protected IEventNotifyReceive<PortfolioStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
 
+    [Inject]
+    protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
+
 
     int QuoteVolume { get; set; }
     int QuoteSizeVolume { get; set; }
     int SkipSizeVolume { get; set; }
 
-    List<InstrumentTradeStockSharpViewModel>? instruments;
+    List<InstrumentTradeStockSharpViewModel> instruments = [];
     List<PortfolioStockSharpViewModel> portfolios = [];
 
     List<BoardStockSharpModel>? allBoards;
     IEnumerable<BoardStockSharpModel>? SelectedBoards { get; set; }
 
     PortfolioStockSharpModel? SelectedPortfolio { get; set; }
+
+    bool _eachDisable => AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected;
 
     async Task StartTradeAsync()
     {
@@ -72,6 +75,7 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         await base.OnInitializedAsync();
 
         await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.PortfolioReceivedStockSharpNotifyReceive, PortfolioNotificationHandle);
+        await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
 
         await SetBusyAsync();
         await Task.WhenAll([
@@ -83,7 +87,12 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
                         FavoriteFilter = true,
                     };
                 TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
-                instruments = res.Response;
+                lock(instruments)
+                {
+                    instruments.Clear();
+                    if(res.Response is not null)
+                        instruments.AddRange(res.Response);
+                }
             }),
             Task.Run(async () => {
                 TResponseModel<List<BoardStockSharpModel>> res = await DataRepo.GetBoardsAsync();
@@ -102,6 +111,20 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         await SetBusyAsync(false);
     }
 
+    private void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
+    {
+        lock (instruments)
+        {
+            int _pf = instruments.FindIndex(x => x.Id == model.Id);
+            if (_pf < 0)
+                instruments.Add(model);
+            else
+                instruments[_pf].Reload(model);
+        }
+        StateHasChangedCall();
+
+    }
+
     private void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
     {
         lock (portfolios)
@@ -113,5 +136,12 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
                 portfolios[_pf].Reload(model);
         }
         StateHasChangedCall();
+    }
+
+    public override void Dispose()
+    {
+        PortfolioEventRepo.UnregisterAction().Wait();
+        InstrumentEventRepo.UnregisterAction().Wait();
+        base.Dispose();
     }
 }
