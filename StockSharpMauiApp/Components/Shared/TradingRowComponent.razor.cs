@@ -25,6 +25,18 @@ public partial class TradingRowComponent : StockSharpBaseComponent
     bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
 
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Parent.AddRowComponent(this);
+    }
+
+    public void Update(InstrumentTradeStockSharpViewModel sender)
+    {
+        Instrument.Reload(sender);
+        StateHasChangedCall();
+    }
+
     decimal _basePrice;
     /// <inheritdoc/>
     public decimal BasePrice

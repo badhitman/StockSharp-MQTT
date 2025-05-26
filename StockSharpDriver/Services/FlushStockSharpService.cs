@@ -28,6 +28,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         {
             instrumentDb = new InstrumentStockSharpModelDB().Bind(req);
             instrumentDb.CreatedAtUTC = DateTime.UtcNow;
+            instrumentDb.LastUpdatedAtUTC = DateTime.UtcNow;
             instrumentDb.BoardId = board.Id;
             instrumentDb.Board = null;
 
@@ -61,6 +62,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         {
             portDb = new PortfolioTradeModelDB().Bind(req);
             portDb.CreatedAtUTC = DateTime.UtcNow;
+            portDb.LastUpdatedAtUTC = DateTime.UtcNow;
             portDb.BoardId = board?.Id;
             portDb.Board = null;
 
@@ -91,7 +93,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         if (boardDb is null)
         {
             boardDb = new BoardStockSharpModelDB().Bind(req);
-
+            boardDb.LastUpdatedAtUTC = DateTime.UtcNow;
             boardDb.ExchangeId = exchange.Id;
             boardDb.Exchange = null;
 
@@ -153,6 +155,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         {
             orderDb = new OrderStockSharpModelDB().Bind(req);
             orderDb.CreatedAtUTC = DateTime.UtcNow;
+            orderDb.LastUpdatedAtUTC = DateTime.UtcNow;
             orderDb.InstrumentId = instrumentDb.Id;
             orderDb.Instrument = null;
 
@@ -181,6 +184,8 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         }
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
         MyTradeStockSharpModelDB myTradeDb = new MyTradeStockSharpModelDB().Bind(myTrade);
+        myTradeDb.LastUpdatedAtUTC = DateTime.UtcNow;
+
         myTradeDb.OrderId = SaveOrder(myTrade.Order).Result.Response;
         await context.MyTrades.AddAsync(myTradeDb);
         await context.SaveChangesAsync();

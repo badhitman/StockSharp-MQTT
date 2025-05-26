@@ -2,30 +2,39 @@
 
 @inherits StockSharpBaseComponent
 
-<tr class="@(Available ? "" : "opacity-25")">
-    <th scope="row" title="@Instrument.Name">
-        <input disabled="@(!Available)" type="text" readonly class="form-control-plaintext" value="@Instrument.Code">
-    </th>
-    <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="BasePrice" Variant="Variant.Text" /></td>
-    <td>
-        <div class="btn-group btn-group-sm" role="group">
-            <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">buy</button>
-            <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">sell</button>
-        </div>
-    </td>
-    <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="ValueOperation" Variant="Variant.Text" /></td>
-    <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="ShiftPosition" Variant="Variant.Text" /></td>
-    <td>
-        <div class="input-group input-group-sm mb-3">
-            <span class="input-group-text">L1</span>
-            <input disabled="@(!Available)" type="number" class="form-control">
-            <span class="input-group-text">L2</span>
-            <input disabled="@(!Available)" type="number" class="form-control">
-        </div>
-    </td>
-    <td>
-        <div class="input-group input-group-sm">
-            <button disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
-        </div>
-    </td>
+<tr class="@(!Available ? "opacity-25" : "")">
+    @if (IsBusyProgress)
+    {
+        <th colspan="7">
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-3" />
+        </th>
+    }
+    else
+    {
+        <th scope="row" title="@Instrument.Name">
+            <input disabled="@(!Available)" type="text" readonly class="form-control-plaintext" value="@Instrument.Code">
+        </th>
+        <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="BasePrice" Variant="Variant.Text" /></td>
+        <td>
+            <div class="btn-group btn-group-sm" role="group">
+                <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">buy</button>
+                <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">sell</button>
+            </div>
+        </td>
+        <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="ValueOperation" Variant="Variant.Text" /></td>
+        <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="ShiftPosition" Variant="Variant.Text" /></td>
+        <td>
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">L1</span>
+                <input disabled="@(!Available)" type="number" class="form-control">
+                <span class="input-group-text">L2</span>
+                <input disabled="@(!Available)" type="number" class="form-control">
+            </div>
+        </td>
+        <td>
+            <div class="input-group input-group-sm">
+                <button disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
+            </div>
+        </td>
+    }
 </tr>

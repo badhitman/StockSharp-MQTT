@@ -91,6 +91,42 @@ public static class BindsStockSharpModelsExtensionsDB
         main.NameNormalizedUpper = inc.Name.ToUpper();
         main.IdRemoteNormalizedUpper = inc.IdRemote.ToUpper();
 
+        //main.Board = new BoardStockSharpModelDB().Bind(inc.Board);
+
+        return main;
+    }
+
+    /// <inheritdoc/>
+    public static InstrumentStockSharpModelDB Bind(this InstrumentStockSharpModelDB main, InstrumentTradeStockSharpViewModel inc)
+    {
+        main.Id = inc.Id;
+        main.LastUpdatedAtUTC = inc.LastUpdatedAtUTC;
+        main.CreatedAtUTC = inc.CreatedAtUTC;
+
+        main.Multiplier = inc.Multiplier;
+        main.FaceValue = inc.FaceValue;
+        main.SettlementDate = inc.SettlementDate;
+        main.Decimals = inc.Decimals;
+        main.CfiCode = inc.CfiCode;
+        main.Class = inc.Class;
+        main.Code = inc.Code;
+        main.ExpiryDate = inc.ExpiryDate;
+        main.UnderlyingSecurityId = inc.UnderlyingSecurityId;
+        main.ShortName = inc.ShortName;
+        main.Shortable = inc.Shortable;
+        main.PrimaryId = inc.PrimaryId;
+        main.Name = inc.Name;
+        main.IdRemote = inc.IdRemote;
+
+        main.Currency = inc.Currency;
+        main.UnderlyingSecurityType = inc.UnderlyingSecurityType;
+        main.TypeInstrument = inc.TypeInstrument;
+        main.SettlementType = inc.SettlementType;
+        main.OptionType = inc.OptionType;
+        main.OptionStyle = inc.OptionStyle;
+
+        main.NameNormalizedUpper = inc.Name.ToUpper();
+        main.IdRemoteNormalizedUpper = inc.IdRemote.ToUpper();
 
         //main.Board = new BoardStockSharpModelDB().Bind(inc.Board);
 
@@ -129,7 +165,7 @@ public static class BindsStockSharpModelsExtensionsDB
     }
 
     /// <inheritdoc/>
-    public static MyTradeStockSharpModelDB Bind(this MyTradeStockSharpModelDB main,MyTradeStockSharpModel inc)
+    public static MyTradeStockSharpModelDB Bind(this MyTradeStockSharpModelDB main, MyTradeStockSharpModel inc)
     {
         main.Yield = inc.Yield;
         main.Slippage = inc.Slippage;

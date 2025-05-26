@@ -4,6 +4,8 @@
 
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SharedLib;
 using System.Diagnostics.Metrics;
 
@@ -24,6 +26,8 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
+    [Inject]
+    ILogger<TradingAreaComponent> LoggerRepo { get; set; } = default!;
 
     int QuoteVolume { get; set; }
     int QuoteSizeVolume { get; set; }
@@ -36,6 +40,16 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     IEnumerable<BoardStockSharpModel>? SelectedBoards { get; set; }
 
     PortfolioStockSharpModel? SelectedPortfolio { get; set; }
+
+    List<TradingRowComponent> RowsComponents { get; set; } = [];
+
+    public void AddRowComponent(TradingRowComponent sender)
+    {
+        lock (RowsComponents)
+        {
+            RowsComponents.Add(sender);
+        }
+    }
 
     async Task StartTradeAsync()
     {
@@ -57,6 +71,12 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         await SetBusyAsync();
         await SetBusyAsync(false);
     }
+    private string? data;
+
+    void HandleOnChange(ChangeEventArgs args)
+    {
+        data = args.Value?.ToString();
+    }
 
     async Task Connect()
     {
@@ -73,10 +93,11 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     {
         await base.OnInitializedAsync();
 
+        await SetBusyAsync();
+
         await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.PortfolioReceivedStockSharpNotifyReceive, PortfolioNotificationHandle);
         await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
 
-        await SetBusyAsync();
         await Task.WhenAll([
             Task.Run(async () => {
                 InstrumentsRequestModel req = new()
@@ -125,20 +146,28 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
     void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
     {
-        //lock (Instrument)
-        //{
-        //    if (Instrument.Id == model.Id)
-        //    {
-        //        Instrument.Reload(model);
-        //        StateHasChangedCall();
-        //    }
-        //}
+        //data += $"{JsonConvert.SerializeObject(model)}\n";
+        //LoggerRepo.LogDebug($"{JsonConvert.SerializeObject(model)}\n");
+        //Console.WriteLine($"{JsonConvert.SerializeObject(model)}\n");
+        lock (instruments)
+        {
+            if (instruments.Count == 0)
+                return;
+
+            int _i = -1;
+            _i = RowsComponents.FindIndex(x => x.Instrument.Id == model.Id);
+            if (_i != -1)
+            {
+                RowsComponents[_i].Update(model);
+                StateHasChangedCall();
+            }
+        }
     }
 
     public override void Dispose()
     {
-        PortfolioEventRepo.UnregisterAction().Wait();
-        InstrumentEventRepo.UnregisterAction().Wait();
+        PortfolioEventRepo.UnregisterAction();
+        InstrumentEventRepo.UnregisterAction();
         base.Dispose();
     }
 }

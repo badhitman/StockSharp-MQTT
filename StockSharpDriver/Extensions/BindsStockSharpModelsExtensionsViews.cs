@@ -14,7 +14,9 @@ public static class BindsStockSharpModelsExtensionsViews
     public static InstrumentTradeStockSharpViewModel Bind(this InstrumentTradeStockSharpViewModel main, InstrumentStockSharpModelDB inc)
     {
         main.Board = inc.Board is null ? null : new BoardStockSharpModel().Bind(inc.Board);
-
+        main.Id = inc.Id;
+        main.LastUpdatedAtUTC = inc.LastUpdatedAtUTC;
+        main.CreatedAtUTC = inc.CreatedAtUTC;
         main.Currency = inc.Currency;
         main.Multiplier = inc.Multiplier;
         main.CfiCode = inc.CfiCode;
