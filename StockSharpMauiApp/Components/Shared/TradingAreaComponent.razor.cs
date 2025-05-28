@@ -72,7 +72,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         ConnectRequestModel req = new()
         {
             BoardsFilter = SelectedBoards is null ? null : [.. SelectedBoards],
-            Instruments = instruments,
         };
         await Connect(req);
     }

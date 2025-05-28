@@ -69,7 +69,7 @@ public class DriverStockSharpService(
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
 
-    List<InstrumentTradeStockSharpViewModel> Instruments;
+    List<StrategyTradeStockSharpModel> Instruments;
     List<FixMessageAdapterModelDB> Adapters;
     List<BoardStockSharpModel> BoardsFilter;
 
@@ -91,14 +91,100 @@ public class DriverStockSharpService(
         }
     }
 
+
+    public async Task<ResponseBaseModel> StrategyStartAsync(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
+    {
+        if (req.Instruments is null || req.Instruments.Count == 0)
+            return ResponseBaseModel.CreateError("Instruments - is empty");
+
+        Instruments = req.Instruments;
+
+        SBondPositionsList.Clear();
+        SBondSizePositionsList.Clear();
+        SBondSmallPositionsList.Clear();
+
+        bondPositionTraded = 0;
+        bondSizePositionTraded = 0;
+        bondSmallPositionTraded = 0;
+        bondOutOfRangePositionTraded = 0;
+
+        BondList.ForEach(security =>
+        {
+            /*
+             // Создаем объект для поиска инструментов
+                var lookupMessage = new SecurityLookupMessage
+                {
+                    SecurityId = new SecurityId
+                    {
+                        SecurityCode = searchCode,
+                        // Если требуется искать на конкретной площадке
+                        // BoardCode = ExchangeBoard.Nyse.Code,
+                    },
+                    SecurityType = securityType,
+                    TransactionId = Connector.TransactionIdGenerator.GetNextId()
+                };
+    
+                // Создаем подписку
+                var subscription = new Subscription(lookupMessage);
+             */
+            //Subscription sub = conLink.Connector.Subscribe(security);
+
+
+
+            //string bndName = security.Code.Substring(2, 5);
+            //DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
+
+            //if (!decUpD.IsNull())
+            //{
+            //    long? WorkVol =
+            //        ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName)).Value;
+            //    long? SmallBidVol =
+            //      ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName)).Value;
+            //    long? SmallOfferVol =
+            //      ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName)).Value;
+            //    int? Lowlimit =
+            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName)).Value;
+            //    int? Highlimit =
+            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName)).Value;
+            //    int? SmallOffset =
+            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName)).Value;
+            //    int? Offset =
+            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName)).Value;
+            //    bool? IsSmall =
+            //        ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bndName)).IsChecked;
+
+            //    SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100,
+            //        (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+
+            //    if ((bool)IsSmall)
+            //    {
+            //        SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Lowlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+            //    }
+
+            //    if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+            //        SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+
+            //}
+            //else
+            //{
+            //    SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+
+            //    if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+            //        SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            //}
+        });
+
+        //_ordersForQuoteBuyReregister = new Dictionary<string, Order>();
+        //_ordersForQuoteSellReregister = new Dictionary<string, Order>();         
+
+
+        throw new NotImplementedException();
+    }
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
     {
         if (BondList.Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
-
-        if (req.Instruments is null || req.Instruments.Count == 0)
-            return ResponseBaseModel.CreateError("Instruments - is empty");
 
         TPaginationRequestStandardModel<AdaptersRequestModel> adReq = new()
         {
@@ -118,7 +204,6 @@ public class DriverStockSharpService(
             AllBondList.Clear();
         }
 
-        Instruments = req.Instruments;
         BoardsFilter = req.BoardsFilter;
         LastConnectedAt = DateTime.UtcNow;
 

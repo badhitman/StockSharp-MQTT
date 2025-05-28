@@ -25,10 +25,13 @@
         <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="ShiftPosition" Variant="Variant.Text" /></td>
         <td>
             <div class="input-group input-group-sm mb-3">
+                <div class="input-group-text">
+                    <input @bind="IsMM" class="form-check-input mt-0" type="checkbox" aria-label="IsMM">
+                </div>
                 <span class="input-group-text">L1</span>
-                <input disabled="@(!Available)" type="number" class="form-control">
+                <input @bind-value="L1" disabled="@(!Available)" type="number" class="form-control">
                 <span class="input-group-text">L2</span>
-                <input disabled="@(!Available)" type="number" class="form-control">
+                <input @bind-value="L2" disabled="@(!Available)" type="number" class="form-control">
             </div>
         </td>
         <td>
