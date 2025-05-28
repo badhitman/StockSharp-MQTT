@@ -4,10 +4,7 @@
 
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using SharedLib;
-using System.Diagnostics.Metrics;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -26,8 +23,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
-    [Inject]
-    ILogger<TradingAreaComponent> LoggerRepo { get; set; } = default!;
 
     int QuoteVolume { get; set; }
     int QuoteSizeVolume { get; set; }
@@ -70,12 +65,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     {
         await SetBusyAsync();
         await SetBusyAsync(false);
-    }
-    private string? data;
-
-    void HandleOnChange(ChangeEventArgs args)
-    {
-        data = args.Value?.ToString();
     }
 
     async Task Connect()
