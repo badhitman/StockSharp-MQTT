@@ -92,6 +92,7 @@ public class DriverStockSharpService(
     }
 
 
+    /// <inheritdoc/>
     public async Task<ResponseBaseModel> StrategyStartAsync(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
         if (req.Instruments is null || req.Instruments.Count == 0)
@@ -180,6 +181,7 @@ public class DriverStockSharpService(
 
         throw new NotImplementedException();
     }
+
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
     {

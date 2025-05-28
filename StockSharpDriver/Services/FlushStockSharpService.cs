@@ -153,7 +153,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
 
         if (orderDb is null)
         {
-            orderDb = new OrderStockSharpModelDB().Bind(req);
+            orderDb = (OrderStockSharpModelDB)req;
             orderDb.CreatedAtUTC = DateTime.UtcNow;
             orderDb.LastUpdatedAtUTC = DateTime.UtcNow;
             orderDb.InstrumentId = instrumentDb.Id;
