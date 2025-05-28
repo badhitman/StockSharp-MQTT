@@ -1,0 +1,76 @@
+﻿@using BlazorLib.Components.StockSharp
+
+@inherits StockSharpBaseComponent
+
+<h3>OrdersStockSharpViewComponent</h3>
+
+<MudTable ServerData="ServerReload" Dense="true" Hover="true" @ref="_tableRef">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Periodic Elements</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>AveragePrice</MudTh>
+        <MudTh>Balance</MudTh>
+        <MudTh>BoardId</MudTh>
+        <MudTh>BrokerCode</MudTh>
+        <MudTh>ClientCode</MudTh>
+        <MudTh>Comment</MudTh>
+        <MudTh>Commission</MudTh>
+        <MudTh>CommissionCurrency</MudTh>
+        <MudTh>CreatedAtUTC</MudTh>
+        <MudTh>Currency</MudTh>
+        <MudTh>ExpiryDate</MudTh>
+        <MudTh>IsManual</MudTh>
+        <MudTh>IsMarketMaker</MudTh>
+        <MudTh>IsSystem</MudTh>
+        <MudTh>LocalTime</MudTh>
+        <MudTh>MarginMode</MudTh>
+        <MudTh>MatchedTime</MudTh>
+        <MudTh>MinVolume</MudTh>
+        <MudTh>PositionEffect</MudTh>
+        <MudTh>Price</MudTh>
+        <MudTh>SeqNum</MudTh>
+        <MudTh>Side</MudTh>
+        <MudTh>State</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Type</MudTh>
+        <MudTh>Volume</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="AveragePrice">@context.AveragePrice</MudTd>
+        <MudTd DataLabel="Balance">@context.Balance</MudTd>
+        <MudTd DataLabel="BoardId">@context.BoardId</MudTd>
+        <MudTd DataLabel="BrokerCode">@context.BrokerCode</MudTd>
+        <MudTd DataLabel="ClientCode">@context.ClientCode</MudTd>
+        <MudTd DataLabel="Comment">@context.Comment</MudTd>
+        <MudTd DataLabel="Commission">@context.Commission</MudTd>
+        <MudTd DataLabel="CommissionCurrency">@context.CommissionCurrency</MudTd>
+        <MudTd DataLabel="CreatedAtUTC">@context.CreatedAtUTC</MudTd>
+        <MudTd DataLabel="Currency">@context.Currency</MudTd>
+        <MudTd DataLabel="ExpiryDate">@context.ExpiryDate</MudTd>
+        <MudTd DataLabel="IsManual">@context.IsManual</MudTd>
+        <MudTd DataLabel="IsMarketMaker">@context.IsMarketMaker</MudTd>
+        <MudTd DataLabel="IsSystem">@context.IsSystem</MudTd>
+        <MudTd DataLabel="LocalTime">@context.LocalTime</MudTd>
+        <MudTd DataLabel="MarginMode">@context.MarginMode</MudTd>
+        <MudTd DataLabel="MatchedTime">@context.MatchedTime</MudTd>
+        <MudTd DataLabel="MinVolume">@context.MinVolume</MudTd>
+        <MudTd DataLabel="PositionEffect">@context.PositionEffect</MudTd>
+        <MudTd DataLabel="Price">@context.Price</MudTd>
+        <MudTd DataLabel="SeqNum">@context.SeqNum</MudTd>
+        <MudTd DataLabel="Side">@context.Side</MudTd>
+        <MudTd DataLabel="State">@context.State</MudTd>
+        <MudTd DataLabel="Status">@context.Status</MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Volume">@context.Volume</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>

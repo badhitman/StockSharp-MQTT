@@ -115,25 +115,33 @@ else
         <MudButton Size="Size.Small" Color="Color.Tertiary">L</MudButton>
         <MudIconButton OnClick="ResetAllTradesAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.KeyboardCommandKey" />
     </MudStack>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th scope="col">Instrument</th>
-                <th scope="col">Base</th>
-                <th scope="col">Actions</th>
-                <th scope="col">Volume</th>
-                <th scope="col">Shift</th>
-                <th scope="col">Confines</th>
-                <th scope="col"></th>
-            </tr>
-        </thead>
-        <tbody>
-            <CascadingValue Value="this">
-                @foreach (InstrumentTradeStockSharpViewModel i in instruments)
-                {
-                    <TradingRowComponent Instrument="i" @key="@($"instr_{i.Id}")" />
-                }
-            </CascadingValue>
-        </tbody>
-    </table>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabPanel Text="Strategy">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Instrument</th>
+                        <th scope="col">Base</th>
+                        <th scope="col">Actions</th>
+                        <th scope="col">Volume</th>
+                        <th scope="col">Shift</th>
+                        <th scope="col">Confines</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <CascadingValue Value="this">
+                        @foreach (InstrumentTradeStockSharpViewModel i in instruments)
+                        {
+                            <TradingRowComponent Instrument="i" @key="@($"instr_{i.Id}")" />
+                        }
+                    </CascadingValue>
+                </tbody>
+            </table>
+        </MudTabPanel>
+        <MudTabPanel Text="Orders">
+            <MudText>Content Two</MudText>
+        </MudTabPanel>
+    </MudTabs>
 }
