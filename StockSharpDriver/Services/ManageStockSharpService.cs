@@ -130,4 +130,10 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             Response = [.. res.Response.Select(x => (OrderStockSharpViewModel)x)]
         };
     }
+
+    /// <inheritdoc/>
+    public async Task<TPaginationResponseModel<MyTradeStockSharpViewModel>> TradesSelectAsync(TPaginationRequestStandardModel<MyTradeSelectStockSharpRequestModel> req, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

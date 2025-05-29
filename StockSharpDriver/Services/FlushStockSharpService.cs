@@ -11,7 +11,7 @@ namespace StockSharpDriver;
 /// <summary>
 /// FlushStockSharpService
 /// </summary>
-public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IFlushStockSharpService
+public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, ILogger<FlushStockSharpService> loggerRepo) : IFlushStockSharpService
 {
     /// <inheritdoc/>
     public Task<TResponseModel<InstrumentTradeStockSharpViewModel>> SaveInstrument(InstrumentTradeStockSharpModel req)
@@ -75,6 +75,27 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         }
         context.SaveChanges();
         return Task.FromResult(new TResponseModel<PortfolioStockSharpViewModel>() { Response = portDb });
+    }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<MyTradeStockSharpViewModel>> SaveTrade(MyTradeStockSharpModel myTrade)
+    {
+        TResponseModel<MyTradeStockSharpViewModel> res = new();
+        if (myTrade.Order is null)
+        {
+            loggerRepo.LogError("myTrade.Order is null");
+            res.AddError("myTrade.Order is null");
+            return res;
+        }
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
+        MyTradeStockSharpModelDB myTradeDb = new MyTradeStockSharpModelDB().Bind(myTrade);
+        myTradeDb.LastUpdatedAtUTC = DateTime.UtcNow;
+
+        myTradeDb.OrderId = SaveOrder(myTrade.Order).Result.Response.IdPK;
+        await context.MyTrades.AddAsync(myTradeDb);
+        await context.SaveChangesAsync();
+        res.Response = myTradeDb;
+        return res;
     }
 
     /// <inheritdoc/>
@@ -171,25 +192,5 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         }
         context.SaveChanges();
         return Task.FromResult(new TResponseModel<int>() { Response = exchangeDb.Id });
-    }
-
-    /// <inheritdoc/>
-    public async Task<TResponseModel<int>> SaveTrade(MyTradeStockSharpModel myTrade)
-    {
-        TResponseModel<int> res = new();
-        if (myTrade.Order is null)
-        {
-            res.AddError("myTrade.Order is null");
-            return res;
-        }
-        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
-        MyTradeStockSharpModelDB myTradeDb = new MyTradeStockSharpModelDB().Bind(myTrade);
-        myTradeDb.LastUpdatedAtUTC = DateTime.UtcNow;
-
-        myTradeDb.OrderId = SaveOrder(myTrade.Order).Result.Response.IdPK;
-        await context.MyTrades.AddAsync(myTradeDb);
-        await context.SaveChangesAsync();
-        res.Response = myTradeDb.Id;
-        return res;
     }
 }

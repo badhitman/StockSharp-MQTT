@@ -1,0 +1,42 @@
+﻿@using BlazorLib.Components.StockSharp
+
+@inherits StockSharpBaseComponent
+
+<h3>TradesStockSharpViewComponent</h3>
+
+<MudTable ServerData="ServerReload" Dense="true" Hover="true" @ref="_tableRef">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">My Trades</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>Commission</MudTh>
+        <MudTh>CommissionCurrency</MudTh>
+        <MudTh>Initiator</MudTh>
+        <MudTh>Order</MudTh>
+        <MudTh>Yield</MudTh>
+        <MudTh>Slippage</MudTh>
+        <MudTh>Position</MudTh>
+        <MudTh>PnL</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Commission">@context.Commission</MudTd>
+        <MudTd DataLabel="CommissionCurrency">@context.CommissionCurrency</MudTd>
+        <MudTd DataLabel="Initiator">@context.Initiator</MudTd>
+        <MudTd DataLabel="Order">@context.Order</MudTd>
+        <MudTd DataLabel="Yield">@context.Yield</MudTd>
+        <MudTd DataLabel="Slippage">@context.Slippage</MudTd>
+        <MudTd DataLabel="Position">@context.Position</MudTd>
+        <MudTd DataLabel="PnL">@context.PnL</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
