@@ -20,7 +20,7 @@ public partial class TradesStockSharpViewComponent : StockSharpBaseComponent
 
 
     [Inject]
-    protected IEventNotifyReceive<MyTradeStockSharpModel> PortfolioEventRepo { get; set; } = default!;
+    protected IEventNotifyReceive<MyTradeStockSharpModel> MyTradeEventRepo { get; set; } = default!;
 
 
     List<MyTradeStockSharpViewModel>? partData;
@@ -48,11 +48,11 @@ public partial class TradesStockSharpViewComponent : StockSharpBaseComponent
     protected override async Task OnInitializedAsync()
     {
         await SetBusyAsync();
-        //await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.MyTradeReceivedStockSharpNotifyReceive, MyTradeNotificationHandle);
+        await MyTradeEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.OwnTradeReceivedStockSharpNotifyReceive, MyTradeNotificationHandle);
         await SetBusyAsync(false);
     }
 
-    private void TradeNotificationHandle(MyTradeStockSharpModel model)
+    private void MyTradeNotificationHandle(MyTradeStockSharpModel model)
     {
         //if (partData?.Any(x => x.Id == model.Id) == true && _tableRef is not null)
         //{
