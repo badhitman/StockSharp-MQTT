@@ -35,6 +35,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<GetBoardsStockSharpDriverReceive, int[], TResponseModel<List<BoardStockSharpModel>>>()
             .RegisterMqListener<GetExchangesStockSharpDriverReceive, int[], TResponseModel<List<ExchangeStockSharpModel>>>()
             .RegisterMqListener<GetInstrumentsStockSharpDriverReceive, int[], TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()
+            .RegisterMqListener<GetMarkersForInstrumentStockSharpDriverReceive, int, TResponseModel<List<MarkerInstrumentStockSharpViewModel>>>()
             .RegisterMqListener<GetOrdersStockSharpDriverReceive, int[], TResponseModel<List<OrderStockSharpModel>>>()
             .RegisterMqListener<OrderRegisterStockSharpDriverReceive, CreateOrderRequestModel, ResponseBaseModel>()
             .RegisterMqListener<OrderRegisterRequestStockSharpDriverReceive, OrderRegisterRequestModel, OrderRegisterRequestResponseModel>()

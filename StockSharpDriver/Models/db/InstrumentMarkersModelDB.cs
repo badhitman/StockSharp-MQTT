@@ -2,23 +2,18 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace SharedLib;
 
 /// <summary>
 /// Markers of instruments
 /// </summary>
-public class InstrumentMarkersModelDB
+[Index(nameof(MarkerDescriptor))]
+public class InstrumentMarkersModelDB : MarkerInstrumentStockSharpViewModel
 {
-    [Key]
-    public int Id { get; set; }
-
     /// <inheritdoc/>
-    public InstrumentStockSharpMarkersEnum MarkerDescriptor { get; set; }
-
-    /// <inheritdoc/>
-    public InstrumentStockSharpModelDB Instrument {  get; set; }
+    public InstrumentStockSharpModelDB Instrument { get; set; }
 
     /// <inheritdoc/>
     public int InstrumentId { get; set; }

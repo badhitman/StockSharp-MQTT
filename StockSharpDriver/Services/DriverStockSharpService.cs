@@ -11,6 +11,7 @@ using Ecng.Common;
 using System.Net;
 using SharedLib;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 
 namespace StockSharpDriver;
 
@@ -86,8 +87,17 @@ public class DriverStockSharpService(
             lock (AllBondList)
                 foreach (Security security in AllBondList)
                 {
-                    if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
-                        res.Add(security);
+
+                    try
+                    {
+                        if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
+                            res.Add(security);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"{JsonConvert.SerializeObject(Instruments)}\n{JsonConvert.SerializeObject(BoardsFilter)}");
+                    }
                 }
             return res;
         }

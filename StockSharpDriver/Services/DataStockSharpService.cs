@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using StockSharp.Algo;
 using SharedLib;
 using DbcLib;
+using System.Collections.Generic;
 
 namespace StockSharpDriver;
 
@@ -29,6 +30,30 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         };
     }
 
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<MarkerInstrumentStockSharpViewModel>>> GetMarkersForInstrumentAsync(int instrumentId, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        InstrumentStockSharpModelDB instrumentDb = await context
+            .Instruments
+            .Include(x => x.Markers)
+            .FirstOrDefaultAsync(x => x.Id == instrumentId, cancellationToken: cancellationToken);
+
+        TResponseModel<List<MarkerInstrumentStockSharpViewModel>> res = new();
+
+        if (instrumentDb?.Markers is null)
+        {
+            res.AddError($"Instrument #{instrumentId} not found");
+            return res;
+        }
+        res.Response = [.. instrumentDb.Markers.Select(x=> new MarkerInstrumentStockSharpViewModel()
+        {
+            Id = x.Id,
+            MarkerDescriptor = x.MarkerDescriptor,
+        })];
+        return res;
+    }
+    
     /// <inheritdoc/>
     public async Task<TResponseModel<List<BoardStockSharpModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
     {
