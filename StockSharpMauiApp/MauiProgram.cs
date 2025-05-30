@@ -51,6 +51,8 @@ public static class MauiProgram
         builder.Services
             .AddScoped<IEventNotifyReceive<PortfolioStockSharpViewModel>, EventNotifyReceive<PortfolioStockSharpViewModel>>()
             .AddScoped<IEventNotifyReceive<InstrumentTradeStockSharpViewModel>, EventNotifyReceive<InstrumentTradeStockSharpViewModel>>()
+            .AddScoped<IEventNotifyReceive<MyTradeStockSharpModel>, EventNotifyReceive<MyTradeStockSharpModel>>()
+            .AddScoped<IEventNotifyReceive<OrderStockSharpViewModel>, EventNotifyReceive<OrderStockSharpViewModel>>()
             ;
         //
         #endregion

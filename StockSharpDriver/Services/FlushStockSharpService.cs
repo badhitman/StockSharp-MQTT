@@ -44,7 +44,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     }
 
     /// <inheritdoc/>
-    public Task<TResponseModel<PortfolioStockSharpViewModel>> SavePortfolio(PortfolioStockSharpModel req)
+    public async Task<TResponseModel<PortfolioStockSharpViewModel>> SavePortfolio(PortfolioStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
         BoardStockSharpModelDB board = null;
@@ -73,14 +73,15 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             portDb.SetUpdate(req);
             context.Update(portDb);
         }
-        context.SaveChanges();
-        return Task.FromResult(new TResponseModel<PortfolioStockSharpViewModel>() { Response = portDb });
+        await context.SaveChangesAsync();
+        return new TResponseModel<PortfolioStockSharpViewModel>() { Response = portDb };
     }
 
     /// <inheritdoc/>
     public async Task<TResponseModel<MyTradeStockSharpViewModel>> SaveTrade(MyTradeStockSharpModel myTrade)
     {
         TResponseModel<MyTradeStockSharpViewModel> res = new();
+
         if (myTrade.Order is null)
         {
             loggerRepo.LogError("myTrade.Order is null");

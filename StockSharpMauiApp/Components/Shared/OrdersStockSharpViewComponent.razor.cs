@@ -20,7 +20,7 @@ public partial class OrdersStockSharpViewComponent : StockSharpBaseComponent
 
 
     [Inject]
-    protected IEventNotifyReceive<OrderStockSharpModel> PortfolioEventRepo { get; set; } = default!;
+    protected IEventNotifyReceive<OrderStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
 
     List<OrderStockSharpViewModel>? partData;
     MudTable<OrderStockSharpViewModel>? _tableRef;

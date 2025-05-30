@@ -28,8 +28,8 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     int QuoteSizeVolume { get; set; }
     int SkipSizeVolume { get; set; }
 
-    List<InstrumentTradeStockSharpViewModel> instruments = [];
-    List<PortfolioStockSharpViewModel> portfolios = [];
+    readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
+    readonly List<PortfolioStockSharpViewModel> portfolios = [];
 
     List<BoardStockSharpModel>? allBoards;
     IEnumerable<BoardStockSharpModel>? SelectedBoards { get; set; }

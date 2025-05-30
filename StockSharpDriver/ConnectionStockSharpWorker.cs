@@ -124,20 +124,27 @@ public class ConnectionStockSharpWorker(
         eventTrans.BoardReceived(board);
     }
 
-    void OrderReceivedHandle(Subscription subscription, Order oreder)
+    void OrderReceivedHandle(Subscription subscription, Order orderSource)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(oreder)}");
-        OrderStockSharpModel order = new OrderStockSharpModel().Bind(oreder);
-        dataRepo.SaveOrder(order);
-        eventTrans.OrderReceived(order);
+        _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(orderSource)}");
+        OrderStockSharpModel order = new OrderStockSharpModel().Bind(orderSource);
+        TResponseModel<OrderStockSharpViewModel> dbRes = dataRepo.SaveOrder(order).Result;
+        if (dbRes.Response is null)
+            _logger.LogError("result is null: TResponseModel<OrderStockSharpViewModel> dbRes = dataRepo.SaveOrder(order).Result;");
+        else
+            eventTrans.OrderReceived(dbRes.Response);
     }
 
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
         _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
         MyTradeStockSharpModel myTrade = new MyTradeStockSharpModel().Bind(tr);
-        dataRepo.SaveTrade(myTrade);
-        eventTrans.OwnTradeReceived(myTrade);
+        TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade).Result;
+       
+        if (dbRes.Response is null)
+            _logger.LogError("result is null: TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade).Result;");
+        else
+            eventTrans.OwnTradeReceived(dbRes.Response);
     }
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
