@@ -49,10 +49,10 @@ public static class MauiProgram
             .AddScoped<ILogsService, LogsServiceTransmission>()
             ;
         builder.Services
-            .AddScoped<IEventNotifyReceive<PortfolioStockSharpViewModel>, EventNotifyReceive<PortfolioStockSharpViewModel>>()
-            .AddScoped<IEventNotifyReceive<InstrumentTradeStockSharpViewModel>, EventNotifyReceive<InstrumentTradeStockSharpViewModel>>()
-            .AddScoped<IEventNotifyReceive<MyTradeStockSharpModel>, EventNotifyReceive<MyTradeStockSharpModel>>()
-            .AddScoped<IEventNotifyReceive<OrderStockSharpViewModel>, EventNotifyReceive<OrderStockSharpViewModel>>()
+            .AddTransient<IEventNotifyReceive<PortfolioStockSharpViewModel>, EventNotifyReceive<PortfolioStockSharpViewModel>>()
+            .AddTransient<IEventNotifyReceive<InstrumentTradeStockSharpViewModel>, EventNotifyReceive<InstrumentTradeStockSharpViewModel>>()
+            .AddTransient<IEventNotifyReceive<MyTradeStockSharpModel>, EventNotifyReceive<MyTradeStockSharpModel>>()
+            .AddTransient<IEventNotifyReceive<OrderStockSharpViewModel>, EventNotifyReceive<OrderStockSharpViewModel>>()
             ;
         //
         #endregion

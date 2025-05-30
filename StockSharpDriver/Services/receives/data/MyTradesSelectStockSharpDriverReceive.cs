@@ -13,7 +13,7 @@ public class MyTradesSelectStockSharpDriverReceive(IManageStockSharpService ssRe
     : IMQTTReceive<TPaginationRequestStandardModel<MyTradeSelectStockSharpRequestModel>, TPaginationResponseModel<MyTradeStockSharpViewModel>>
 {
     /// <inheritdoc/>
-    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.OwnTradeReceivedStockSharpNotifyReceive;
+    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.MyTradesSelectStockSharpReceive;
 
     /// <inheritdoc/>
     public async Task<TPaginationResponseModel<MyTradeStockSharpViewModel>> ResponseHandleActionAsync(TPaginationRequestStandardModel<MyTradeSelectStockSharpRequestModel> req, CancellationToken token = default)

@@ -60,4 +60,9 @@ public partial class TradesStockSharpViewComponent : StockSharpBaseComponent
         //    SnackbarRepo.Add($"Order handle: {JsonConvert.SerializeObject(model)}", Severity.Info, c => c.DuplicatesBehavior = SnackbarDuplicatesBehavior.Allow);
         //}
     }
+    public override void Dispose()
+    {
+        MyTradeEventRepo.UnregisterAction();
+        base.Dispose();
+    }
 }
