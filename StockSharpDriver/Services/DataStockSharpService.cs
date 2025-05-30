@@ -7,6 +7,8 @@ using StockSharp.Algo;
 using SharedLib;
 using DbcLib;
 using System.Collections.Generic;
+using System.Threading;
+using System.Diagnostics.Metrics;
 
 namespace StockSharpDriver;
 
@@ -53,7 +55,51 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         })];
         return res;
     }
-    
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> SetMarkersForInstrumentAsync(SetMarkersForInstrumentRequestModel req, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        IQueryable<InstrumentMarkersModelDB> q = context.InstrumentsMarkers.Where(x => x.InstrumentId == req.InstrumentId);
+
+        if (req.SetMarkers is null || req.SetMarkers.Length == 0)
+        {
+            if (!await q.AnyAsync(cancellationToken: cancellationToken))
+                return ResponseBaseModel.CreateInfo($"{nameof(SetMarkersForInstrumentAsync)}: no exist thin");
+
+            context.InstrumentsMarkers.RemoveRange(q);
+            int res = await context.SaveChangesAsync(cancellationToken);
+            return res == 0
+                ? ResponseBaseModel.CreateInfo($"{nameof(SetMarkersForInstrumentAsync)}: no changes caused")
+                : ResponseBaseModel.CreateInfo($"{nameof(SetMarkersForInstrumentAsync)}: {res} elements removed");
+        }
+
+        InstrumentMarkersModelDB[] markersDb = await q.ToArrayAsync(cancellationToken: cancellationToken);
+        int _resCount = 0;
+        InstrumentMarkersModelDB[] _markers = [.. markersDb.Where(x => !req.SetMarkers.Contains(x.MarkerDescriptor))];
+        if (_markers.Length != 0)
+        {
+            context.InstrumentsMarkers.RemoveRange(q);
+            _resCount += await context.SaveChangesAsync(cancellationToken);
+        }
+
+        _markers = [..req.SetMarkers
+            .Where(x => !markersDb.Any(y => y.MarkerDescriptor == x))
+            .Select(x => new InstrumentMarkersModelDB()
+            {
+                InstrumentId = req.InstrumentId,
+                MarkerDescriptor = x,
+            })];
+
+        if (_markers.Length != 0)
+        {
+            await context.InstrumentsMarkers.AddRangeAsync(q, cancellationToken);
+            _resCount += await context.SaveChangesAsync(cancellationToken);
+        }
+
+        return ResponseBaseModel.CreateInfo($"changed items: {_resCount}");
+    }
+
     /// <inheritdoc/>
     public async Task<TResponseModel<List<BoardStockSharpModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
     {
