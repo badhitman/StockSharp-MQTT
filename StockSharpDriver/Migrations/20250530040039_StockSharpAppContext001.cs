@@ -94,10 +94,7 @@ namespace StockSharpDriver.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
                     BoardId = table.Column<int>(type: "INTEGER", nullable: false),
-                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     NameNormalizedUpper = table.Column<string>(type: "TEXT", nullable: true),
                     IdRemoteNormalizedUpper = table.Column<string>(type: "TEXT", nullable: true),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
@@ -119,7 +116,10 @@ namespace StockSharpDriver.Migrations
                     UnderlyingSecurityId = table.Column<string>(type: "TEXT", nullable: true),
                     OptionType = table.Column<int>(type: "INTEGER", nullable: false),
                     UnderlyingSecurityType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Shortable = table.Column<bool>(type: "INTEGER", nullable: true)
+                    Shortable = table.Column<bool>(type: "INTEGER", nullable: true),
+                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -138,15 +138,15 @@ namespace StockSharpDriver.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
                     BoardId = table.Column<int>(type: "INTEGER", nullable: true),
-                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
                     State = table.Column<int>(type: "INTEGER", nullable: true),
                     Currency = table.Column<int>(type: "INTEGER", nullable: true),
                     ClientCode = table.Column<string>(type: "TEXT", nullable: true),
-                    DepoName = table.Column<string>(type: "TEXT", nullable: true)
+                    DepoName = table.Column<string>(type: "TEXT", nullable: true),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -166,8 +166,6 @@ namespace StockSharpDriver.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     InstrumentId = table.Column<int>(type: "INTEGER", nullable: false),
                     PortfolioId = table.Column<int>(type: "INTEGER", nullable: false),
-                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     LatencyRegistration = table.Column<TimeSpan>(type: "TEXT", nullable: true),
                     LatencyCancellation = table.Column<TimeSpan>(type: "TEXT", nullable: true),
                     LatencyEdition = table.Column<TimeSpan>(type: "TEXT", nullable: true),
@@ -207,7 +205,9 @@ namespace StockSharpDriver.Migrations
                     PositionEffect = table.Column<int>(type: "INTEGER", nullable: true),
                     PostOnly = table.Column<bool>(type: "INTEGER", nullable: true),
                     SeqNum = table.Column<long>(type: "INTEGER", nullable: false),
-                    Leverage = table.Column<int>(type: "INTEGER", nullable: true)
+                    Leverage = table.Column<int>(type: "INTEGER", nullable: true),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -232,8 +232,6 @@ namespace StockSharpDriver.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     OrderId = table.Column<int>(type: "INTEGER", nullable: false),
                     Commission = table.Column<decimal>(type: "TEXT", nullable: true),
                     CommissionCurrency = table.Column<string>(type: "TEXT", nullable: true),
@@ -241,7 +239,9 @@ namespace StockSharpDriver.Migrations
                     PnL = table.Column<decimal>(type: "TEXT", nullable: true),
                     Position = table.Column<decimal>(type: "TEXT", nullable: true),
                     Initiator = table.Column<bool>(type: "INTEGER", nullable: true),
-                    Yield = table.Column<decimal>(type: "TEXT", nullable: true)
+                    Yield = table.Column<decimal>(type: "TEXT", nullable: true),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

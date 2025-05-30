@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250518040122_StockSharpAppContext001")]
+    [Migration("20250530040039_StockSharpAppContext001")]
     partial class StockSharpAppContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -556,7 +556,7 @@ namespace StockSharpDriver.Migrations
             modelBuilder.Entity("SharedLib.MyTradeStockSharpModelDB", b =>
                 {
                     b.HasOne("SharedLib.OrderStockSharpModelDB", "Order")
-                        .WithMany()
+                        .WithMany("MyTrades")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -600,6 +600,11 @@ namespace StockSharpDriver.Migrations
             modelBuilder.Entity("SharedLib.ExchangeStockSharpModelDB", b =>
                 {
                     b.Navigation("Boards");
+                });
+
+            modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>
+                {
+                    b.Navigation("MyTrades");
                 });
 
             modelBuilder.Entity("SharedLib.PortfolioTradeModelDB", b =>

@@ -554,7 +554,7 @@ namespace StockSharpDriver.Migrations
             modelBuilder.Entity("SharedLib.MyTradeStockSharpModelDB", b =>
                 {
                     b.HasOne("SharedLib.OrderStockSharpModelDB", "Order")
-                        .WithMany()
+                        .WithMany("MyTrades")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -598,6 +598,11 @@ namespace StockSharpDriver.Migrations
             modelBuilder.Entity("SharedLib.ExchangeStockSharpModelDB", b =>
                 {
                     b.Navigation("Boards");
+                });
+
+            modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>
+                {
+                    b.Navigation("MyTrades");
                 });
 
             modelBuilder.Entity("SharedLib.PortfolioTradeModelDB", b =>
