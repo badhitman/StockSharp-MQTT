@@ -133,7 +133,6 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     /// <inheritdoc/>
     public async Task<TPaginationResponseModel<MyTradeStockSharpViewModel>> TradesSelectAsync(TPaginationRequestStandardModel<MyTradeSelectStockSharpRequestModel> req, CancellationToken cancellationToken = default)
     {
-
         if (req.PageSize < 10)
             req.PageSize = 10;
 

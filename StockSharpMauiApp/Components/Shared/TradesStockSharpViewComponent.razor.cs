@@ -5,7 +5,6 @@
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using Newtonsoft.Json;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
