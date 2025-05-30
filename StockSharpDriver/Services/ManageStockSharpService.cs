@@ -106,7 +106,6 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     /// <inheritdoc/>
     public async Task<TPaginationResponseModel<OrderStockSharpViewModel>> OrdersSelectAsync(TPaginationRequestStandardModel<OrdersSelectStockSharpRequestModel> req, CancellationToken cancellationToken = default)
     {
-
         if (req.PageSize < 10)
             req.PageSize = 10;
 
@@ -117,7 +116,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
 
         res.TotalRowsCount = await q.CountAsync(cancellationToken: cancellationToken);
         res.Response = await q
-            .OrderBy(x => x.Time)
+            .OrderBy(x => x.CreatedAtUTC)
             .ThenBy(x => x.LastUpdatedAtUTC)
             .ThenBy(x => x.Id)
             .Skip(req.PageSize * req.PageNum)
@@ -134,6 +133,28 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     /// <inheritdoc/>
     public async Task<TPaginationResponseModel<MyTradeStockSharpViewModel>> TradesSelectAsync(TPaginationRequestStandardModel<MyTradeSelectStockSharpRequestModel> req, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+
+        if (req.PageSize < 10)
+            req.PageSize = 10;
+
+        TPaginationResponseModel<MyTradeStockSharpModelDB> res = new(req);
+        StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+
+        IQueryable<MyTradeStockSharpModelDB> q = ctx.MyTrades.AsQueryable();
+
+        res.TotalRowsCount = await q.CountAsync(cancellationToken: cancellationToken);
+        res.Response = await q
+            .OrderBy(x => x.CreatedAtUTC)
+            .ThenBy(x => x.LastUpdatedAtUTC)
+            .ThenBy(x => x.Id)
+            .Skip(req.PageSize * req.PageNum)
+            .Take(req.PageSize)
+            .ToListAsync(cancellationToken: cancellationToken);
+
+        return new(req)
+        {
+            TotalRowsCount = res.TotalRowsCount,
+            Response = [.. res.Response.Select(x => (MyTradeStockSharpViewModel)x)]
+        };
     }
 }
