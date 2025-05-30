@@ -78,7 +78,7 @@ public abstract partial class StockSharpAppLayerContext : DbContext
     public DbSet<FixMessageAdapterModelDB> Adapters { get; set; }
 
     /// <inheritdoc/>
-    public DbSet<PortfolioTradeModelDB> Portfolios { get; set; } = default!;
+    public DbSet<PortfolioTradeModelDB> Portfolios { get; set; }
 
     /// <inheritdoc/>
     public DbSet<ExchangeStockSharpModelDB> Exchanges { get; set; }
@@ -88,6 +88,9 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
     /// <inheritdoc/>
     public DbSet<InstrumentStockSharpModelDB> Instruments { get; set; }
+
+    /// <inheritdoc/>
+    public DbSet<InstrumentMarkersModelDB> InstrumentsMarkers { get; set; }
 
     /// <inheritdoc/>
     public DbSet<OrderStockSharpModelDB> Orders { get; set; }

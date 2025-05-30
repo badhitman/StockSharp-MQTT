@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace SharedLib;
@@ -23,6 +22,9 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
 
     /// <inheritdoc/>
     public string IdRemoteNormalizedUpper { get; set; }
+
+    /// <inheritdoc/>
+    public List<InstrumentMarkersModelDB> Markers { get; set; }
 
     /// <inheritdoc/>
     public void SetUpdate(InstrumentTradeStockSharpModel req)

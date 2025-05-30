@@ -129,6 +129,7 @@ public class Program
                     .AddScoped<ReceiverService>()
                     .AddHostedService<PollingService>()
                 ;
+                services.AddMemoryCache();
 
                 ConnectionLink _connector = new();
                 _conf.Reload(bx.Configuration.GetSection("StockSharpDriverConfig").Get<StockSharpClientConfigModel>());

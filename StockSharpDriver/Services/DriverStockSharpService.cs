@@ -10,6 +10,7 @@ using System.Security;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace StockSharpDriver;
 
@@ -19,6 +20,7 @@ namespace StockSharpDriver;
 public class DriverStockSharpService(
     ILogger<DriverStockSharpService> _logger,
     IManageStockSharpService manageRepo,
+    IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
     readonly List<SecurityPosition> SBondPositionsList = [];
@@ -387,13 +389,59 @@ public class DriverStockSharpService(
             Volume = req.Volume,
             Price = req.Price,
             Security = currentSec,
-            Side = (Sides)Enum.Parse(typeof(Sides), Enum.GetName(req.Side))
+            Side = (Sides)Enum.Parse(typeof(Sides), Enum.GetName(req.Side)),
+            IsManual = req.IsManual,
+            IsMarketMaker = req.IsMarketMaker,
+            IsSystem = req.IsSystem,
+            Comment = req.Comment,
         };
 
         conLink.Connector.RegisterOrder(order);
         return Task.FromResult(ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию"));
     }
 
+    /// <inheritdoc/>
+    public Task<OrderRegisterRequestResponseModel> OrderRegisterRequestAsync(OrderRegisterRequestModel req, CancellationToken cancellationToken = default)
+    {
+        OrderRegisterRequestResponseModel res = new();
+        if (string.IsNullOrWhiteSpace(req.ConfirmRequestToken))
+        {
+            req.ConfirmRequestToken = Guid.NewGuid().ToString();
+            memoryCache.Set(req.ConfirmRequestToken, req, new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(10)));
+            res.AddWarning("Запрос требуется подтвердить!");
+            return Task.FromResult(res);
+        }
+        else
+        {
+            memoryCache.TryGetValue(req.ConfirmRequestToken, out OrderRegisterRequestModel savedReq);
+            if (savedReq is null)
+            {
+                req.ConfirmRequestToken = Guid.NewGuid().ToString();
+                memoryCache.Set(req.ConfirmRequestToken, req, new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(30)));
+                res.AddAlert("Подтверждение просрочено. Повторите попытку! ");
+                return Task.FromResult(res);
+            }
+            else
+                memoryCache.Remove(req.ConfirmRequestToken);
+        }
+
+
+        Order _order = new()
+        {
+            Price = req.Price,
+            ClientCode = req.ClientCode,
+            Comment = "Manual",
+            Volume = req.Volume,
+            Side = req.Direction == SidesEnum.Buy ? Sides.Buy : Sides.Sell,
+            //Security = conLink.Connector.Securities.FirstOrDefault(s => (s.Code == secCode) && (s.Board == ExchangeBoard.MicexTqob)),
+            //Portfolio = conLink.Connector.Portfolios.FirstOrDefault(p => p.Name == PortName),
+            //IsMarketMaker = OfzCodes.Contains(req.SecCode),
+        };
+
+        conLink.Connector.RegisterOrder(_order);
+
+        throw new NotImplementedException();
+    }
 
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
@@ -634,7 +682,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogTrace($"Call > `{nameof(CurrentTimeChangedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
-    void NewMessageHandle(Message msg)
+    void NewMessageHandle(StockSharp.Messages.Message msg)
     {
         //_logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg)}");
     }

@@ -159,6 +159,26 @@ namespace StockSharpDriver.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "InstrumentsMarkers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    MarkerDescriptor = table.Column<int>(type: "INTEGER", nullable: false),
+                    InstrumentId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InstrumentsMarkers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InstrumentsMarkers_Instruments_InstrumentId",
+                        column: x => x.InstrumentId,
+                        principalTable: "Instruments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Orders",
                 columns: table => new
                 {
@@ -335,6 +355,11 @@ namespace StockSharpDriver.Migrations
                 column: "UnderlyingSecurityId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_InstrumentsMarkers_InstrumentId",
+                table: "InstrumentsMarkers",
+                column: "InstrumentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MyTrades_OrderId",
                 table: "MyTrades",
                 column: "OrderId");
@@ -399,6 +424,9 @@ namespace StockSharpDriver.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Adapters");
+
+            migrationBuilder.DropTable(
+                name: "InstrumentsMarkers");
 
             migrationBuilder.DropTable(
                 name: "MyTrades");

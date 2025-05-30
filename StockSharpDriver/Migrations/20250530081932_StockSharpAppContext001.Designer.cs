@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250530040039_StockSharpAppContext001")]
+    [Migration("20250530081932_StockSharpAppContext001")]
     partial class StockSharpAppContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -178,6 +178,25 @@ namespace StockSharpDriver.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("Adapters");
+                });
+
+            modelBuilder.Entity("SharedLib.InstrumentMarkersModelDB", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InstrumentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MarkerDescriptor")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId");
+
+                    b.ToTable("InstrumentsMarkers");
                 });
 
             modelBuilder.Entity("SharedLib.InstrumentStockSharpModelDB", b =>
@@ -542,6 +561,17 @@ namespace StockSharpDriver.Migrations
                     b.Navigation("Exchange");
                 });
 
+            modelBuilder.Entity("SharedLib.InstrumentMarkersModelDB", b =>
+                {
+                    b.HasOne("SharedLib.InstrumentStockSharpModelDB", "Instrument")
+                        .WithMany("Markers")
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
+                });
+
             modelBuilder.Entity("SharedLib.InstrumentStockSharpModelDB", b =>
                 {
                     b.HasOne("SharedLib.BoardStockSharpModelDB", "Board")
@@ -600,6 +630,11 @@ namespace StockSharpDriver.Migrations
             modelBuilder.Entity("SharedLib.ExchangeStockSharpModelDB", b =>
                 {
                     b.Navigation("Boards");
+                });
+
+            modelBuilder.Entity("SharedLib.InstrumentStockSharpModelDB", b =>
+                {
+                    b.Navigation("Markers");
                 });
 
             modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>
