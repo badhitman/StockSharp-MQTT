@@ -76,7 +76,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         InstrumentMarkersModelDB[] _markers = [.. markersDb.Where(x => !req.SetMarkers.Contains(x.MarkerDescriptor))];
         if (_markers.Length != 0)
         {
-            context.InstrumentsMarkers.RemoveRange(q);
+            context.InstrumentsMarkers.RemoveRange(_markers);
             _resCount += await context.SaveChangesAsync(cancellationToken);
         }
 
@@ -90,7 +90,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
 
         if (_markers.Length != 0)
         {
-            await context.InstrumentsMarkers.AddRangeAsync(q, cancellationToken);
+            await context.InstrumentsMarkers.AddRangeAsync(_markers, cancellationToken);
             _resCount += await context.SaveChangesAsync(cancellationToken);
         }
 
