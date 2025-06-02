@@ -126,7 +126,7 @@ public class Program
                             return new TelegramBotClient(options, httpClient);
                         });
 
-                services//
+                services
                     .AddSingleton<IFlushStockSharpService, FlushStockSharpService>()
                     .AddSingleton<IDataStockSharpService, DataStockSharpService>()
                     .AddSingleton<IParametersStorage, ParametersStorage>()

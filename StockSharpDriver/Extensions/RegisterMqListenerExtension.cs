@@ -6,6 +6,7 @@ using Transmission.Receives.StockSharpDriver;
 using Transmission.Receives.storage;
 using MQTTCallLib;
 using SharedLib;
+using Transmission.Receives.rubrics;
 
 namespace StockSharpService;
 
@@ -20,6 +21,21 @@ public static class RegisterMqListenerExtension
     public static IServiceCollection StockSharpRegisterMqListeners(this IServiceCollection services)
     {
         return services
+            .RegisterMqListener<SaveParameterReceive, StorageCloudParameterPayloadModel, TResponseModel<int?>>()
+            .RegisterMqListener<ReadParameterReceive, StorageMetadataModel, TResponseModel<StorageCloudParameterPayloadModel>>()
+            .RegisterMqListener<ReadParametersReceive, StorageMetadataModel[], TResponseModel<List<StorageCloudParameterPayloadModel>>>()
+            .RegisterMqListener<FindParametersReceive, RequestStorageBaseModel, TResponseModel<FoundParameterModel[]>>()
+
+            .RegisterMqListener<TagSetReceive, TagSetModel, ResponseBaseModel>()
+            .RegisterMqListener<TagsSelectReceive, TPaginationRequestModel<SelectMetadataRequestModel>, TPaginationResponseModel<TagViewModel>>()
+
+            .RegisterMqListener<RubricsListReceive, RubricsListRequestModel, List<UniversalBaseModel>>()
+            .RegisterMqListener<RubricCreateOrUpdateReceive, RubricStandardModel, TResponseModel<int>>()
+            .RegisterMqListener<RubricMoveReceive, TAuthRequestModel<RowMoveModel>, ResponseBaseModel>()
+            .RegisterMqListener<RubricReadReceive, int, TResponseModel<List<RubricStandardModel>>>()
+            .RegisterMqListener<RubricsGetReceive, int[], TResponseModel<List<RubricStandardModel>>>()
+
+
             .RegisterMqListener<GoToPageForRowReceive, TPaginationRequestStandardModel<int>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<MetadataLogsReceive, PeriodDatesTimesModel, TResponseModel<LogsMetadataResponseModel>>()
             .RegisterMqListener<LogsSelectReceive, TPaginationRequestStandardModel<LogsSelectRequestModel>, TPaginationResponseModel<NLogRecordModelDB>>()
