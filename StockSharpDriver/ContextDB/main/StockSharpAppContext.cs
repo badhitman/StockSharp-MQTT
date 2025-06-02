@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////
 
 using Microsoft.EntityFrameworkCore;
-using SharedLib;
 
 namespace DbcLib;
 

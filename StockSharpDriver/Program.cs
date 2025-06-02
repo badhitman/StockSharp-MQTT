@@ -95,6 +95,13 @@ public class Program
                     //opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 #endif
                 })
+                .AddDbContextFactory<PropertiesStorageContext>(opt =>
+                {
+#if DEBUG
+                    opt.EnableSensitiveDataLogging(true);
+                    //opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+#endif
+                })
                 .AddDbContextFactory<NLogsContext>(opt =>
                 {
 #if DEBUG
@@ -122,6 +129,7 @@ public class Program
                 services//
                     .AddSingleton<IFlushStockSharpService, FlushStockSharpService>()
                     .AddSingleton<IDataStockSharpService, DataStockSharpService>()
+                    .AddSingleton<IParametersStorage, ParametersStorage>()
                     .AddSingleton<IDriverStockSharpService, DriverStockSharpService>()
                     .AddSingleton<IManageStockSharpService, ManageStockSharpService>()
                     .AddScoped<ILogsService, LogsNavigationImpl>()
@@ -159,6 +167,7 @@ public class Program
         //IDbContextFactory<NLogsContext> logsDbFactory
         IDbContextFactory<NLogsContext> _factNlogs = host.Services.GetRequiredService<IDbContextFactory<NLogsContext>>();
         NLogsContext _ctxNlogs = _factNlogs.CreateDbContext();
+
         logger.Info($"Program has started (logs count: {_ctxNlogs.Logs.Count()}).");
         host.Run();
     }
