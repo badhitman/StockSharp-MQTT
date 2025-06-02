@@ -12,6 +12,7 @@ using Telegram.Bot;
 using SharedLib;
 using DbcLib;
 using NLog;
+using HelpDeskService;
 
 namespace StockSharpDriver;
 
@@ -132,6 +133,7 @@ public class Program
                     .AddSingleton<IParametersStorage, ParametersStorage>()
                     .AddSingleton<IDriverStockSharpService, DriverStockSharpService>()
                     .AddSingleton<IManageStockSharpService, ManageStockSharpService>()
+                    .AddSingleton<IRubricsService, RubricsService>()
                     .AddScoped<ILogsService, LogsNavigationImpl>()
                     .AddScoped<UpdateHandler>()
                     .AddScoped<ReceiverService>()
@@ -153,7 +155,10 @@ public class Program
                 ;
 
                 #region MQ Transmission (remote methods call)
-                services.AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName));
+                services
+                    .AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName))
+
+                    ;
                 //
                 services
                     .AddSingleton<IEventsStockSharpService, StockSharpEventsServiceTransmission>()

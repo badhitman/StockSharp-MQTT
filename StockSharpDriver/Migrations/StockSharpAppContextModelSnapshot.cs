@@ -194,6 +194,8 @@ namespace StockSharpDriver.Migrations
 
                     b.HasIndex("InstrumentId");
 
+                    b.HasIndex("MarkerDescriptor");
+
                     b.ToTable("InstrumentsMarkers");
                 });
 

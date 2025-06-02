@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace StockSharpDriver.Migrations
 {
-    public partial class StockSharpAppContext001 : Migration
+    public partial class AppStockSharpContext001 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -164,8 +164,8 @@ namespace StockSharpDriver.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    MarkerDescriptor = table.Column<int>(type: "INTEGER", nullable: false),
-                    InstrumentId = table.Column<int>(type: "INTEGER", nullable: false)
+                    InstrumentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    MarkerDescriptor = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -358,6 +358,11 @@ namespace StockSharpDriver.Migrations
                 name: "IX_InstrumentsMarkers_InstrumentId",
                 table: "InstrumentsMarkers",
                 column: "InstrumentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InstrumentsMarkers_MarkerDescriptor",
+                table: "InstrumentsMarkers",
+                column: "MarkerDescriptor");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyTrades_OrderId",

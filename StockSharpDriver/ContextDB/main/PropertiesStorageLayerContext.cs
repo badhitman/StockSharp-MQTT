@@ -25,11 +25,12 @@ public partial class PropertiesStorageLayerContext : DbContext
     public PropertiesStorageLayerContext(DbContextOptions options)
         : base(options)
     {
-        //#if DEBUG
-        //        Database.EnsureCreated();
-        //#else
+        FileInfo _fi = new(DbPath);
+
+        if (_fi.Directory?.Exists != true)
+            Directory.CreateDirectory(Path.GetDirectoryName(DbPath)!);
+
         Database.Migrate();
-        //#endif
     }
 
     /// <inheritdoc/>
