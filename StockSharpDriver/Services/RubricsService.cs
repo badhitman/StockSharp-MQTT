@@ -49,7 +49,7 @@ public class RubricsService(
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> RubricMoveAsync(TAuthRequestModel<RowMoveModel> req, CancellationToken token = default)
+    public async Task<ResponseBaseModel> RubricMoveAsync(TRequestModel<RowMoveModel> req, CancellationToken token = default)
     {
         ResponseBaseModel res = new();
 
@@ -169,6 +169,7 @@ public class RubricsService(
             res.AddError("Объект с таким именем уже существует в данном узле");
             return res;
         }
+        RubricModelDB _rub;
 
         if (rubric.Id < 1)
         {
@@ -179,17 +180,17 @@ public class RubricsService(
                             .ToArrayAsync(cancellationToken: token);
 
             rubric.SortIndex = six.Length == 0 ? 1 : six.Max() + 1;
-
-            await context.AddAsync((RubricModelDB)rubric, token);
+            _rub = RubricModelDB.Build(rubric);
+            await context.AddAsync(_rub, token);
             await context.SaveChangesAsync(token);
             res.AddSuccess("Объект успешно создан");
-            res.Response = rubric.Id;
+            res.Response = _rub.Id;
         }
         else
         {
-            RubricModelDB _rub = await context
-                .Rubrics
-                .FirstAsync(x => x.Id == rubric.Id, cancellationToken: token);
+            _rub = await context
+               .Rubrics
+               .FirstAsync(x => x.Id == rubric.Id, cancellationToken: token);
 
             _rub.IsDisabled = rubric.IsDisabled;
             _rub.Name = rubric.Name;
