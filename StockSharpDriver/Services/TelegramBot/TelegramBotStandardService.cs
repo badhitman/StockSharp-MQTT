@@ -1,3 +1,7 @@
+////////////////////////////////////////////////
+// © https://github.com/badhitman - @FakeGov
+////////////////////////////////////////////////
+
 using SharedLib;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -10,7 +14,6 @@ namespace Telegram.Bot.Services;
 /// </summary>
 public class TelegramBotStandardService(ITelegramBotClient _botClient, ILogger<TelegramBotStandardService> _logger) : ITelegramBotStandardService
 {
-
     /// <inheritdoc/>
     public async Task<TResponseModel<UserTelegramBaseModel>> AboutBotAsync(CancellationToken token = default)
     {
@@ -45,8 +48,8 @@ public class TelegramBotStandardService(ITelegramBotClient _botClient, ILogger<T
 
     public async Task<TResponseModel<MessageComplexIdsModel>> SendTextMessageTelegramAsync(SendTextMessageTelegramBotModel message, CancellationToken token = default)
     {
-        
-         TResponseModel<MessageComplexIdsModel> res = new();
+
+        TResponseModel<MessageComplexIdsModel> res = new();
         string msg;
         if (string.IsNullOrWhiteSpace(message.Message))
         {

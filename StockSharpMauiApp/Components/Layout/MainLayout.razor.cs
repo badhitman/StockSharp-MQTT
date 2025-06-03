@@ -1,6 +1,7 @@
 ﻿using BlazorLib;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using Newtonsoft.Json;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Layout;
@@ -11,7 +12,7 @@ public partial class MainLayout
     ISnackbar SnackbarRepo { get; set; } = default!;
 
     [Inject]
-    ITelegramBotStandardService TelegramRepo { get; set; } = default!;
+    ITelegramBotStandardTransmission TelegramRepo { get; set; } = default!;
 
 
     private bool _isDarkMode = true;
@@ -22,7 +23,7 @@ public partial class MainLayout
         TResponseModel<UserTelegramBaseModel> rest = await TelegramRepo.AboutBotAsync();
         SnackbarRepo.ShowMessagesResponse(rest.Messages);
         aboutBot = rest.Response;
-        SnackbarRepo.Add($"Bot name:{aboutBot.Username}");
+        SnackbarRepo.Add($"TelegramBot: {JsonConvert.SerializeObject(aboutBot)}");
     }
 
     protected override async Task OnInitializedAsync()
