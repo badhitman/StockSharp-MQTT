@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedLib", "..\BlankCRM\Sh
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedLibStandart21", "..\BlankCRM\SharedLibStandard21\SharedLibStandard21.csproj", "{CE885F7A-8580-AC10-39BA-3CA73BD7B716}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedLibStandard21", "..\BlankCRM\SharedLibStandard21\SharedLibStandard21.csproj", "{CE885F7A-8580-AC10-39BA-3CA73BD7B716}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTTCallLib", "..\BlankCRM\RemoteCallLib\MQTTCallLib\MQTTCallLib.csproj", "{A4440145-B164-BEEC-B108-66938E6637D2}"
 EndProject
