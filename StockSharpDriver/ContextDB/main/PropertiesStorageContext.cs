@@ -11,5 +11,11 @@ namespace DbcLib;
 /// </summary>
 public partial class PropertiesStorageContext(DbContextOptions<PropertiesStorageContext> options) : PropertiesStorageLayerContext(options)
 {
-
+    /// <inheritdoc/>
+    protected override void OnConfiguring(DbContextOptionsBuilder options)
+    {
+        base.OnConfiguring(options);
+        options
+            .UseSqlite($"Filename={DbPath}");
+    }
 }

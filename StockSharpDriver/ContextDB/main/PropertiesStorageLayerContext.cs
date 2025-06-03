@@ -40,6 +40,7 @@ public partial class PropertiesStorageLayerContext : DbContext
         options.EnableSensitiveDataLogging(true);
         // options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 #endif
+        base.OnConfiguring(options);
     }
 
     /// <summary>

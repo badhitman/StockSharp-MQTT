@@ -180,7 +180,7 @@ public class RubricsService(
 
             rubric.SortIndex = six.Length == 0 ? 1 : six.Max() + 1;
 
-            await context.AddAsync(rubric, token);
+            await context.AddAsync((RubricModelDB)rubric, token);
             await context.SaveChangesAsync(token);
             res.AddSuccess("Объект успешно создан");
             res.Response = rubric.Id;
