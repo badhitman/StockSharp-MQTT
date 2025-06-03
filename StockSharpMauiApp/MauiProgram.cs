@@ -41,8 +41,9 @@ public static class MauiProgram
         string appName = typeof(MauiProgram).Assembly.GetName().Name ?? "StockSharpMauiAppDemoAssemblyName";
         #region MQ Transmission (remote methods call)
         builder.Services.AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName));
-        //
+        // 
         builder.Services
+            .AddScoped<IRubricsTransmission, RubricsTransmission>()
             .AddScoped<ITelegramBotStandardTransmission, TelegramBotStandardTransmission>()
             .AddScoped<IDataStockSharpService, DataStockSharpTransmission>()
             .AddScoped<IDriverStockSharpService, StockSharpDriverTransmission>()
