@@ -15,6 +15,9 @@ Adapters
 Instruments (aka Securities)
 ![instruments view](./StockSharpMauiApp/img/instruments-view.png)
 
+Rubrics (segments)
+![rubrics view](./StockSharpMauiApp/img/rubrics-view.png)
+
 Logs (imported of BlankCRM)
 ![logs](./StockSharpMauiApp/img/logs.png)
 

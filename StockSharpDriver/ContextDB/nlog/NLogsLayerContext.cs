@@ -47,7 +47,7 @@ public partial class NLogsLayerContext : DbContext
     }
 
     /// <summary>
-    /// Логи
+    /// Logs
     /// </summary>
     public DbSet<NLogRecordModelDB> Logs { get; set; } = default!;
 }
