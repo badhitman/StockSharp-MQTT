@@ -126,8 +126,9 @@ public class Program
                             TelegramBotClientOptions options = new(botConfig.BotToken);
                             return new TelegramBotClient(options, httpClient);
                         });
-
+                //
                 services
+                    .AddSingleton<ITelegramBotStandardService, TelegramBotStandardService>()
                     .AddSingleton<IFlushStockSharpService, FlushStockSharpService>()
                     .AddSingleton<IDataStockSharpService, DataStockSharpService>()
                     .AddSingleton<IParametersStorage, ParametersStorage>()

@@ -4,8 +4,8 @@
 
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 using Newtonsoft.Json;
+using MudBlazor;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
@@ -18,9 +18,9 @@ public partial class OrdersStockSharpViewComponent : StockSharpBaseComponent
     [Inject]
     IManageStockSharpService SsRepo { get; set; } = default!;
 
-
     [Inject]
     protected IEventNotifyReceive<OrderStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
+
 
     List<OrderStockSharpViewModel>? partData;
     MudTable<OrderStockSharpViewModel>? _tableRef;
@@ -44,13 +44,6 @@ public partial class OrdersStockSharpViewComponent : StockSharpBaseComponent
         return new TableData<OrderStockSharpViewModel>() { TotalItems = res.TotalRowsCount, Items = res.Response };
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await SetBusyAsync();
-        await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.OrderReceivedStockSharpNotifyReceive, OrderNotificationHandle);
-        await SetBusyAsync(false);
-    }
-
     private void OrderNotificationHandle(OrderStockSharpModel model)
     {
         if (partData?.Any(x => x.Id == model.Id) == true && _tableRef is not null)
@@ -58,5 +51,18 @@ public partial class OrdersStockSharpViewComponent : StockSharpBaseComponent
             InvokeAsync(_tableRef.ReloadServerData);
             SnackbarRepo.Add($"Order handle: {JsonConvert.SerializeObject(model)}", Severity.Info, c => c.DuplicatesBehavior = SnackbarDuplicatesBehavior.Allow);
         }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetBusyAsync();
+        await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.OrderReceivedStockSharpNotifyReceive, OrderNotificationHandle);
+        await SetBusyAsync(false);
+    }
+
+    public override void Dispose()
+    {
+        PortfolioEventRepo.UnregisterAction();
+        base.Dispose();
     }
 }

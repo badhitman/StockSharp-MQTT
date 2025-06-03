@@ -266,7 +266,7 @@ public class ParametersStorage(
     {
         req.Normalize();
         string mem_key = $"{req.PropertyName}/{req.OwnerPrimaryKey}/{req.PrefixPropertyName}/{req.ApplicationName}".Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
-        TResponseModel<StorageCloudParameterPayloadModel?> res = new();
+        TResponseModel<StorageCloudParameterPayloadModel> res = new();
         if (cache.TryGetValue(mem_key, out StorageCloudParameterPayloadModel sd))
         {
             res.Response = sd;

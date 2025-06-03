@@ -1,5 +1,4 @@
 using Telegram.Bot.Polling;
-using Telegram.Bot.Types.Enums;
 
 namespace Telegram.Bot.Abstract;
 
@@ -27,18 +26,16 @@ public abstract class ReceiverServiceBase<TUpdateHandler> : IReceiverService
     /// <summary>
     /// Start to service Updates with provided Update Handler class
     /// </summary>
-    /// <param name="stoppingToken"></param>
-    /// <returns></returns>
     public async Task ReceiveAsync(CancellationToken stoppingToken)
     {
         // ToDo: we can inject ReceiverOptions through IOptions container
-        var receiverOptions = new ReceiverOptions()
+        ReceiverOptions receiverOptions = new()
         {
-            AllowedUpdates = Array.Empty<UpdateType>(),
+            AllowedUpdates = [],
             ThrowPendingUpdates = true,
         };
 
-        var me = await _botClient.GetMeAsync(stoppingToken);
+        Types.User me = await _botClient.GetMeAsync(stoppingToken);
         _logger.LogInformation("Start receiving updates for {BotName}", me.Username ?? "My Awesome Bot");
 
         // Start receiving updates

@@ -59,7 +59,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\BlankCRM\RemoteCallLib\MQTTCallLib\MQTTCallLib.csproj" />
-		<ProjectReference Include="..\..\BlankCRM\SharedLibStandart21\SharedLibStandart21.csproj" />
+		<ProjectReference Include="..\..\BlankCRM\SharedLibStandard21\SharedLibStandard21.csproj" />
 	</ItemGroup>
 
 </Project>

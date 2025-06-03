@@ -43,14 +43,6 @@ public partial class TradesStockSharpViewComponent : StockSharpBaseComponent
         partData = res.Response;
         return new TableData<MyTradeStockSharpViewModel>() { TotalItems = res.TotalRowsCount, Items = res.Response };
     }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await SetBusyAsync();
-        await MyTradeEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.OwnTradeReceivedStockSharpNotifyReceive, MyTradeNotificationHandle);
-        await SetBusyAsync(false);
-    }
-
     private void MyTradeNotificationHandle(MyTradeStockSharpModel model)
     {
         //if (partData?.Any(x => x.Id == model.Id) == true && _tableRef is not null)
@@ -59,6 +51,14 @@ public partial class TradesStockSharpViewComponent : StockSharpBaseComponent
         //    SnackbarRepo.Add($"Order handle: {JsonConvert.SerializeObject(model)}", Severity.Info, c => c.DuplicatesBehavior = SnackbarDuplicatesBehavior.Allow);
         //}
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetBusyAsync();
+        await MyTradeEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.OwnTradeReceivedStockSharpNotifyReceive, MyTradeNotificationHandle);
+        await SetBusyAsync(false);
+    }
+
     public override void Dispose()
     {
         MyTradeEventRepo.UnregisterAction();

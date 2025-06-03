@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using SharedLib
+@inherits LayoutComponentBase
 
 @* Required *@
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" />
@@ -17,6 +18,7 @@
 
     <main>
         <div class="top-row px-4">
+            <button @onclick="AboutBotAsync" type="button" class="btn btn-link">@aboutBot?.Username</button>
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 
@@ -25,6 +27,3 @@
         </article>
     </main>
 </div>
-@code{
-    private bool _isDarkMode = true;
-}

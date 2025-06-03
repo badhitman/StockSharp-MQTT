@@ -7,6 +7,7 @@ using Transmission.Receives.storage;
 using MQTTCallLib;
 using SharedLib;
 using Transmission.Receives.rubrics;
+using Transmission.Receives.telegram;
 
 namespace StockSharpService;
 
@@ -34,6 +35,9 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<RubricMoveReceive, TAuthRequestModel<RowMoveModel>, ResponseBaseModel>()
             .RegisterMqListener<RubricReadReceive, int, TResponseModel<List<RubricStandardModel>>>()
             .RegisterMqListener<RubricsGetReceive, int[], TResponseModel<List<RubricStandardModel>>>()
+
+            .RegisterMqListener<GetBotUsernameReceive, object, TResponseModel<UserTelegramBaseModel>>()
+            .RegisterMqListener<SendTextMessageTelegramReceive, SendTextMessageTelegramBotModel, TResponseModel<MessageComplexIdsModel>>()
 
 
             .RegisterMqListener<GoToPageForRowReceive, TPaginationRequestStandardModel<int>, TPaginationResponseModel<NLogRecordModelDB>>()

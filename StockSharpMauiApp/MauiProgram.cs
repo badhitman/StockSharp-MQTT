@@ -53,6 +53,7 @@ public static class MauiProgram
             .AddTransient<IEventNotifyReceive<InstrumentTradeStockSharpViewModel>, EventNotifyReceive<InstrumentTradeStockSharpViewModel>>()
             .AddTransient<IEventNotifyReceive<MyTradeStockSharpModel>, EventNotifyReceive<MyTradeStockSharpModel>>()
             .AddTransient<IEventNotifyReceive<OrderStockSharpViewModel>, EventNotifyReceive<OrderStockSharpViewModel>>()
+            .AddTransient<IEventNotifyReceive<UserTelegramBaseModel>, EventNotifyReceive<UserTelegramBaseModel>>()
             ;
         //
         #endregion
