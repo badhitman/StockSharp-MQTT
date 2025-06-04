@@ -44,8 +44,8 @@ public class LogsNavigationImpl(IDbContextFactory<NLogsContext> logsDbFactory) :
 
         res.Response = [.. await oq.Skip(res.PageNum * req.PageSize).Take(req.PageSize).ToArrayAsync(cancellationToken: token)];
 
-        if (!res.Response.Any(x => x.Id == req.Payload))
-            return await GoToPageForRowAsync(req, token);
+        //if (!res.Response.Any(x => x.Id == req.Payload))
+        //    return await GoToPageForRowAsync(req, token);
 
         return res;
     }
