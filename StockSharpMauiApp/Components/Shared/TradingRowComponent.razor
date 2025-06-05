@@ -15,7 +15,7 @@
     else
     {
         <th class="@_opClass" scope="row" title="@Instrument.Name">
-            <input disabled="@(!Available)" type="text" readonly class="form-control-plaintext" value="@Instrument.Code">
+            <input disabled="@(!Available)" type="text" readonly class="form-control-plaintext form-control-sm" value="@Instrument.Code">
         </th>
         <td class="@_opClass">
             @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
@@ -36,13 +36,13 @@
             }
         </td>
         <td><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
+        <td><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td>
             <div class="btn-group btn-group-sm" role="group">
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">buy</button>
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">sell</button>
             </div>
         </td>
-        <td><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td><input @bind-value="ShiftPosition" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td>
             <div class="input-group input-group-sm">
