@@ -24,7 +24,8 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
     public string IdRemoteNormalizedUpper { get; set; }
 
     /// <inheritdoc/>
-    public List<InstrumentMarkersModelDB> Markers { get; set; }
+    public new List<InstrumentMarkersModelDB> Markers { get; set; }
+
 
     /// <inheritdoc/>
     public void SetUpdate(InstrumentTradeStockSharpModel req)

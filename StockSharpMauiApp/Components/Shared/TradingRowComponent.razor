@@ -1,4 +1,5 @@
 ﻿@using BlazorLib.Components.StockSharp
+@using SharedLib
 
 @inherits StockSharpBaseComponent
 
@@ -14,6 +15,22 @@
         <th scope="row" title="@Instrument.Name">
             <input disabled="@(!Available)" type="text" readonly class="form-control-plaintext" value="@Instrument.Code">
         </th>
+        <td>
+            @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
+            {
+                foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)
+                {
+                    string colorClass = _ie.MarkerDescriptor switch
+                    {
+                        MarkersInstrumentStockSharpEnum.Illiquid => "primary",
+                        MarkersInstrumentStockSharpEnum.IsNew => "info",
+                        _ => "danger",
+                    };
+
+                    <span class="badge text-bg-@colorClass me-1">@_ie.MarkerDescriptor.DescriptionInfo()</span>
+                }
+            }
+        </td>
         <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="BasePrice" Variant="Variant.Text" /></td>
         <td>
             <div class="btn-group btn-group-sm" role="group">

@@ -176,6 +176,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         }
 
         List<InstrumentStockSharpModelDB> _data = await q
+            .Include(x=> x.Markers)
             .Include(x => x.Board)
             .ThenInclude(x => x.Exchange)
             .OrderBy(x => x.Name)
