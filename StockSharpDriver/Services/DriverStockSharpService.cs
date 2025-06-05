@@ -195,6 +195,12 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
+    public Task<ResponseBaseModel> StrategyStopAsync(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
     {
         if (BondList.Any())

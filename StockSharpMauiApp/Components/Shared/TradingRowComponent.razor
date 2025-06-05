@@ -2,56 +2,60 @@
 @using SharedLib
 
 @inherits StockSharpBaseComponent
-
-<tr class="@(!Available ? "opacity-25" : "")">
+@{
+    string _opClass = !Available ? "opacity-25" : "";
+}
+<tr>
     @if (IsBusyProgress)
     {
-        <th colspan="7">
+        <th colspan="8">
             <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-3" />
         </th>
     }
     else
     {
-        <th scope="row" title="@Instrument.Name">
+        <th class="@_opClass" scope="row" title="@Instrument.Name">
             <input disabled="@(!Available)" type="text" readonly class="form-control-plaintext" value="@Instrument.Code">
         </th>
-        <td>
+        <td class="@_opClass">
             @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
             {
-                foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)
-                {
-                    string colorClass = _ie.MarkerDescriptor switch
+                <div class="hstack">
+                    @foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)
                     {
-                        MarkersInstrumentStockSharpEnum.Illiquid => "primary",
-                        MarkersInstrumentStockSharpEnum.IsNew => "info",
-                        _ => "danger",
-                    };
-
-                    <span class="badge text-bg-@colorClass me-1">@_ie.MarkerDescriptor.DescriptionInfo()</span>
-                }
+                        string colorClass = _ie.MarkerDescriptor switch
+                        {
+                            MarkersInstrumentStockSharpEnum.Illiquid => "primary",
+                            MarkersInstrumentStockSharpEnum.IsNew => "info",
+                            MarkersInstrumentStockSharpEnum.IsMarketMaker => "warning",
+                            _ => "danger",
+                        };
+                        <span class="badge text-bg-@colorClass me-1">@_ie.MarkerDescriptor.DescriptionInfo()</span>
+                    }
+                </div>
             }
         </td>
-        <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="BasePrice" Variant="Variant.Text" /></td>
+        <td><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td>
             <div class="btn-group btn-group-sm" role="group">
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">buy</button>
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">sell</button>
             </div>
         </td>
-        <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="ValueOperation" Variant="Variant.Text" /></td>
-        <td><MudNumericField Disabled="@(!Available)" Immediate @bind-Value="ShiftPosition" Variant="Variant.Text" /></td>
+        <td><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
+        <td><input @bind-value="ShiftPosition" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td>
-            <div class="input-group input-group-sm mb-3">
+            <div class="input-group input-group-sm">
                 <div class="input-group-text">
                     <input @bind="IsMM" class="form-check-input mt-0" type="checkbox" aria-label="IsMM">
                 </div>
                 <span class="input-group-text">L1</span>
-                <input @bind-value="L1" disabled="@(!Available)" type="number" class="form-control">
+                <input @bind-value="L1" type="number" class="form-control" @bind-value:event="oninput">
                 <span class="input-group-text">L2</span>
-                <input @bind-value="L2" disabled="@(!Available)" type="number" class="form-control">
+                <input @bind-value="L2" type="number" class="form-control" @bind-value:event="oninput">
             </div>
         </td>
-        <td>
+        <td class="@_opClass">
             <div class="input-group input-group-sm">
                 <button disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
             </div>

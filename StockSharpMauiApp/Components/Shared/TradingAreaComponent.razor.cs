@@ -2,6 +2,7 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using BlazorLib;
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using SharedLib;
@@ -48,12 +49,27 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
     async Task StartTradeAsync()
     {
+        if (RowsComponents.Any(x => !x.Available))
+        {
+            SnackbarRepo.Add("Instruments not initialized!", MudBlazor.Severity.Error);
+            return;
+        }
+
+        StrategyStartRequestModel req = new()
+        {
+            Instruments = [.. RowsComponents.Select(x => x.StrategyTrade)]
+        };
         await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.StrategyStartAsync(req);
+        SnackbarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
     }
     async Task StopTradeAsync()
     {
+        StrategyStopRequestModel req = new();
         await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.StrategyStopAsync(req);
+        SnackbarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
     }
     async Task DownloadBaseAsync()

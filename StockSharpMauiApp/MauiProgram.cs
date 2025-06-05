@@ -49,6 +49,7 @@ public static class MauiProgram
             .AddScoped<IDriverStockSharpService, StockSharpDriverTransmission>()
             .AddScoped<IManageStockSharpService, ManageStockSharpTransmission>()
             .AddScoped<ILogsService, LogsServiceTransmission>()
+            .AddScoped<IParametersStorageTransmission, ParametersStorageTransmission>()
             ;
         builder.Services
             .AddTransient<IEventNotifyReceive<PortfolioStockSharpViewModel>, EventNotifyReceive<PortfolioStockSharpViewModel>>()
