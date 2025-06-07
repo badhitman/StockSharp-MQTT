@@ -2,16 +2,16 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using Microsoft.Extensions.Caching.Memory;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
 using StockSharp.Algo;
 using System.Security;
+using Newtonsoft.Json;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
-using Microsoft.Extensions.Caching.Memory;
-using Newtonsoft.Json;
 
 namespace StockSharpDriver;
 
@@ -72,6 +72,8 @@ public class DriverStockSharpService(
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
 
+    List<MyTrade> myTrades = [];
+
     List<StrategyTradeStockSharpModel> Instruments;
     List<FixMessageAdapterModelDB> Adapters;
     List<BoardStockSharpModel> BoardsFilter;
@@ -87,12 +89,10 @@ public class DriverStockSharpService(
             lock (AllBondList)
                 foreach (Security security in AllBondList)
                 {
-
                     try
                     {
                         if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
                             res.Add(security);
-
                     }
                     catch (Exception ex)
                     {
@@ -103,14 +103,18 @@ public class DriverStockSharpService(
         }
     }
 
-
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StrategyStartAsync(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
         if (req.Instruments is null || req.Instruments.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
-
         Instruments = req.Instruments;
+
+        if (!BondList.Any())
+            return ResponseBaseModel.CreateError("BondList - not any");
+
+        if (OfzCurve.Length == 0)
+            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
 
         SBondPositionsList.Clear();
         SBondSizePositionsList.Clear();
@@ -122,49 +126,8 @@ public class DriverStockSharpService(
         bondOutOfRangePositionTraded = 0;
 
         BondList.ForEach(security =>
-        {
-            /*
-             // Создаем объект для поиска инструментов
-                var lookupMessage = new SecurityLookupMessage
-                {
-                    SecurityId = new SecurityId
-                    {
-                        SecurityCode = searchCode,
-                        // Если требуется искать на конкретной площадке
-                        // BoardCode = ExchangeBoard.Nyse.Code,
-                    },
-                    SecurityType = securityType,
-                    TransactionId = Connector.TransactionIdGenerator.GetNextId()
-                };
-    
-                // Создаем подписку
-                var subscription = new Subscription(lookupMessage);
-             */
-            //Subscription sub = conLink.Connector.Subscribe(security);
-
-
-
-            //string bndName = security.Code.Substring(2, 5);
-            //DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
-
-            //if (!decUpD.IsNull())
-            //{
-            //    long? WorkVol =
-            //        ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName)).Value;
-            //    long? SmallBidVol =
-            //      ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName)).Value;
-            //    long? SmallOfferVol =
-            //      ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName)).Value;
-            //    int? Lowlimit =
-            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName)).Value;
-            //    int? Highlimit =
-            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName)).Value;
-            //    int? SmallOffset =
-            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName)).Value;
-            //    int? Offset =
-            //        ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName)).Value;
-            //    bool? IsSmall =
-            //        ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bndName)).IsChecked;
+        {// if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
+            StrategyTradeStockSharpModel cs = Instruments.Single(x => x.Code == security.Code);
 
             //    SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100,
             //        (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
@@ -177,19 +140,11 @@ public class DriverStockSharpService(
             //    if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
             //        SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
 
-            //}
-            //else
-            //{
-            //    SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
 
-            //    if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-            //        SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-            //}
         });
 
         //_ordersForQuoteBuyReregister = new Dictionary<string, Order>();
         //_ordersForQuoteSellReregister = new Dictionary<string, Order>();         
-
 
         throw new NotImplementedException();
     }
@@ -298,6 +253,7 @@ public class DriverStockSharpService(
         conLink.Connector.SubscriptionStopped += SubscriptionStoppedHandle;
         conLink.Connector.TickTradeReceived += TickTradeReceivedHandle;
         conLink.Connector.ValuesChanged += ValuesChangedHandle;
+
         #endregion
 
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
@@ -510,38 +466,11 @@ public class DriverStockSharpService(
     }
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
+        lock (myTrades)
+            myTrades.Add(tr);
+
         //_logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
     }
-
-    #region transit
-
-    void SendRequest(string secCode, decimal price, decimal volume, Sides direction)
-    {
-        /*if (System.Windows.MessageBox.Show(
-            "Do you really want to " + (direction == Sides.Buy ? "BUY" : "SELL") + " " + volume.ToString("#") +
-            " " + secCode + " bonds @" + " " + price.ToString("#.##"), "Confirmation", MessageBoxButton.YesNo) ==
-            MessageBoxResult.Yes)
-        {
-            Order _order = new()
-            {
-                Security = conLink.Connector.Securities.FirstOrDefault(s => (s.Code == secCode) && (s.Board == ExchangeBoard.MicexTqob)),
-                Portfolio = conLink.Connector.Portfolios.FirstOrDefault(p => p.Name == PortName),
-                Side = direction,
-                Price = price,
-                Volume = volume,
-                Comment = "Manual",
-                IsMarketMaker = OfzCodes.Contains(secCode),
-                ClientCode = ClCode,
-            };
-
-            conLink.Connector.RegisterOrder(_order);
-        }*/
-    }
-
-
-    #endregion
-
-    #region todo
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
         //_logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
@@ -557,6 +486,8 @@ public class DriverStockSharpService(
         }
          */
     }
+
+    #region todo
     void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
     {
         //_logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
@@ -573,7 +504,6 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
     }
-
     void TickTradeReceivedHandle(Subscription subscription, ITickTradeMessage msg)
     {
         //_logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg)}");
@@ -590,7 +520,6 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(ParentRemovedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
-
     void NewsReceivedHandle(Subscription subscription, News sender)
     {
         //_logger.LogWarning($"Call > `{nameof(NewsReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
@@ -614,8 +543,7 @@ public class DriverStockSharpService(
     void DisconnectedExHandle(IMessageAdapter sender)
     {
         //_logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`: {JsonConvert.SerializeObject(sender)}");
-
-        #region event -
+        #region event`s -
         conLink.Connector.Connected -= ConnectedHandle;
         conLink.Connector.ConnectedEx -= ConnectedExHandle;
         conLink.Connector.Disconnected -= DisconnectedHandle;
@@ -660,7 +588,6 @@ public class DriverStockSharpService(
         conLink.Connector.TickTradeReceived -= TickTradeReceivedHandle;
         conLink.Connector.ValuesChanged -= ValuesChangedHandle;
         #endregion
-
     }
     void DisconnectedHandle()
     {
@@ -724,7 +651,6 @@ public class DriverStockSharpService(
         //foreach (Portfolio port in portfolios)
         //    dataRepo.SavePortfolio(new PortfolioStockSharpModel().Bind(port));
     }
-
     void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
     {
         // _logger.LogError(ex, $"Call > `{nameof(SubscriptionFailedHandle)}`: [{nameof(arg)}:{arg}]");
