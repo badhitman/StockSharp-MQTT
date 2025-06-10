@@ -37,7 +37,7 @@
         </td>
         <td><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
-        <td>
+        <td class="@_opClass">
             <div class="btn-group btn-group-sm" role="group">
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">buy</button>
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">sell</button>
@@ -57,7 +57,7 @@
         </td>
         <td class="@_opClass">
             <div class="input-group input-group-sm">
-                <button disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
+                <button title="reset" disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
             </div>
         </td>
     }

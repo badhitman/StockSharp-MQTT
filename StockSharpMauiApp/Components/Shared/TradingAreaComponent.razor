@@ -3,55 +3,6 @@
 
 @inherits StockSharpBaseComponent
 
-@if (AboutConnection is null)
-{
-    <div class="alert alert-secondary" role="alert">
-        Connection diagnostics...
-    </div>
-}
-else
-{
-    <div class="d-grid gap-2">
-        @{
-            bool allowed = IsBusyProgress || AboutConnection.ConnectionState != ConnectionStatesEnum.Disconnected;
-        }
-        <button disabled="@allowed" @onclick="Connect" class="btn btn-@(allowed ? "outline-" : "")primary" type="button">
-            @(AboutConnection.ConnectionState == ConnectionStatesEnum.Disconnected ? "Connect" : $"Current status: {AboutConnection.ConnectionState}...")
-        </button>
-        @{
-            bool allowed2 = IsBusyProgress || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected;
-        }
-        <button disabled="@allowed2" @onclick="Disconnect" class="btn btn-@(allowed2 ? "outline-" : "")primary" type="button">
-            @(AboutConnection.ConnectionState == ConnectionStatesEnum.Connected ? "Disconnect" : $"Current status: {AboutConnection.ConnectionState}...")
-        </button>
-        <button disabled="@(IsBusyProgress)" @onclick="GetStatusConnection" class="btn btn-outline-info" type="button">Reload status connection</button>
-    </div>
-}
-
-@if (AboutConnection is not null)
-{
-    <figure class="text-center">
-        <blockquote class="blockquote">
-            <p>Connection Status: @AboutConnection.ConnectionState?.DescriptionInfo()</p>
-        </blockquote>
-        <figcaption class="blockquote-footer">
-            Can connect probe: <cite title="Checking connectivity">@AboutConnection.CanConnect</cite>
-        </figcaption>
-    </figure>
-}
-@if (AboutConnection is null)
-{
-    <div class="alert alert-danger" role="alert">
-        There is no connection to the driver
-    </div>
-}
-else if (AboutConnection.ConnectionState != ConnectionStatesEnum.Connected)
-{
-    <div class="alert alert-warning" role="alert">
-        Connection status: @AboutConnection.ConnectionState
-    </div>
-}
-
 @if (IsBusyProgress)
 {
     <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-3" />
@@ -73,21 +24,16 @@ else if (instruments.Count == 0)
         </figcaption>
     </figure>
 }
-else if (portfolios is null || allBoards is null)
-{
-    <MudAlert Severity="Severity.Info">portfolios or boards - is null</MudAlert>
-}
+
 else
 {
-    <MudStack Row="true" Class="mb-2">
-        <MudSelect T="BoardStockSharpModel" Label="Boards [restriction]" @bind-SelectedValues="SelectedBoards" MultiSelection>
+    @* <MudStack Row="true">
+        <MudSelect T="BoardStockSharpModel" Label="Board [restriction]" @bind-Value="SelectedBoard">
             @foreach (BoardStockSharpModel _port in allBoards)
             {
                 <MudSelectItem T="BoardStockSharpModel" Value="@_port">@_port</MudSelectItem>
             }
         </MudSelect>
-    </MudStack>
-    <MudStack Row="true" Class="mb-2">
         <MudSelect T="PortfolioStockSharpModel" Label="Portfolio" @bind-Value="SelectedPortfolio">
             @foreach (PortfolioStockSharpViewModel _port in portfolios)
             {
@@ -98,54 +44,45 @@ else
             }
         </MudSelect>
         <MudSpacer />
-        <MudNumericField @bind-Value="QuoteVolume" Label="Quote" />
-        <MudNumericField @bind-Value="QuoteSizeVolume" Label="QSize" />
-        <MudNumericField @bind-Value="SkipSizeVolume" Label="Skip size" />
-    </MudStack>
-    <MudStack Row="true" Class="mb-2">
-        <MudIconButton OnClick="StartTradeAsync" Color="Color.Success" Icon="@Icons.Material.Filled.Start" />
+        <MudIconButton OnClick="StartTradeAsync" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="CantStarted" />
         <MudIconButton OnClick="StopTradeAsync" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" />
         <MudIconButton OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" />
-        <MudButton Size="Size.Small" Color="Color.Secondary">x2</MudButton>
-        <MudButton Size="Size.Small" Color="Color.Secondary">/2</MudButton>
-        <MudButton Size="Size.Small" Color="Color.Secondary">S+</MudButton>
-        <MudButton Size="Size.Small" Color="Color.Secondary">S-</MudButton>
+    </MudStack> *@
+    <MudStack Row="true">
+        <MudButton Color="Color.Secondary">x2</MudButton>
+        <MudButton Color="Color.Secondary">/2</MudButton>
+        <MudButton Color="Color.Secondary">S+</MudButton>
+        <MudButton Color="Color.Secondary">S-</MudButton>
         <MudSpacer />
-        <MudButton Size="Size.Small" Color="Color.Tertiary">S</MudButton>
-        <MudButton Size="Size.Small" Color="Color.Tertiary">L</MudButton>
-        <MudIconButton OnClick="ResetAllTradesAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.KeyboardCommandKey" />
+        <div class="input-group">
+            <span class="input-group-text">Quote</span>
+            <input type="number" aria-label="Volume" placeholder="Volume" class="form-control">
+            <input type="number" aria-label="Size" placeholder="Size" class="form-control">
+            <input type="number" aria-label="Skip" placeholder="SkipSizeVolume" class="form-control">
+            <button class="btn btn-outline-success bi bi-recycle" type="button"> Reset</button>
+        </div>
     </MudStack>
 
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-        <MudTabPanel Text="Strategy">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">Instrument</th>
-                        <th></th>
-                        <th scope="col">Price</th>
-                        <th scope="col">Volume</th>
-                        <th scope="col">Actions</th>
-                        <th scope="col">Shift</th>
-                        <th scope="col">Confines</th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <CascadingValue Value="this">
-                        @foreach (InstrumentTradeStockSharpViewModel i in instruments)
-                        {
-                            <TradingRowComponent Instrument="i" @key="@($"instr_{i.Id}")" />
-                        }
-                    </CascadingValue>
-                </tbody>
-            </table>
-        </MudTabPanel>
-        <MudTabPanel Text="Orders">
-            <OrdersStockSharpViewComponent />
-        </MudTabPanel>
-        <MudTabPanel Text="Trades">
-            <TradesStockSharpViewComponent />
-        </MudTabPanel>
-    </MudTabs>
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Instrument</th>
+                <th></th>
+                <th scope="col">Price</th>
+                <th scope="col">Volume</th>
+                <th scope="col">Actions</th>
+                <th scope="col">Shift</th>
+                <th scope="col">Confines</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <CascadingValue Value="this">
+                @foreach (InstrumentTradeStockSharpViewModel i in instruments)
+                {
+                    <TradingRowComponent Instrument="i" @key="@($"instr_{i.Id}")" />
+                }
+            </CascadingValue>
+        </tbody>
+    </table>
 }

@@ -1,8 +1,9 @@
-﻿using Ecng.Common;
-using StockSharp.BusinessEntities;
+﻿using StockSharp.BusinessEntities;
+using System.Data.SQLite;
 using StockSharp.Algo;
 using System.Data;
-using System.Data.SQLite;
+using Ecng.Common;
+using SharedLib;
 
 namespace StockSharpDriver;
 
@@ -29,7 +30,7 @@ public class Curve(DateTime date)
     }
 
     //Load Curve form database
-    public void GetCurveFromDb(string DbName, Connector trader)
+    public void GetCurveFromDb(string DbName, Connector trader, BoardStockSharpModel board)
     {
         string secName;
         decimal secPrice;
@@ -73,7 +74,7 @@ public class Curve(DateTime date)
                 for (int i = 0; i <= tableSize - 1; i++)
                 {
                     secName = reader.GetName(i);
-                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && (s.Board == ExchangeBoard.MicexTqob));
+                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && new BoardStockSharpModel().Bind(s.Board).Equals(board));
                     if ((!security.IsNull()) && (secName != "SU26217RMFS8"))
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(i));
@@ -88,7 +89,7 @@ public class Curve(DateTime date)
                 while (j <= tableSize - 1)
                 {
                     secName = reader.GetName(j);
-                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && (s.Board == ExchangeBoard.MicexTqob));
+                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && new BoardStockSharpModel().Bind(s.Board).Equals(board));
                     if ((!security.IsNull()) && (secName != "SU26217RMFS8"))
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(j));

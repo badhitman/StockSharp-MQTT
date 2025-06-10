@@ -19,9 +19,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     protected IDataStockSharpService DataRepo { get; set; } = default!;
 
     [Inject]
-    protected IEventNotifyReceive<PortfolioStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
-
-    [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
 
@@ -30,12 +27,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     int SkipSizeVolume { get; set; }
 
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
-    readonly List<PortfolioStockSharpViewModel> portfolios = [];
-
-    List<BoardStockSharpModel>? allBoards;
-    IEnumerable<BoardStockSharpModel>? SelectedBoards { get; set; }
-
-    PortfolioStockSharpModel? SelectedPortfolio { get; set; }
 
     List<TradingRowComponent> RowsComponents { get; set; } = [];
 
@@ -47,51 +38,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         }
     }
 
-    async Task StartTradeAsync()
-    {
-        if (RowsComponents.Any(x => !x.Available))
-        {
-            SnackbarRepo.Add("Instruments not initialized!", MudBlazor.Severity.Error);
-            return;
-        }
-
-        StrategyStartRequestModel req = new()
-        {
-            Instruments = [.. RowsComponents.Select(x => x.StrategyTrade)]
-        };
-        await SetBusyAsync();
-        ResponseBaseModel res = await DriverRepo.StrategyStartAsync(req);
-        SnackbarRepo.ShowMessagesResponse(res.Messages);
-        await SetBusyAsync(false);
-    }
-    async Task StopTradeAsync()
-    {
-        StrategyStopRequestModel req = new();
-        await SetBusyAsync();
-        ResponseBaseModel res = await DriverRepo.StrategyStopAsync(req);
-        SnackbarRepo.ShowMessagesResponse(res.Messages);
-        await SetBusyAsync(false);
-    }
-    async Task DownloadBaseAsync()
-    {
-        await SetBusyAsync();
-        await SetBusyAsync(false);
-    }
-    async Task ResetAllTradesAsync()
-    {
-        await SetBusyAsync();
-        await SetBusyAsync(false);
-    }
-
-    async Task Connect()
-    {
-        ConnectRequestModel req = new()
-        {
-            BoardsFilter = SelectedBoards is null ? null : [.. SelectedBoards],
-        };
-        await Connect(req);
-    }
-
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
@@ -99,53 +45,24 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
         await SetBusyAsync();
 
-        await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.PortfolioReceivedStockSharpNotifyReceive, PortfolioNotificationHandle);
+
         await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
 
-        await Task.WhenAll([
-            Task.Run(async () => {
-                InstrumentsRequestModel req = new()
-                    {
-                        PageNum = 0,
-                        PageSize = int.MaxValue,
-                        FavoriteFilter = true,
-                    };
-                TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
-                lock(instruments)
-                {
-                    instruments.Clear();
-                    if(res.Response is not null)
-                        instruments.AddRange(res.Response);
-                }
-            }),
-            Task.Run(async () => {
-                TResponseModel<List<BoardStockSharpModel>> res = await DataRepo.GetBoardsAsync();
-                allBoards = res.Response;
-            }),
-            Task.Run(async () => {
-                TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
-                lock (portfolios)
-                {
-                    portfolios.Clear();
-                    if(res.Response is not null)
-                        portfolios.AddRange(res.Response);
-                }
-            })]);
+        InstrumentsRequestModel req = new()
+        {
+            PageNum = 0,
+            PageSize = int.MaxValue,
+            FavoriteFilter = true,
+        };
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
+        lock (instruments)
+        {
+            instruments.Clear();
+            if (res.Response is not null)
+                instruments.AddRange(res.Response);
+        }
 
         await SetBusyAsync(false);
-    }
-
-    void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
-    {
-        lock (portfolios)
-        {
-            int _pf = portfolios.FindIndex(x => x.Id == model.Id);
-            if (_pf < 0)
-                portfolios.Add(model);
-            else
-                portfolios[_pf].Reload(model);
-        }
-        StateHasChangedCall();
     }
 
     void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
@@ -170,7 +87,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
     public override void Dispose()
     {
-        PortfolioEventRepo.UnregisterAction();
         InstrumentEventRepo.UnregisterAction();
         base.Dispose();
     }

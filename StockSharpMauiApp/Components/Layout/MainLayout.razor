@@ -15,11 +15,8 @@
     <div class="sidebar">
         <NavMenu />
     </div>
-
     <main>
-        <div class="top-row px-4">
-            <a href="@($"https://t.me/{aboutBot?.Username}")" target="_blank">&#64;@aboutBot?.Username</a>
-        </div>
+        <ConnectionPanelComponent />
         <article class="content px-4">
             @Body
         </article>

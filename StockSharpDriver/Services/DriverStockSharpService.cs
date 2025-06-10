@@ -76,7 +76,7 @@ public class DriverStockSharpService(
 
     List<StrategyTradeStockSharpModel> Instruments;
     List<FixMessageAdapterModelDB> Adapters;
-    List<BoardStockSharpModel> BoardsFilter;
+    BoardStockSharpModel Board;
 
     readonly List<SBond> SBondList = [];
 
@@ -91,12 +91,12 @@ public class DriverStockSharpService(
                 {
                     try
                     {
-                        if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
+                        if (Instruments.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
                             res.Add(security);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"{JsonConvert.SerializeObject(Instruments)}\n{JsonConvert.SerializeObject(BoardsFilter)}");
+                        _logger.LogError(ex, $"{JsonConvert.SerializeObject(Instruments)}\n{JsonConvert.SerializeObject(Board)}");
                     }
                 }
             return res;
@@ -108,6 +108,11 @@ public class DriverStockSharpService(
     {
         if (req.Instruments is null || req.Instruments.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
+
+        if (req.Board is null )
+            return ResponseBaseModel.CreateError("Board - not set");
+
+        Board = req.Board;
         Instruments = req.Instruments;
 
         if (!BondList.Any())
@@ -158,6 +163,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
     {
+        Board = null;
         if (BondList.Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
 
@@ -179,7 +185,6 @@ public class DriverStockSharpService(
             AllBondList.Clear();
         }
 
-        BoardsFilter = req.BoardsFilter;
         LastConnectedAt = DateTime.UtcNow;
 
         /*
@@ -253,7 +258,6 @@ public class DriverStockSharpService(
         conLink.Connector.SubscriptionStopped += SubscriptionStoppedHandle;
         conLink.Connector.TickTradeReceived += TickTradeReceivedHandle;
         conLink.Connector.ValuesChanged += ValuesChangedHandle;
-
         #endregion
 
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
@@ -343,9 +347,10 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> OrderRegisterAsync(CreateOrderRequestModel req, CancellationToken cancellationToken = default)
     {
-        ExchangeBoard board = req.Instrument.Board is null
-        ? null
+        ExchangeBoard board = req.Instrument.Board is null 
+            ? null 
             : conLink.Connector.ExchangeBoards.FirstOrDefault(x => x.Code == req.Instrument.Board.Code && (x.Exchange.Name == req.Instrument.Board.Exchange.Name || x.Exchange.CountryCode.ToString() == req.Instrument.Board.Exchange.CountryCode.ToString()));
+        
         Security currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Name == req.Instrument.Name && x.Code == req.Instrument.Code && x.Board.Code == board.Code && x.Board.Exchange.Name == board.Exchange.Name && x.Board.Exchange.CountryCode == board.Exchange.CountryCode);
         if (currentSec is null)
             return Task.FromResult(ResponseBaseModel.CreateError($"Инструмент не найден: {req.Instrument}"));
