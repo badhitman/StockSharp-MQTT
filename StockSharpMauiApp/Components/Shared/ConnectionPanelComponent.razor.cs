@@ -32,16 +32,15 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     UserTelegramBaseModel? aboutBot;
 
-    string? MyConnectStyles => AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected
-        ? ""
-        : " text-success";
-
     readonly List<PortfolioStockSharpViewModel> portfolios = [];
 
     List<BoardStockSharpModel>? allBoards;
     BoardStockSharpModel? SelectedBoard { get; set; }
-    bool CantStarted => SelectedBoard is null || SelectedPortfolio is null;
+    bool CantStarted => AboutConnection?.ConnectionState != ConnectionStatesEnum.Connected;
 
+    bool CanConnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected;
+
+    bool CanDisconnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected;
 
     PortfolioStockSharpModel? SelectedPortfolio { get; set; }
 
@@ -88,14 +87,36 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         await Connect(req);
     }
 
+
+    string _myConnectStyles = "secondary";
+    string? MyConnectStyles => AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected
+        ? $"outline-{_myConnectStyles}"
+        : "success";
+
     string? MyConnectTitle { get; set; }
     void MyConnectMouseOver(MouseEventArgs e)
     {
-        MyConnectTitle = "Connect";
+        _myConnectStyles = AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected 
+            ? "primary" 
+            : "secondary";
+
+        if (AboutConnection is null)
+        {
+            MyConnectTitle = "Diagnostic...";
+        }
+        else if (AboutConnection.ConnectionState == ConnectionStatesEnum.Connected)
+        {
+            MyConnectTitle = "Connected!";
+        }
+        else
+        {
+            MyConnectTitle = "Connect";
+        }
     }
     void MyConnectMouseOut(MouseEventArgs e)
     {
-        MyConnectTitle = "";
+        _myConnectStyles = "secondary";
+        MyConnectTitle = null;
     }
 
     string? CheckConnectTitle { get; set; }

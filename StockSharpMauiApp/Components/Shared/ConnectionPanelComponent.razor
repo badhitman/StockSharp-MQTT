@@ -4,7 +4,7 @@
     <div class="container-fluid">
         <div class="navbar-nav me-auto mb-2 mb-lg-0">
             <div class="btn-group">
-                <button @onclick="Connect" type="button" class="btn btn-outline-secondary" @onmouseover="MyConnectMouseOver" @onmouseout="MyConnectMouseOut">
+                <button disabled="@(!CanConnect)" @onclick="Connect" type="button" class="btn btn-@MyConnectStyles" @onmouseover="MyConnectMouseOver" @onmouseout="MyConnectMouseOut">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16">
                         <path d="M7.5 1v7h1V1z"></path>
                         <path d="M3 8.812a5 5 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812"></path>
@@ -12,7 +12,7 @@
                     @MyConnectTitle
                     <span class="visually-hidden">@MyConnectTitle</span>
                 </button>
-                <button @onclick="Disconnect" type="button" class="btn btn-outline-secondary" @onmouseover="DisconnectMouseOver" @onmouseout="DisconnectMouseOut">
+                <button disabled="@(!CanDisconnect)" @onclick="Disconnect" type="button" class="btn btn-outline-secondary" @onmouseover="DisconnectMouseOver" @onmouseout="DisconnectMouseOut">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-telephone-x" viewBox="0 0 16 16">
                         <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"></path>
                         <path fill-rule="evenodd" d="M11.146 1.646a.5.5 0 0 1 .708 0L13 2.793l1.146-1.147a.5.5 0 0 1 .708.708L13.707 3.5l1.147 1.146a.5.5 0 0 1-.708.708L13 4.207l-1.146 1.147a.5.5 0 0 1-.708-.708L12.293 3.5l-1.147-1.146a.5.5 0 0 1 0-.708"></path>
@@ -28,6 +28,14 @@
                     <span class="visually-hidden">@CheckConnectTitle</span>
                 </button>
             </div>
+            @if (IsBusyProgress)
+            {
+                <div class="text-center mx-2">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
             <span class="navbar-text@(ConnectionStateStyles) ms-2">
                 @if (AboutConnection is null)
                 {
@@ -35,16 +43,11 @@
                 }
                 else if (AboutConnection.ConnectionState != ConnectionStatesEnum.Connected)
                 {
-                    <text>
-                        Status: <mark>
-                            @AboutConnection.ConnectionState
-                            <sup>@(AboutConnection.CanConnect ? "Can connect" : "Can`t connect")</sup>
-                        </mark>
-                    </text>
+                    <text>Status: <mark>@AboutConnection.ConnectionState</mark></text>
                 }
                 else
                 {
-                    <text>CONNECTED ON</text>
+                    <text>CONNECTED</text>
                 }
             </span>
         </div>
@@ -54,11 +57,11 @@
                 <MudAlert Severity="Severity.Info">portfolios or boards - is null</MudAlert>
             }
             else
-            {                
+            {
                 <MudSpacer />
-                <MudIconButton OnClick="StartTradeAsync" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="CantStarted" />
-                <MudIconButton OnClick="StopTradeAsync" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" />
-                <MudIconButton OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" />
+                <MudIconButton OnClick="StartTradeAsync" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(CantStarted)" />
+                <MudIconButton OnClick="StopTradeAsync" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(AboutConnection?.ConnectionState != ConnectionStatesEnum.Connected)" />
+                <MudIconButton OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" Disabled="@(AboutConnection?.ConnectionState != ConnectionStatesEnum.Connected)" />
             }
         </MudStack>
         <form class="d-flex">

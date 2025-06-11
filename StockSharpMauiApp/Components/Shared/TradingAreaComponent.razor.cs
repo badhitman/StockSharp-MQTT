@@ -79,6 +79,7 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
             _i = RowsComponents.FindIndex(x => x.Instrument.Id == model.Id);
             if (_i != -1)
             {
+                model.Markers = RowsComponents[_i].Instrument.Markers;
                 RowsComponents[_i].Update(model);
                 StateHasChangedCall();
             }

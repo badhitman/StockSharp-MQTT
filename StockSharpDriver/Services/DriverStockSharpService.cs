@@ -86,6 +86,10 @@ public class DriverStockSharpService(
         get
         {
             List<Security> res = [];
+
+            if(Instruments is null)
+                return res;
+
             lock (AllBondList)
                 foreach (Security security in AllBondList)
                 {
