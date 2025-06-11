@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using BlazorLib;
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using SharedLib;
@@ -20,6 +19,9 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
     [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
+
+    [Inject]
+    protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
 
 
     int QuoteVolume { get; set; }
@@ -45,7 +47,7 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
         await SetBusyAsync();
 
-
+        await UpdateConnectionEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive, UpdateConnectionNotificationHandle);
         await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
 
         InstrumentsRequestModel req = new()
@@ -63,6 +65,13 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
         }
 
         await SetBusyAsync(false);
+    }
+
+    private void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
+    {
+        AboutConnection?.Update(req);
+        RowsComponents.ForEach(rc => rc.UpdateConnectionNotificationHandle(req));
+        StateHasChangedCall();
     }
 
     void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
@@ -89,6 +98,7 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     public override void Dispose()
     {
         InstrumentEventRepo.UnregisterAction();
+        UpdateConnectionEventRepo.UnregisterAction();
         base.Dispose();
     }
 }

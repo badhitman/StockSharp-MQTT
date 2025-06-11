@@ -113,11 +113,17 @@ public partial class TradingRowComponent : StockSharpBaseComponent
         PropertyName = GlobalStaticConstantsRoutes.Routes.MAIN_CONTROLLER_NAME,
     };
 
+    public void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
+    {
+        AboutConnection?.Update(req);
+        StateHasChangedCall();
+    }
+
     StrategyTradeStockSharpModel? RestoreStrategy;
 
     protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        await base.OnInitializedAsync();
         await SetBusyAsync();
         TResponseModel<StrategyTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<StrategyTradeStockSharpModel>(StoreKey);
         RestoreStrategy = restoreStrategy.Response;

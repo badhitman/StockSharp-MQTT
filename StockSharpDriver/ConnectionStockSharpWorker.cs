@@ -140,7 +140,7 @@ public class ConnectionStockSharpWorker(
         _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
         MyTradeStockSharpModel myTrade = new MyTradeStockSharpModel().Bind(tr);
         TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade).Result;
-       
+
         if (dbRes.Response is null)
             _logger.LogError("result is null: TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade).Result;");
         else
@@ -190,10 +190,20 @@ public class ConnectionStockSharpWorker(
     void ConnectionErrorExHandle(StockSharp.Messages.IMessageAdapter sender, Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void ConnectionErrorHandle(Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorHandle)}`");
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void ErrorHandle(Exception ex)
     {
@@ -265,11 +275,15 @@ public class ConnectionStockSharpWorker(
     void DisconnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
     {
         _logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`");
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void DisconnectedHandle()
     {
         _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
-
 
         #region events -
         ssLink.Connector.Connected -= ConnectedHandle;
@@ -316,6 +330,12 @@ public class ConnectionStockSharpWorker(
         ssLink.Connector.TickTradeReceived -= TickTradeReceivedHandle;
         ssLink.Connector.ValuesChanged -= ValuesChangedHandle;
         #endregion
+
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void DataTypeReceivedHandle(Subscription subscription, StockSharp.Messages.DataType argDt)
     {
@@ -324,18 +344,38 @@ public class ConnectionStockSharpWorker(
     void ConnectionRestoredHandle(StockSharp.Messages.IMessageAdapter sender)
     {
         _logger.LogWarning($"Call > `{nameof(ConnectionRestoredHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void ConnectionLostHandle(StockSharp.Messages.IMessageAdapter sender)
     {
         _logger.LogWarning($"Call > `{nameof(ConnectionLostHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void ConnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
     {
         _logger.LogWarning($"Call > `{nameof(ConnectedExHandle)}`: {JsonConvert.SerializeObject(new { sender.Name, sender.Categories })}");
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void ConnectedHandle()
     {
         _logger.LogWarning($"Call > `{nameof(ConnectedHandle)}`");
+        eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = ssLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+        }).Wait();
     }
     void CandleReceivedHandle(Subscription subscription, StockSharp.Messages.ICandleMessage candleMessage)
     {

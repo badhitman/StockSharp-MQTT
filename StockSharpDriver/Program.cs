@@ -154,7 +154,7 @@ public class Program
                     .AddHostedService<MqttServerWorker>()
                     .AddHostedService<ConnectionStockSharpWorker>()
                 ;
-
+                
                 #region MQ Transmission (remote methods call)
                 services
                     .AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName))

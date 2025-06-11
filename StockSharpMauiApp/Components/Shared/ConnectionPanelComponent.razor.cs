@@ -19,6 +19,13 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     [Inject]
     IEventNotifyReceive<PortfolioStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
 
+    [Inject]
+    protected IEventsStockSharpService EventsNotifyRepo { get; set; } = default!;
+
+    [Inject]
+    protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
+
+
     private bool _visible;
     private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
@@ -85,8 +92,19 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
         };
         await Connect(req);
+        await GetStatusConnection();
+        if (AboutConnection is not null)
+            await EventsNotifyRepo.UpdateConnectionHandle(new UpdateConnectionHandleModel() { CanConnect = AboutConnection.CanConnect, ConnectionState = AboutConnection.ConnectionState });
     }
 
+    protected override async Task GetStatusConnection()
+    {
+        await base.GetStatusConnection();
+        if (AboutConnection?.Messages.Count == 0)
+        {
+            SnackbarRepo.Info(AboutConnection.ConnectionState.ToString() ?? "error");
+        }
+    }
 
     string _myConnectStyles = "secondary";
     string? MyConnectStyles => AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected
@@ -96,8 +114,8 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     string? MyConnectTitle { get; set; }
     void MyConnectMouseOver(MouseEventArgs e)
     {
-        _myConnectStyles = AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected 
-            ? "primary" 
+        _myConnectStyles = AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected
+            ? "primary"
             : "secondary";
 
         if (AboutConnection is null)
@@ -163,7 +181,10 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+
         await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.PortfolioReceivedStockSharpNotifyReceive, PortfolioNotificationHandle);
+        await UpdateConnectionEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive, UpdateConnectionNotificationHandle);
+
         await AboutBotAsync();
 
         await Task.WhenAll([
@@ -182,9 +203,16 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
             })]);
     }
 
+    private void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
+    {
+        AboutConnection?.Update(req);
+        StateHasChangedCall();
+    }
+
     public override void Dispose()
     {
         PortfolioEventRepo.UnregisterAction();
+        UpdateConnectionEventRepo.UnregisterAction();
         base.Dispose();
     }
 }

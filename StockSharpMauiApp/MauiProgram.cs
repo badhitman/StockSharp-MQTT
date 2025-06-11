@@ -51,7 +51,13 @@ public static class MauiProgram
             .AddScoped<ILogsService, LogsServiceTransmission>()
             .AddScoped<IParametersStorageTransmission, ParametersStorageTransmission>()
             ;
+
         builder.Services
+                   .AddSingleton<IEventsStockSharpService, StockSharpEventsServiceTransmission>()
+               ;
+        //
+        builder.Services
+            .AddTransient<IEventNotifyReceive<UpdateConnectionHandleModel>, EventNotifyReceive<UpdateConnectionHandleModel>>()
             .AddTransient<IEventNotifyReceive<PortfolioStockSharpViewModel>, EventNotifyReceive<PortfolioStockSharpViewModel>>()
             .AddTransient<IEventNotifyReceive<InstrumentTradeStockSharpViewModel>, EventNotifyReceive<InstrumentTradeStockSharpViewModel>>()
             .AddTransient<IEventNotifyReceive<MyTradeStockSharpModel>, EventNotifyReceive<MyTradeStockSharpModel>>()
