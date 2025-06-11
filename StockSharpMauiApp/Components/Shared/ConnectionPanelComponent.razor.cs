@@ -92,9 +92,9 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
         };
         await Connect(req);
-        await GetStatusConnection();
         if (AboutConnection is not null)
             await EventsNotifyRepo.UpdateConnectionHandle(new UpdateConnectionHandleModel() { CanConnect = AboutConnection.CanConnect, ConnectionState = AboutConnection.ConnectionState });
+        await SetBusyAsync(false);
     }
 
     protected override async Task GetStatusConnection()
