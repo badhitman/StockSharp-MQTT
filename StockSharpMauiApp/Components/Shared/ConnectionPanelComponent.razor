@@ -77,21 +77,35 @@
     </TitleContent>
     <DialogContent>
         <p>How awesome are inline dialogs?</p>
-        <MudSelect T="BoardStockSharpModel" Label="Board [restriction]" @bind-Value="SelectedBoard">
-            @foreach (BoardStockSharpModel _port in allBoards)
-            {
-                <MudSelectItem T="BoardStockSharpModel" Value="@_port">@_port</MudSelectItem>
-            }
-        </MudSelect>
-        <MudSelect T="PortfolioStockSharpModel" Label="Portfolio" @bind-Value="SelectedPortfolio">
-            @foreach (PortfolioStockSharpViewModel _port in portfolios)
-            {
-                <MudSelectItem Value="@_port"
-                               T="PortfolioStockSharpModel"
-                               @key="@($"portf_{_port.Id}")"
-                               Disabled="@(EachDisable || _port.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt)">@_port</MudSelectItem>
-            }
-        </MudSelect>
+        @if (allBoards is null)
+        {
+            <figure class="text-center">
+                <blockquote class="blockquote">
+                    <p>Error boards init</p>
+                </blockquote>
+                <figcaption class="blockquote-footer">
+                    Boards <cite title="is null">is null</cite>.
+                </figcaption>
+            </figure>
+        }
+        else
+        {
+            <MudSelect T="BoardStockSharpModel" Label="Board [restriction]" @bind-Value="SelectedBoard">
+                @foreach (BoardStockSharpModel _port in allBoards)
+                {
+                    <MudSelectItem T="BoardStockSharpModel" Value="@_port">@_port</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="PortfolioStockSharpModel" Label="Portfolio" @bind-Value="SelectedPortfolio">
+                @foreach (PortfolioStockSharpViewModel _port in portfolios)
+                {
+                    <MudSelectItem Value="@_port"
+                                   T="PortfolioStockSharpModel"
+                                   @key="@($"portf_{_port.Id}")"
+                                   Disabled="@(EachDisable || _port.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt)">@_port</MudSelectItem>
+                }
+            </MudSelect>
+        }
     </DialogContent>
     <DialogActions>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Class="px-10">Close</MudButton>
