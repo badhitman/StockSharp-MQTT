@@ -29,7 +29,11 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     private bool _visible;
     private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
-    private void Submit() => _visible = false;
+    private void Close() => _visible = false;
+
+    private void Start() => _visible = false;
+
+    private void Stop() => _visible = false;
 
     string ConnectionStateStyles => AboutConnection is null
         ? ""

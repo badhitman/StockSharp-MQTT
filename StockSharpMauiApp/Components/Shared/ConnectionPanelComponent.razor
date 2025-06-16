@@ -72,11 +72,11 @@
 <MudDialog @bind-Visible="_visible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-3" /> Edit rating
+            <MudIcon Icon="@Icons.Material.Filled.CellTower" Class="mr-3" /> Strategy monitor
         </MudText>
     </TitleContent>
     <DialogContent>
-        <p>How awesome are inline dialogs?</p>
+        <p>Manage strategy</p>
         @if (allBoards is null)
         {
             <figure class="text-center">
@@ -108,6 +108,8 @@
         }
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Class="px-10">Close</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Start" Class="px-10">Start</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="Stop" Class="px-10">Stop</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Close" Class="px-10">Close</MudButton>
     </DialogActions>
 </MudDialog>
