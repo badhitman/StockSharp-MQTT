@@ -30,8 +30,6 @@ public partial class TradingRowComponent : StockSharpBaseComponent
     public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
-    readonly string _appName = typeof(TradingRowComponent).Name;
-
     decimal _l1;
     /// <inheritdoc/>
     public decimal L1
@@ -108,14 +106,14 @@ public partial class TradingRowComponent : StockSharpBaseComponent
 
     StorageMetadataModel StoreKey => new()
     {
-        ApplicationName = _appName,
+        ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
         OwnerPrimaryKey = Instrument.Id,
-        PropertyName = GlobalStaticConstantsRoutes.Routes.MAIN_CONTROLLER_NAME,
+        PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
     };
 
-    public void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
+    public void UpdateConnectionNotificationHandle(AboutConnectResponseModel req)
     {
-        AboutConnection?.Update(req);
+        AboutConnection!.Update(req);
         StateHasChangedCall();
     }
 

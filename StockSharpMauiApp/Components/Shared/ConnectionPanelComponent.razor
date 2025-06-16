@@ -3,7 +3,7 @@
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
         <div class="navbar-nav me-auto mb-2 mb-lg-0">
-            <div class="btn-group">
+            <div class="btn-group btn-group-sm">
                 <button disabled="@(!CanConnect)" @onclick="Connect" type="button" class="btn btn-@MyConnectStyles" @onmouseover="MyConnectMouseOver" @onmouseout="MyConnectMouseOut">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16">
                         <path d="M7.5 1v7h1V1z"></path>
@@ -59,9 +59,9 @@
             else
             {
                 <MudSpacer />
-                <MudIconButton OnClick="StartTradeAsync" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(CantStarted)" />
-                <MudIconButton OnClick="StopTradeAsync" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(AboutConnection?.ConnectionState != ConnectionStatesEnum.Connected)" />
-                <MudIconButton OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" Disabled="@(AboutConnection?.ConnectionState != ConnectionStatesEnum.Connected)" />
+                <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(!CanStarted)" />
+                <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(!CanStopped)" />
+                <MudIconButton OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" Variant="Variant.Outlined" />
             }
         </MudStack>
         <form class="d-flex">
@@ -69,7 +69,7 @@
         </form>
     </div>
 </nav>
-<MudDialog @bind-Visible="_visible" Options="_dialogOptions">
+<MudDialog @bind-Visible="_visibleStrategyBoard" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.CellTower" Class="mr-3" /> Strategy monitor
@@ -108,8 +108,8 @@
         }
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="StartStrategy" Class="px-10">Start</MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="StopStrategy" Class="px-10">Stop</MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CloseStrategy" Class="px-10">Close</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="StartTradeAsync" Class="px-10">Start</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="StopTradeAsync" Class="px-10">Stop</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => _visibleStrategyBoard = false" Class="px-10">Close</MudButton>
     </DialogActions>
 </MudDialog>

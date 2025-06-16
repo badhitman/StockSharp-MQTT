@@ -21,6 +21,7 @@ namespace StockSharpDriver;
 public class DriverStockSharpService(
     ILogger<DriverStockSharpService> _logger,
     IManageStockSharpService manageRepo,
+    IDataStockSharpService DataRepo,
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
@@ -74,7 +75,7 @@ public class DriverStockSharpService(
 
     List<MyTrade> myTrades = [];
 
-    List<StrategyTradeStockSharpModel> Instruments;
+    List<StrategyTradeStockSharpModel> StrategyTrades;
     List<FixMessageAdapterModelDB> Adapters;
     BoardStockSharpModel Board;
 
@@ -87,7 +88,7 @@ public class DriverStockSharpService(
         {
             List<Security> res = [];
 
-            if (Instruments is null)
+            if (StrategyTrades is null)
                 return res;
 
             lock (AllBondList)
@@ -95,12 +96,12 @@ public class DriverStockSharpService(
                 {
                     try
                     {
-                        if (Instruments.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
+                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
                             res.Add(security);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"{JsonConvert.SerializeObject(Instruments)}\n{JsonConvert.SerializeObject(Board)}");
+                        _logger.LogError(ex, $"{JsonConvert.SerializeObject(StrategyTrades)}\n{JsonConvert.SerializeObject(Board)}");
                     }
                 }
             return res;
@@ -110,7 +111,7 @@ public class DriverStockSharpService(
     void ClearStrategy()
     {
         Board = null;
-        Instruments = null;
+        StrategyTrades = null;
 
         SBondPositionsList.Clear();
         SBondSizePositionsList.Clear();
@@ -126,14 +127,32 @@ public class DriverStockSharpService(
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
         ClearStrategy();
-        if (req.Instruments is null || req.Instruments.Count == 0)
-            return ResponseBaseModel.CreateError("Instruments - is empty");
 
         if (req.Board is null)
             return ResponseBaseModel.CreateError("Board - not set");
 
         Board = req.Board;
-        Instruments = req.Instruments;
+
+        List<InstrumentTradeStockSharpViewModel> instruments = [];
+
+
+        InstrumentsRequestModel reqInstruments = new()
+        {
+            PageNum = 0,
+            PageSize = int.MaxValue,
+            FavoriteFilter = true,
+        };
+
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(reqInstruments, cancellationToken);
+
+        if (resInstruments.Response is not null)
+            instruments = resInstruments.Response;
+
+        // public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
+        // StrategyTrades = req.Instruments;
+
+        if (StrategyTrades is null || StrategyTrades.Count == 0)
+            return ResponseBaseModel.CreateError("Instruments - is empty");
 
         if (!BondList.Any())
             return ResponseBaseModel.CreateError("BondList - not any");
@@ -143,7 +162,7 @@ public class DriverStockSharpService(
 
         BondList.ForEach(security =>
         {// if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
-            StrategyTradeStockSharpModel cs = Instruments.Single(x => x.Code == security.Code);
+            StrategyTradeStockSharpModel cs = StrategyTrades.Single(x => x.Code == security.Code);
 
             //    SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100,
             //        (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
@@ -353,7 +372,7 @@ public class DriverStockSharpService(
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)),
             LastConnectedAt = _lc == DateTime.MinValue ? null : _lc,
-            StrategyStarted = Board is not null && Instruments is not null && Instruments.Count != 0
+            StrategyStarted = Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0
         };
         return Task.FromResult(res);
     }

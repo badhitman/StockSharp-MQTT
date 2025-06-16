@@ -1,9 +1,9 @@
-﻿using BlazorLib.Components.StockSharp;
+﻿using Microsoft.AspNetCore.Components.Web;
+using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
 using BlazorLib;
 using SharedLib;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace StockSharpMauiApp.Components.Shared;
@@ -17,23 +17,18 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     IDataStockSharpService DataRepo { get; set; } = default!;
 
     [Inject]
+    IEventsStockSharpService EventsNotifyRepo { get; set; } = default!;
+
+    [Inject]
     IEventNotifyReceive<PortfolioStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
 
     [Inject]
-    protected IEventsStockSharpService EventsNotifyRepo { get; set; } = default!;
-
-    [Inject]
-    protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
+    IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
 
 
-    private bool _visible;
+    private bool _visibleStrategyBoard;
     private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
-    private void CloseStrategy() => _visible = false;
-
-    private void StartStrategy() => _visible = false;
-
-    private void StopStrategy() => _visible = false;
 
     string ConnectionStateStyles => AboutConnection is null
         ? ""
@@ -47,17 +42,17 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     List<BoardStockSharpModel>? allBoards;
     BoardStockSharpModel? SelectedBoard { get; set; }
-    bool CantStarted => AboutConnection?.ConnectionState != ConnectionStatesEnum.Connected;
+
+    bool CanStarted => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && !AboutConnection.StrategyStarted;
+    bool CanStopped => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.StrategyStarted;
 
     bool CanConnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected;
-
     bool CanDisconnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected;
 
     PortfolioStockSharpModel? SelectedPortfolio { get; set; }
 
     async Task StartTradeAsync()
     {
-        _visible = true;
 
         //if (RowsComponents.Any(x => !x.Available))
         //{
@@ -65,15 +60,17 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         //    return;
         //}
 
-        //StrategyStartRequestModel req = new()
-        //{
-        //    Instruments = [.. RowsComponents.Select(x => x.StrategyTrade)],
-        //    Board = SelectedBoard,
-        //};
+        StrategyStartRequestModel req = new()
+        {
+            Board = SelectedBoard,
+            SelectedPortfolio = SelectedPortfolio
+        };
         await SetBusyAsync();
-        //ResponseBaseModel res = await DriverRepo.StrategyStartAsync(req);
-        //SnackbarRepo.ShowMessagesResponse(res.Messages);
+        ResponseBaseModel res = await DriverRepo.StartStrategy(req);
+        SnackbarRepo.ShowMessagesResponse(res.Messages);
+
         await SetBusyAsync(false);
+        _visibleStrategyBoard = false;
     }
     async Task StopTradeAsync()
     {
@@ -82,6 +79,8 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         ResponseBaseModel res = await DriverRepo.StopStrategy(req);
         SnackbarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
+
+        _visibleStrategyBoard = false;
     }
     async Task DownloadBaseAsync()
     {
@@ -210,7 +209,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     private void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
     {
         AboutConnection?.Update(req);
-        StateHasChangedCall();
+        InvokeAsync(GetStatusConnection);
     }
 
     public override void Dispose()

@@ -64,7 +64,6 @@ public static class MauiProgram
             .AddTransient<IEventNotifyReceive<OrderStockSharpViewModel>, EventNotifyReceive<OrderStockSharpViewModel>>()
             .AddTransient<IEventNotifyReceive<UserTelegramBaseModel>, EventNotifyReceive<UserTelegramBaseModel>>()
             ;
-        //
         #endregion
         return builder.Build();
     }

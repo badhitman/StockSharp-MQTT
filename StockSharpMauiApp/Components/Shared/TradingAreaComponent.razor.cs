@@ -69,9 +69,15 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
     private void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
     {
-        AboutConnection?.Update(req);
-        RowsComponents.ForEach(rc => rc.UpdateConnectionNotificationHandle(req));
-        StateHasChangedCall();
+        InvokeAsync(async () =>
+        {
+            await GetStatusConnection();
+            if (AboutConnection is null)
+                throw new Exception();
+
+            RowsComponents.ForEach(rc => rc.UpdateConnectionNotificationHandle(AboutConnection));
+            StateHasChangedCall();
+        });
     }
 
     void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
