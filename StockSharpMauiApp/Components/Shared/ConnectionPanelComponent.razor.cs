@@ -29,11 +29,11 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     private bool _visible;
     private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
-    private void Close() => _visible = false;
+    private void CloseStrategy() => _visible = false;
 
-    private void Start() => _visible = false;
+    private void StartStrategy() => _visible = false;
 
-    private void Stop() => _visible = false;
+    private void StopStrategy() => _visible = false;
 
     string ConnectionStateStyles => AboutConnection is null
         ? ""
@@ -79,7 +79,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     {
         StrategyStopRequestModel req = new();
         await SetBusyAsync();
-        ResponseBaseModel res = await DriverRepo.StrategyStopAsync(req);
+        ResponseBaseModel res = await DriverRepo.StopStrategy(req);
         SnackbarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
     }

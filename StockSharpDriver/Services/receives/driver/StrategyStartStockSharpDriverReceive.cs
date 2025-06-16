@@ -21,6 +21,6 @@ public class StrategyStartStockSharpDriverReceive(IDriverStockSharpService ssRep
         if (req is null)
             throw new ArgumentNullException(nameof(req));
 
-        return await ssRepo.StrategyStartAsync(req, token);
+        return await ssRepo.StartStrategy(req, token);
     }
 }

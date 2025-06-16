@@ -87,7 +87,7 @@ public class DriverStockSharpService(
         {
             List<Security> res = [];
 
-            if(Instruments is null)
+            if (Instruments is null)
                 return res;
 
             lock (AllBondList)
@@ -107,13 +107,29 @@ public class DriverStockSharpService(
         }
     }
 
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> StrategyStartAsync(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
+    void ClearStrategy()
     {
+        Board = null;
+        Instruments = null;
+
+        SBondPositionsList.Clear();
+        SBondSizePositionsList.Clear();
+        SBondSmallPositionsList.Clear();
+
+        bondPositionTraded = 0;
+        bondSizePositionTraded = 0;
+        bondSmallPositionTraded = 0;
+        bondOutOfRangePositionTraded = 0;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
+    {
+        ClearStrategy();
         if (req.Instruments is null || req.Instruments.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
 
-        if (req.Board is null )
+        if (req.Board is null)
             return ResponseBaseModel.CreateError("Board - not set");
 
         Board = req.Board;
@@ -124,15 +140,6 @@ public class DriverStockSharpService(
 
         if (OfzCurve.Length == 0)
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
-
-        SBondPositionsList.Clear();
-        SBondSizePositionsList.Clear();
-        SBondSmallPositionsList.Clear();
-
-        bondPositionTraded = 0;
-        bondSizePositionTraded = 0;
-        bondSmallPositionTraded = 0;
-        bondOutOfRangePositionTraded = 0;
 
         BondList.ForEach(security =>
         {// if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
@@ -155,13 +162,15 @@ public class DriverStockSharpService(
         //_ordersForQuoteBuyReregister = new Dictionary<string, Order>();
         //_ordersForQuoteSellReregister = new Dictionary<string, Order>();         
 
-        throw new NotImplementedException();
+        return ResponseBaseModel.CreateInfo("Ok");
     }
 
     /// <inheritdoc/>
-    public Task<ResponseBaseModel> StrategyStopAsync(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
+    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ClearStrategy();
+
+        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
     }
 
     /// <inheritdoc/>
@@ -344,6 +353,7 @@ public class DriverStockSharpService(
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)),
             LastConnectedAt = _lc == DateTime.MinValue ? null : _lc,
+            StrategyStarted = Board is not null && Instruments is not null && Instruments.Count != 0
         };
         return Task.FromResult(res);
     }
@@ -351,10 +361,10 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> OrderRegisterAsync(CreateOrderRequestModel req, CancellationToken cancellationToken = default)
     {
-        ExchangeBoard board = req.Instrument.Board is null 
-            ? null 
+        ExchangeBoard board = req.Instrument.Board is null
+            ? null
             : conLink.Connector.ExchangeBoards.FirstOrDefault(x => x.Code == req.Instrument.Board.Code && (x.Exchange.Name == req.Instrument.Board.Exchange.Name || x.Exchange.CountryCode.ToString() == req.Instrument.Board.Exchange.CountryCode.ToString()));
-        
+
         Security currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Name == req.Instrument.Name && x.Code == req.Instrument.Code && x.Board.Code == board.Code && x.Board.Exchange.Name == board.Exchange.Name && x.Board.Exchange.CountryCode == board.Exchange.CountryCode);
         if (currentSec is null)
             return Task.FromResult(ResponseBaseModel.CreateError($"Инструмент не найден: {req.Instrument}"));

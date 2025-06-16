@@ -148,7 +148,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = ssLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(ssLink.Connector.ConnectionState)),
         }).Wait();
     }
     void ConnectionErrorHandle(Exception ex)
