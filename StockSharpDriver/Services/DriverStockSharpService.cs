@@ -22,6 +22,7 @@ public class DriverStockSharpService(
     ILogger<DriverStockSharpService> _logger,
     IManageStockSharpService manageRepo,
     IDataStockSharpService DataRepo,
+    IParametersStorage storageRepo,
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
@@ -133,9 +134,6 @@ public class DriverStockSharpService(
 
         Board = req.Board;
 
-        List<InstrumentTradeStockSharpViewModel> instruments = [];
-
-
         InstrumentsRequestModel reqInstruments = new()
         {
             PageNum = 0,
@@ -145,8 +143,14 @@ public class DriverStockSharpService(
 
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(reqInstruments, cancellationToken);
 
-        if (resInstruments.Response is not null)
-            instruments = resInstruments.Response;
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        List<InstrumentTradeStockSharpViewModel> instruments = resInstruments.Response;
+
+        /*
+         IParametersStorage serializeStorageRepo
+         */
 
         // public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
         // StrategyTrades = req.Instruments;
