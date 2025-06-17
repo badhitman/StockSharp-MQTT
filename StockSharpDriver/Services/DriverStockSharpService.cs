@@ -148,9 +148,6 @@ public class DriverStockSharpService(
 
         List<InstrumentTradeStockSharpViewModel> instruments = resInstruments.Response;
 
-        /*
-         IParametersStorage serializeStorageRepo
-         */
 
         // public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
         // StrategyTrades = req.Instruments;
@@ -163,6 +160,13 @@ public class DriverStockSharpService(
 
         if (OfzCurve.Length == 0)
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+
+        StrategyTradeStockSharpModel[] findStorageRows = await storageRepo.FindAsync<StrategyTradeStockSharpModel>(new FindStorageBaseModel()
+        {
+            ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
+            PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
+            OwnersPrimaryKeys = [.. instruments.Select(x => x.Id)]
+        }, cancellationToken);
 
         BondList.ForEach(security =>
         {// if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))

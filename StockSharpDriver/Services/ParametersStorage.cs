@@ -141,6 +141,9 @@ public class ParametersStorage(
         StorageCloudParameterModelDB[] _dbd = await q
             .ToArrayAsync(cancellationToken: token);
 
+        if (req.OwnersPrimaryKeys is not null && req.OwnersPrimaryKeys.Length != 0)
+            q = q.Where(x => req.OwnersPrimaryKeys.Contains(x.OwnerPrimaryKey));
+
         return [.. _dbd.Select(x => JsonConvert.DeserializeObject<T>(x.SerializedDataJson))];
     }
 
@@ -356,6 +359,9 @@ public class ParametersStorage(
 
         if (!string.IsNullOrWhiteSpace(req.PropertyName))
             q = q.Where(x => x.PropertyName == req.PropertyName);
+
+        if (req.OwnersPrimaryKeys is not null && req.OwnersPrimaryKeys.Length != 0)
+            q = q.Where(x => req.OwnersPrimaryKeys.Contains(x.OwnerPrimaryKey));
 
         StorageCloudParameterModelDB[] prop_db = await q
             .ToArrayAsync(cancellationToken: token);
