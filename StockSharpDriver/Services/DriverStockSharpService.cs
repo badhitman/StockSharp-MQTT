@@ -133,24 +133,32 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError("Board - not set");
 
         Board = req.Board;
-
-        InstrumentsRequestModel reqInstruments = new()
+        
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
         {
             PageNum = 0,
             PageSize = int.MaxValue,
             FavoriteFilter = true,
-        };
-
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(reqInstruments, cancellationToken);
+        }, cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        List<InstrumentTradeStockSharpViewModel> instruments = resInstruments.Response;
+        //List<InstrumentTradeStockSharpViewModel> instruments = resInstruments.Response;
 
+        TResponseModel<FoundParameterModel[]> findStorageRows = await storageRepo.FindRawAsync(new FindStorageBaseModel()
+        {
+            ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
+            PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
+            OwnersPrimaryKeys = [.. resInstruments.Response.Select(x => x.Id)]
+        }, cancellationToken);
 
-        // public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
-        // StrategyTrades = req.Instruments;
+        //StrategyTradeStockSharpModel[] findStorageRows = await storageRepo.FindAsync<StrategyTradeStockSharpModel>(new FindStorageBaseModel()
+        //{
+        //    ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
+        //    PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
+        //    OwnersPrimaryKeys = [.. instruments.Select(x => x.Id)]
+        //}, cancellationToken);
 
         if (StrategyTrades is null || StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
@@ -161,12 +169,24 @@ public class DriverStockSharpService(
         if (OfzCurve.Length == 0)
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
 
-        StrategyTradeStockSharpModel[] findStorageRows = await storageRepo.FindAsync<StrategyTradeStockSharpModel>(new FindStorageBaseModel()
+        Dictionary<int, List<StrategyTradeStockSharpModel>> storeRows = [];
+
+        IQueryable<IGrouping<int?, FoundParameterModel>> _q = findStorageRows.Response.GroupBy(x => x.OwnerPrimaryKey).Where(x => x.Key.HasValue).AsQueryable();
+        foreach (IGrouping<int, FoundParameterModel> _gNode in _q.Cast<IGrouping<int, FoundParameterModel>>())
         {
-            ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
-            PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
-            OwnersPrimaryKeys = [.. instruments.Select(x => x.Id)]
-        }, cancellationToken);
+            if (!storeRows.ContainsKey(_gNode.Key))
+                storeRows.Add(_gNode.Key, []);
+
+            storeRows[_gNode.Key].Add(new StrategyTradeStockSharpModel()
+            {
+
+            });
+        }
+
+        // List<IGrouping<int?, FoundParameterModel>> storeRows = [.. findStorageRows.Response.GroupBy(x => x.OwnerPrimaryKey)];
+
+        // public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
+        // StrategyTrades = req.Instruments;
 
         BondList.ForEach(security =>
         {// if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
