@@ -133,7 +133,7 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError("Board - not set");
 
         Board = req.Board;
-        
+
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
         {
             PageNum = 0,
@@ -144,8 +144,6 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        //List<InstrumentTradeStockSharpViewModel> instruments = resInstruments.Response;
-
         TResponseModel<FoundParameterModel[]> findStorageRows = await storageRepo.FindRawAsync(new FindStorageBaseModel()
         {
             ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
@@ -153,12 +151,34 @@ public class DriverStockSharpService(
             OwnersPrimaryKeys = [.. resInstruments.Response.Select(x => x.Id)]
         }, cancellationToken);
 
-        //StrategyTradeStockSharpModel[] findStorageRows = await storageRepo.FindAsync<StrategyTradeStockSharpModel>(new FindStorageBaseModel()
-        //{
-        //    ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
-        //    PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
-        //    OwnersPrimaryKeys = [.. instruments.Select(x => x.Id)]
-        //}, cancellationToken);
+        if (!findStorageRows.Success() || findStorageRows.Response is null || findStorageRows.Response.Length == 0)
+            return new() { Messages = findStorageRows.Messages };
+
+        IQueryable<IGrouping<int?, FoundParameterModel>> _q = findStorageRows.Response
+            .GroupBy(x => x.OwnerPrimaryKey)
+            .Where(x => x.Key.HasValue)
+            .AsQueryable();
+
+        List<KeyValuePair<int?, StrategyTradeStockSharpModel>> dataParse = [.. _q.Select(x => new KeyValuePair<int?, StrategyTradeStockSharpModel>
+        (
+            x.Key,
+            JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(x.OrderByDescending(x => x.CreatedAt).First().SerializedDataJson)
+        ))];
+
+        foreach(InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
+        {
+            int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
+            if (_fx < 0)
+                return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+
+            if(dataParse[_fx].Value.ValueOperation < 1)
+                return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
+
+            if (dataParse[_fx].Value.BasePrice < 1)
+                return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
+
+            StrategyTrades.Add(dataParse[_fx].Value);
+        }
 
         if (StrategyTrades is null || StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
@@ -169,21 +189,6 @@ public class DriverStockSharpService(
         if (OfzCurve.Length == 0)
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
 
-        Dictionary<int, List<StrategyTradeStockSharpModel>> storeRows = [];
-
-        IQueryable<IGrouping<int?, FoundParameterModel>> _q = findStorageRows.Response.GroupBy(x => x.OwnerPrimaryKey).Where(x => x.Key.HasValue).AsQueryable();
-        foreach (IGrouping<int, FoundParameterModel> _gNode in _q.Cast<IGrouping<int, FoundParameterModel>>())
-        {
-            if (!storeRows.ContainsKey(_gNode.Key))
-                storeRows.Add(_gNode.Key, []);
-
-            storeRows[_gNode.Key].Add(new StrategyTradeStockSharpModel()
-            {
-
-            });
-        }
-
-        // List<IGrouping<int?, FoundParameterModel>> storeRows = [.. findStorageRows.Response.GroupBy(x => x.OwnerPrimaryKey)];
 
         // public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
         // StrategyTrades = req.Instruments;
