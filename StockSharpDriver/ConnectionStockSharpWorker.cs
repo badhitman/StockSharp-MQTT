@@ -20,11 +20,18 @@ public class ConnectionStockSharpWorker(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         RegisterEvents();
+
+        ssLink.ConnectNotify += ConnectLink;
+        ssLink.DisconnectNotify += DisconnectLink;
+
         while (!stoppingToken.IsCancellationRequested)
         {
             // _logger.LogDebug($"`tic-tac`");
             await Task.Delay(200, stoppingToken);
         }
+
+        ssLink.ConnectNotify -= ConnectLink;
+        ssLink.DisconnectNotify -= DisconnectLink;
 
         _logger.LogInformation($"call - {nameof(Connector.CancelOrders)}!");
         ssLink.Connector.CancelOrders();
@@ -36,6 +43,16 @@ public class ConnectionStockSharpWorker(
         }
 
         await ssLink.Connector.DisconnectAsync(stoppingToken);
+    }
+
+    private void DisconnectLink()
+    {
+        UnregisterEvents();
+    }
+
+    private void ConnectLink()
+    {
+        RegisterEvents();
     }
 
     /// <inheritdoc/>

@@ -761,4 +761,13 @@ public class DriverStockSharpService(
     {
         return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(DriverStockSharpService)}"));
     }
+
+    public Task<ResponseBaseModel> Terminate(CancellationToken? cancellationToken = null)
+    {
+        conLink.Unsubscribe();
+        conLink.Connector.Dispose();
+        conLink.Connector = new();
+        conLink.Subscribe();
+        throw new NotImplementedException();
+    }
 }

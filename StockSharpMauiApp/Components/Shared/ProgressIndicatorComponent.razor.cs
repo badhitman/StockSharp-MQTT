@@ -8,7 +8,6 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Server;
 using SharedLib;
-using System.Text;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -20,11 +19,11 @@ public partial class ProgressIndicatorComponent : BlazorBusyComponentBaseModel
     [Inject]
     IServiceProvider servicesProvider { get; set; } = default!;
 
+
     IMqttClient mqttClient = default!;
     MqttFactory mqttFactory = new();
 
     int rotateDeg;
-    int _counter;
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,7 +41,6 @@ public partial class ProgressIndicatorComponent : BlazorBusyComponentBaseModel
         if (rotateDeg >= 360)
         {
             rotateDeg = 0;
-            _counter++;
         }
 
         StateHasChangedCall();
@@ -59,8 +57,8 @@ public partial class ProgressIndicatorComponent : BlazorBusyComponentBaseModel
 
     public override void Dispose()
     {
-        mqttClient.Dispose();
         mqttClient.ApplicationMessageReceivedAsync -= ApplicationMessageReceived;
+        mqttClient.Dispose();
         base.Dispose();
     }
 

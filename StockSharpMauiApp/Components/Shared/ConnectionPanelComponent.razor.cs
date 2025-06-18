@@ -100,6 +100,15 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         await SetBusyAsync(false);
     }
 
+    protected  async Task TerminateConnection()
+    {
+        await base.GetStatusConnection();
+        if (AboutConnection?.Messages.Count == 0)
+        {
+            SnackbarRepo.Info(AboutConnection.ConnectionState.ToString() ?? "error");
+        }
+    }
+
     protected override async Task GetStatusConnection()
     {
         await base.GetStatusConnection();

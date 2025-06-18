@@ -45,6 +45,8 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<LogsSelectReceive, TPaginationRequestStandardModel<LogsSelectRequestModel>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<AboutConnectStockSharpDriverReceive, object, AboutConnectResponseModel>()
             .RegisterMqListener<DisconnectStockSharpDriverReceive, object, ResponseBaseModel>()
+            .RegisterMqListener<TerminateStockSharpDriverReceive, object, ResponseBaseModel>()
+
             .RegisterMqListener<ConnectStockSharpDriverReceive, ConnectRequestModel, ResponseBaseModel>()
             .RegisterMqListener<UpdateOrCreateAdapterStockSharpDriverReceive, FixMessageAdapterModelDB, TResponseModel<FixMessageAdapterModelDB>>()
             .RegisterMqListener<AdaptersSelectStockSharpDriverReceive, TPaginationRequestStandardModel<AdaptersRequestModel>, TPaginationResponseModel<FixMessageAdapterModelDB>>()
