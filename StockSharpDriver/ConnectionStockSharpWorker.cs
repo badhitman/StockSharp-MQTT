@@ -16,6 +16,14 @@ public class ConnectionStockSharpWorker(
     IEventsStockSharpService eventTrans,
     ConnectionLink conLink) : BackgroundService
 {
+    private void DisconnectLink() => UnregisterEvents();
+
+    private void ConnectLink() => RegisterEvents();
+
+    /// <inheritdoc/>
+    public bool IsConnected => conLink.Connector.ConnectionState == Ecng.ComponentModel.ConnectionStates.Connected;
+
+
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -45,18 +53,6 @@ public class ConnectionStockSharpWorker(
         await conLink.Connector.DisconnectAsync(stoppingToken);
     }
 
-    private void DisconnectLink()
-    {
-        UnregisterEvents();
-    }
-
-    private void ConnectLink()
-    {
-        RegisterEvents();
-    }
-
-    /// <inheritdoc/>
-    public bool IsConnected => conLink.Connector.ConnectionState == Ecng.ComponentModel.ConnectionStates.Connected;
 
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
@@ -270,7 +266,7 @@ public class ConnectionStockSharpWorker(
     }
     void ConnectionRestoredHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ConnectionRestoredHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogWarning($"Call > `{nameof(ConnectionRestoredHandle)}`");
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
@@ -279,7 +275,7 @@ public class ConnectionStockSharpWorker(
     }
     void ConnectionLostHandle(StockSharp.Messages.IMessageAdapter sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ConnectionLostHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogWarning($"Call > `{nameof(ConnectionLostHandle)}`");
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,

@@ -347,6 +347,7 @@ public class DriverStockSharpService(
             conLink.Connector.UnSubscribe(sub);
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
+        UnregisterEvents();
         conLink.Connector.Disconnect();
         BondList.Clear();
         lock (AllBondList)
@@ -679,12 +680,8 @@ public class DriverStockSharpService(
     public Task<ResponseBaseModel> Terminate(CancellationToken? cancellationToken = null)
     {
         UnregisterEvents();
-        conLink.Unsubscribe();
-
         conLink.Connector.Dispose();
         conLink.Connector = new();
-
-        conLink.Subscribe();
         RegisterEvents();
         return Task.FromResult(ResponseBaseModel.CreateSuccess("Connection terminated"));
     }
@@ -692,6 +689,8 @@ public class DriverStockSharpService(
 
     void UnregisterEvents()
     {
+        conLink.Unsubscribe();
+
         conLink.Connector.Connected -= ConnectedHandle;
         conLink.Connector.ConnectedEx -= ConnectedExHandle;
         conLink.Connector.Disconnected -= DisconnectedHandle;
@@ -739,6 +738,8 @@ public class DriverStockSharpService(
 
     void RegisterEvents()
     {
+        conLink.Subscribe();
+
         conLink.Connector.Connected += ConnectedHandle;
         conLink.Connector.ConnectedEx += ConnectedExHandle;
         conLink.Connector.Disconnected += DisconnectedHandle;

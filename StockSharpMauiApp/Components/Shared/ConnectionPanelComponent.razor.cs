@@ -102,7 +102,8 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     protected  async Task TerminateConnection()
     {
-        await DriverRepo.Terminate();
+        ResponseBaseModel res =  await DriverRepo.Terminate();
+        SnackbarRepo.ShowMessagesResponse(res.Messages);
         await base.GetStatusConnection();
         if (AboutConnection?.Messages.Count == 0)
         {
