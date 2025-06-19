@@ -165,13 +165,13 @@ public class DriverStockSharpService(
             JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(x.OrderByDescending(x => x.CreatedAt).First().SerializedDataJson)
         ))];
 
-        foreach(InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
+        foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
         {
             int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
             if (_fx < 0)
                 return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
 
-            if(dataParse[_fx].Value.ValueOperation < 1)
+            if (dataParse[_fx].Value.ValueOperation < 1)
                 return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
 
             if (dataParse[_fx].Value.BasePrice < 1)
@@ -224,6 +224,8 @@ public class DriverStockSharpService(
 
         return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
     }
+
+
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
@@ -279,51 +281,7 @@ public class DriverStockSharpService(
         connector.OrderBookReceived += TraderOnMarketDepthReceived;        
          */
 
-        #region event +
-        conLink.Connector.Connected += ConnectedHandle;
-        conLink.Connector.ConnectedEx += ConnectedExHandle;
-        conLink.Connector.Disconnected += DisconnectedHandle;
-        conLink.Connector.BoardReceived += BoardReceivedHandle;
-        conLink.Connector.CandleReceived += CandleReceivedHandle;
-        conLink.Connector.ConnectionLost += ConnectionLostHandle;
-        conLink.Connector.ConnectionError += ConnectionErrorHandle;
-        conLink.Connector.DataTypeReceived += DataTypeReceivedHandle;
-        conLink.Connector.ConnectionErrorEx += ConnectionErrorExHandle;
-        conLink.Connector.ConnectionRestored += ConnectionRestoredHandle;
-        conLink.Connector.CurrentTimeChanged += CurrentTimeChangedHandle;
-        conLink.Connector.ChangePasswordResult += ChangePasswordResultHandle;
-        conLink.Connector.DisconnectedEx += DisconnectedExHandle;
-        conLink.Connector.Disposed += DisposedHandle;
-        conLink.Connector.Error += ErrorHandle;
-        conLink.Connector.Level1Received += Level1ReceivedHandle;
-        conLink.Connector.Log += LogHandle;
-        conLink.Connector.LookupPortfoliosResult += LookupPortfoliosResultHandle;
-        conLink.Connector.LookupSecuritiesResult += LookupSecuritiesResultHandle;
-        conLink.Connector.MassOrderCanceled += MassOrderCanceledHandle;
-        conLink.Connector.MassOrderCanceled2 += MassOrderCanceled2Handle;
-        conLink.Connector.MassOrderCancelFailed += MassOrderCancelFailedHandle;
-        conLink.Connector.MassOrderCancelFailed2 += MassOrderCancelFailed2Handle;
-        conLink.Connector.NewMessage += NewMessageHandle;
-        conLink.Connector.NewsReceived += NewsReceivedHandle;
-        conLink.Connector.OrderBookReceived += OrderBookReceivedHandle;
-        conLink.Connector.OrderCancelFailReceived += OrderCancelFailReceivedHandle;
-        conLink.Connector.OrderEditFailReceived += OrderEditFailReceivedHandle;
-        conLink.Connector.OrderLogReceived += OrderLogReceivedHandle;
-        conLink.Connector.OrderReceived += OrderReceivedHandle;
-        conLink.Connector.OrderRegisterFailReceived += OrderRegisterFailReceivedHandle;
-        conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
-        conLink.Connector.ParentRemoved += ParentRemovedHandle;
-        conLink.Connector.PortfolioReceived += PortfolioReceivedHandle;
-        conLink.Connector.PositionReceived += PositionReceivedHandle;
-        conLink.Connector.SecurityReceived += SecurityReceivedHandle;
-        conLink.Connector.SubscriptionFailed += SubscriptionFailedHandle;
-        conLink.Connector.SubscriptionOnline += SubscriptionOnlineHandle;
-        conLink.Connector.SubscriptionReceived += SubscriptionReceivedHandle;
-        conLink.Connector.SubscriptionStarted += SubscriptionStartedHandle;
-        conLink.Connector.SubscriptionStopped += SubscriptionStoppedHandle;
-        conLink.Connector.TickTradeReceived += TickTradeReceivedHandle;
-        conLink.Connector.ValuesChanged += ValuesChangedHandle;
-        #endregion
+        RegisterEvents();
 
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
@@ -614,51 +572,7 @@ public class DriverStockSharpService(
     void DisconnectedExHandle(IMessageAdapter sender)
     {
         //_logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`: {JsonConvert.SerializeObject(sender)}");
-        #region event`s -
-        conLink.Connector.Connected -= ConnectedHandle;
-        conLink.Connector.ConnectedEx -= ConnectedExHandle;
-        conLink.Connector.Disconnected -= DisconnectedHandle;
-        conLink.Connector.BoardReceived -= BoardReceivedHandle;
-        conLink.Connector.CandleReceived -= CandleReceivedHandle;
-        conLink.Connector.ConnectionLost -= ConnectionLostHandle;
-        conLink.Connector.ConnectionError -= ConnectionErrorHandle;
-        conLink.Connector.DataTypeReceived -= DataTypeReceivedHandle;
-        conLink.Connector.ConnectionErrorEx -= ConnectionErrorExHandle;
-        conLink.Connector.ConnectionRestored -= ConnectionRestoredHandle;
-        conLink.Connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
-        conLink.Connector.ChangePasswordResult -= ChangePasswordResultHandle;
-        conLink.Connector.DisconnectedEx -= DisconnectedExHandle;
-        conLink.Connector.Disposed -= DisposedHandle;
-        conLink.Connector.Error -= ErrorHandle;
-        conLink.Connector.Level1Received -= Level1ReceivedHandle;
-        conLink.Connector.Log -= LogHandle;
-        conLink.Connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
-        conLink.Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
-        conLink.Connector.MassOrderCanceled -= MassOrderCanceledHandle;
-        conLink.Connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
-        conLink.Connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
-        conLink.Connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
-        conLink.Connector.NewMessage -= NewMessageHandle;
-        conLink.Connector.NewsReceived -= NewsReceivedHandle;
-        conLink.Connector.OrderBookReceived -= OrderBookReceivedHandle;
-        conLink.Connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
-        conLink.Connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
-        conLink.Connector.OrderLogReceived -= OrderLogReceivedHandle;
-        conLink.Connector.OrderReceived -= OrderReceivedHandle;
-        conLink.Connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
-        conLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
-        conLink.Connector.ParentRemoved -= ParentRemovedHandle;
-        conLink.Connector.PortfolioReceived -= PortfolioReceivedHandle;
-        conLink.Connector.PositionReceived -= PositionReceivedHandle;
-        conLink.Connector.SecurityReceived -= SecurityReceivedHandle;
-        conLink.Connector.SubscriptionFailed -= SubscriptionFailedHandle;
-        conLink.Connector.SubscriptionOnline -= SubscriptionOnlineHandle;
-        conLink.Connector.SubscriptionReceived -= SubscriptionReceivedHandle;
-        conLink.Connector.SubscriptionStarted -= SubscriptionStartedHandle;
-        conLink.Connector.SubscriptionStopped -= SubscriptionStoppedHandle;
-        conLink.Connector.TickTradeReceived -= TickTradeReceivedHandle;
-        conLink.Connector.ValuesChanged -= ValuesChangedHandle;
-        #endregion
+        UnregisterEvents();
     }
     void DisconnectedHandle()
     {
@@ -764,10 +678,109 @@ public class DriverStockSharpService(
 
     public Task<ResponseBaseModel> Terminate(CancellationToken? cancellationToken = null)
     {
+        UnregisterEvents();
         conLink.Unsubscribe();
+
         conLink.Connector.Dispose();
         conLink.Connector = new();
+
         conLink.Subscribe();
-        throw new NotImplementedException();
+        RegisterEvents();
+        return Task.FromResult(ResponseBaseModel.CreateSuccess("Connection terminated"));
+    }
+
+
+    void UnregisterEvents()
+    {
+        conLink.Connector.Connected -= ConnectedHandle;
+        conLink.Connector.ConnectedEx -= ConnectedExHandle;
+        conLink.Connector.Disconnected -= DisconnectedHandle;
+        conLink.Connector.BoardReceived -= BoardReceivedHandle;
+        conLink.Connector.CandleReceived -= CandleReceivedHandle;
+        conLink.Connector.ConnectionLost -= ConnectionLostHandle;
+        conLink.Connector.ConnectionError -= ConnectionErrorHandle;
+        conLink.Connector.DataTypeReceived -= DataTypeReceivedHandle;
+        conLink.Connector.ConnectionErrorEx -= ConnectionErrorExHandle;
+        conLink.Connector.ConnectionRestored -= ConnectionRestoredHandle;
+        conLink.Connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
+        conLink.Connector.ChangePasswordResult -= ChangePasswordResultHandle;
+        conLink.Connector.DisconnectedEx -= DisconnectedExHandle;
+        conLink.Connector.Disposed -= DisposedHandle;
+        conLink.Connector.Error -= ErrorHandle;
+        conLink.Connector.Level1Received -= Level1ReceivedHandle;
+        conLink.Connector.Log -= LogHandle;
+        conLink.Connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
+        conLink.Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
+        conLink.Connector.MassOrderCanceled -= MassOrderCanceledHandle;
+        conLink.Connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
+        conLink.Connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
+        conLink.Connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
+        conLink.Connector.NewMessage -= NewMessageHandle;
+        conLink.Connector.NewsReceived -= NewsReceivedHandle;
+        conLink.Connector.OrderBookReceived -= OrderBookReceivedHandle;
+        conLink.Connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
+        conLink.Connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
+        conLink.Connector.OrderLogReceived -= OrderLogReceivedHandle;
+        conLink.Connector.OrderReceived -= OrderReceivedHandle;
+        conLink.Connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
+        conLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
+        conLink.Connector.ParentRemoved -= ParentRemovedHandle;
+        conLink.Connector.PortfolioReceived -= PortfolioReceivedHandle;
+        conLink.Connector.PositionReceived -= PositionReceivedHandle;
+        conLink.Connector.SecurityReceived -= SecurityReceivedHandle;
+        conLink.Connector.SubscriptionFailed -= SubscriptionFailedHandle;
+        conLink.Connector.SubscriptionOnline -= SubscriptionOnlineHandle;
+        conLink.Connector.SubscriptionReceived -= SubscriptionReceivedHandle;
+        conLink.Connector.SubscriptionStarted -= SubscriptionStartedHandle;
+        conLink.Connector.SubscriptionStopped -= SubscriptionStoppedHandle;
+        conLink.Connector.TickTradeReceived -= TickTradeReceivedHandle;
+        conLink.Connector.ValuesChanged -= ValuesChangedHandle;
+    }
+
+    void RegisterEvents()
+    {
+        conLink.Connector.Connected += ConnectedHandle;
+        conLink.Connector.ConnectedEx += ConnectedExHandle;
+        conLink.Connector.Disconnected += DisconnectedHandle;
+        conLink.Connector.DisconnectedEx += DisconnectedExHandle;
+        conLink.Connector.BoardReceived += BoardReceivedHandle;
+        conLink.Connector.CandleReceived += CandleReceivedHandle;
+        conLink.Connector.ConnectionLost += ConnectionLostHandle;
+        conLink.Connector.ConnectionError += ConnectionErrorHandle;
+        conLink.Connector.DataTypeReceived += DataTypeReceivedHandle;
+        conLink.Connector.ConnectionErrorEx += ConnectionErrorExHandle;
+        conLink.Connector.ConnectionRestored += ConnectionRestoredHandle;
+        conLink.Connector.CurrentTimeChanged += CurrentTimeChangedHandle;
+        conLink.Connector.ChangePasswordResult += ChangePasswordResultHandle;
+        conLink.Connector.Disposed += DisposedHandle;
+        conLink.Connector.Error += ErrorHandle;
+        conLink.Connector.Level1Received += Level1ReceivedHandle;
+        conLink.Connector.Log += LogHandle;
+        conLink.Connector.LookupPortfoliosResult += LookupPortfoliosResultHandle;
+        conLink.Connector.LookupSecuritiesResult += LookupSecuritiesResultHandle;
+        conLink.Connector.MassOrderCanceled += MassOrderCanceledHandle;
+        conLink.Connector.MassOrderCanceled2 += MassOrderCanceled2Handle;
+        conLink.Connector.MassOrderCancelFailed += MassOrderCancelFailedHandle;
+        conLink.Connector.MassOrderCancelFailed2 += MassOrderCancelFailed2Handle;
+        conLink.Connector.NewMessage += NewMessageHandle;
+        conLink.Connector.NewsReceived += NewsReceivedHandle;
+        conLink.Connector.OrderBookReceived += OrderBookReceivedHandle;
+        conLink.Connector.OrderCancelFailReceived += OrderCancelFailReceivedHandle;
+        conLink.Connector.OrderEditFailReceived += OrderEditFailReceivedHandle;
+        conLink.Connector.OrderLogReceived += OrderLogReceivedHandle;
+        conLink.Connector.OrderReceived += OrderReceivedHandle;
+        conLink.Connector.OrderRegisterFailReceived += OrderRegisterFailReceivedHandle;
+        conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
+        conLink.Connector.ParentRemoved += ParentRemovedHandle;
+        conLink.Connector.PortfolioReceived += PortfolioReceivedHandle;
+        conLink.Connector.PositionReceived += PositionReceivedHandle;
+        conLink.Connector.SecurityReceived += SecurityReceivedHandle;
+        conLink.Connector.SubscriptionFailed += SubscriptionFailedHandle;
+        conLink.Connector.SubscriptionOnline += SubscriptionOnlineHandle;
+        conLink.Connector.SubscriptionReceived += SubscriptionReceivedHandle;
+        conLink.Connector.SubscriptionStarted += SubscriptionStartedHandle;
+        conLink.Connector.SubscriptionStopped += SubscriptionStoppedHandle;
+        conLink.Connector.TickTradeReceived += TickTradeReceivedHandle;
+        conLink.Connector.ValuesChanged += ValuesChangedHandle;
     }
 }
