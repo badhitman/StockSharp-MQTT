@@ -23,6 +23,55 @@ public class OrderStockSharpModelDB : OrderStockSharpViewModel, IBaseStockSharpM
     ///<inheritdoc/>
     public List<MyTradeStockSharpModelDB> MyTrades { get; set; }
 
+    public static OrderStockSharpModelDB Build(OrderStockSharpModel req, int instrumentId)
+    {
+        return new()
+        {
+            AveragePrice = req.AveragePrice,
+            Balance = req.Balance,
+            BoardId = req.BoardId,
+            Id = req.Id,
+            BrokerCode = req.BrokerCode,
+            CancelledTime = req.CancelledTime,
+            ClientCode = req.ClientCode,
+            Comment = req.Comment,
+            Commission = req.Commission,
+            CommissionCurrency = req.CommissionCurrency,
+            Currency = req.Currency,
+            ExpiryDate = req.ExpiryDate,
+            InstrumentId = instrumentId,
+            IsManual = req.IsManual,
+            IsMarketMaker = req.IsMarketMaker,
+            IsSystem = req.IsSystem,
+            LatencyCancellation = req.LatencyCancellation,
+            LatencyEdition = req.LatencyEdition,
+            LatencyRegistration = req.LatencyRegistration,
+            LocalTime = req.LocalTime,
+            MarginMode = req.MarginMode,
+            MatchedTime = req.MatchedTime,
+            MinVolume = req.MinVolume,
+            PositionEffect = req.PositionEffect,
+            Yield = req.Yield,
+            PostOnly = req.PostOnly,
+            Price = req.Price,
+            SeqNum = req.SeqNum,
+            Side = req.Side,
+            Slippage = req.Slippage,
+            State = req.State,
+            Status = req.Status,
+            StringId = req.StringId,
+            Time = req.Time,
+            TimeInForce = req.TimeInForce,
+            Type = req.Type,
+             TransactionId = req.TransactionId,
+              UserOrderId = req.UserOrderId,
+               VisibleVolume = req.VisibleVolume,
+                Volume = req.Volume ,
+                 
+        };
+
+    }
+
     /// <inheritdoc/>
     internal void SetUpdate(OrderStockSharpModel inc)
     {

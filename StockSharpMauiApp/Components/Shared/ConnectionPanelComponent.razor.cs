@@ -53,13 +53,6 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     async Task StartTradeAsync()
     {
-
-        //if (RowsComponents.Any(x => !x.Available))
-        //{
-        //    SnackbarRepo.Add("Instruments not initialized!", MudBlazor.Severity.Error);
-        //    return;
-        //}
-
         StrategyStartRequestModel req = new()
         {
             Board = SelectedBoard,
