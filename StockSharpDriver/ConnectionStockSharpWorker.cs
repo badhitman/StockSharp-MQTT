@@ -6,7 +6,6 @@ using StockSharp.BusinessEntities;
 using StockSharp.Algo;
 using Newtonsoft.Json;
 using SharedLib;
-using StockSharp.Algo.Indicators;
 
 namespace StockSharpDriver;
 
@@ -20,9 +19,6 @@ public class ConnectionStockSharpWorker(
     private void DisconnectLink() => UnregisterEvents();
 
     private void ConnectLink() => RegisterEvents();
-
-    /// <inheritdoc/>
-    public bool IsConnected => conLink.Connector.ConnectionState == Ecng.ComponentModel.ConnectionStates.Connected;
 
 
     /// <inheritdoc/>

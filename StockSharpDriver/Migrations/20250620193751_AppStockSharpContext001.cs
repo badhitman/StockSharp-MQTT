@@ -73,10 +73,10 @@ namespace StockSharpDriver.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ExchangeId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Code = table.Column<string>(type: "TEXT", nullable: true)
+                    Code = table.Column<string>(type: "TEXT", nullable: true),
+                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -144,9 +144,9 @@ namespace StockSharpDriver.Migrations
                     Currency = table.Column<int>(type: "INTEGER", nullable: true),
                     ClientCode = table.Column<string>(type: "TEXT", nullable: true),
                     DepoName = table.Column<string>(type: "TEXT", nullable: true),
+                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false)
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

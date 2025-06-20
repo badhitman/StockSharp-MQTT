@@ -95,16 +95,6 @@ public class DriverStockSharpService(
             lock (AllBondList)
                 foreach (Security security in AllBondList)
                 {
-#if DEBUG
-                    string _jd1 = "";
-                    string _jd2 = "";
-                    if (security.Code.StartsWith("SU", StringComparison.OrdinalIgnoreCase) || security.Name.StartsWith("SU"))
-                    {
-                         _jd1 = JsonConvert.SerializeObject(AllBondList);
-                         _jd2 = JsonConvert.SerializeObject(StrategyTrades);
-                    }
-                    bool _actItem = !string.IsNullOrWhiteSpace(_jd1) || !string.IsNullOrWhiteSpace(_jd2);
-#endif
                     try
                     {
                         if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
@@ -313,7 +303,7 @@ public class DriverStockSharpService(
                     case nameof(LuaFixMarketDataMessageAdapter):
                         LuaFixMarketDataMessageAdapter luaFixMarketDataMessageAdapter = new(conLink.Connector.TransactionIdGenerator)
                         {
-                            Address = x.Address.To<EndPoint>(), //"localhost:5001".To<EndPoint>(),
+                            Address = x.Address.To<EndPoint>(),
                             Login = x.Login,
                             Password = secure,
                             IsDemo = true,
@@ -343,7 +333,10 @@ public class DriverStockSharpService(
         });
 
         if (!conLink.Connector.CanConnect)
-            return ResponseBaseModel.CreateError("can`t connect");
+        {
+            res.AddError("can`t connect");
+            return res; 
+        }
 
         await conLink.Connector.ConnectAsync(cancellationToken ?? CancellationToken.None);
         res.AddInfo($"connection: {conLink.Connector.ConnectionState}");
