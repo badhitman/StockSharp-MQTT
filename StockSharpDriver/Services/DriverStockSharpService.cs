@@ -95,6 +95,16 @@ public class DriverStockSharpService(
             lock (AllBondList)
                 foreach (Security security in AllBondList)
                 {
+#if DEBUG
+                    string _jd1 = "";
+                    string _jd2 = "";
+                    if (security.Code.StartsWith("SU", StringComparison.OrdinalIgnoreCase) || security.Name.StartsWith("SU"))
+                    {
+                         _jd1 = JsonConvert.SerializeObject(AllBondList);
+                         _jd2 = JsonConvert.SerializeObject(StrategyTrades);
+                    }
+                    bool _actItem = !string.IsNullOrWhiteSpace(_jd1) || !string.IsNullOrWhiteSpace(_jd2);
+#endif
                     try
                     {
                         if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
@@ -160,44 +170,27 @@ public class DriverStockSharpService(
         if (findStorageRows.Length == 0)
             return ResponseBaseModel.CreateError("Dashboard - not set");
 
-        //IQueryable<IGrouping<int?, FoundParameterModel>> _q = findStorageRows
-        //    .GroupBy(x => x.Id)
-        //    .Where(x => x.Key.HasValue)
-        //    .AsQueryable();
+        IQueryable<IGrouping<int?, FundedParametersModel<StrategyTradeStockSharpModel>>> _q = findStorageRows
+            .GroupBy(x => x.OwnerPrimaryKey)
+            .Where(x => x.Key.HasValue)
+            .AsQueryable();
 
-//#if DEBUG
-//        foreach (IGrouping<int?, FoundParameterModel> x in _q)
-//        {
-//            FoundParameterModel _dbg1 = x.OrderByDescending(x => x.CreatedAt).First();
-//            //JToken token = JToken.Parse(_dbg1.SerializedDataJson);
-//            JObject json = JObject.Parse(_dbg1.SerializedDataJson);
-//            StrategyTradeStockSharpModel _obj = json.ToObject<StrategyTradeStockSharpModel>();
-//            // Regex.Unescape(
-//            //string _dbg2 = HttpUtility.JavaScriptStringEncode(Regex.Unescape(_dbg1.SerializedDataJson));
-//            StrategyTradeStockSharpModel _dbg3 = JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(_dbg1.SerializedDataJson);
-//        }
-//#endif
+        List<KeyValuePair<int?, StrategyTradeStockSharpModel>> dataParse = _q.Select(x => new KeyValuePair<int?, StrategyTradeStockSharpModel>(x.Key, x.OrderByDescending(x => x.CreatedAt).First().Payload)).ToList();
+        StrategyTrades = [];
+        foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
+        {
+                int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
+                if (_fx < 0)
+                    return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
 
-        //List<KeyValuePair<int?, StrategyTradeStockSharpModel>> dataParse = [.. _q.Select(x => new KeyValuePair<int?, StrategyTradeStockSharpModel>
-        //(
-        //    x.Key,
-        //    JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(x.OrderByDescending(x => x.CreatedAt).First().SerializedDataJson)
-        //))];
+                if (dataParse[_fx].Value.ValueOperation < 1)
+                    return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
 
-        //foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
-        //{
-        //    int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
-        //    if (_fx < 0)
-        //        return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+                if (dataParse[_fx].Value.BasePrice < 1)
+                    return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
 
-        //    if (dataParse[_fx].Value.ValueOperation < 1)
-        //        return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
-
-        //    if (dataParse[_fx].Value.BasePrice < 1)
-        //        return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
-
-        //    StrategyTrades.Add(dataParse[_fx].Value);
-        //}
+                StrategyTrades.Add(dataParse[_fx].Value);
+        }
 
         if (StrategyTrades is null || StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");

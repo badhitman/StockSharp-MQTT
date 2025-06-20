@@ -45,7 +45,7 @@ else
     <table class="table table-striped table-hover">
         <thead>
             <tr>
-                <th scope="col">Instrument</th>
+                <th @onclick="() => ShowNamesInstruments = !ShowNamesInstruments" scope="col">Instrument</th>
                 <th></th>
                 <th scope="col">Price</th>
                 <th scope="col">Volume</th>
@@ -59,7 +59,7 @@ else
             <CascadingValue Value="this">
                 @foreach (InstrumentTradeStockSharpViewModel i in instruments)
                 {
-                    <TradingRowComponent Instrument="i" @key="@($"instr_{i.Id}")" />
+                    <TradingRowComponent Instrument="i" @key="@($"instr_{i.Id}")" ShowNamesInstruments="ShowNamesInstruments" />
                 }
             </CascadingValue>
         </tbody>

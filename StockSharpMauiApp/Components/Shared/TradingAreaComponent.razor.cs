@@ -23,6 +23,7 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
     [Inject]
     protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
 
+    bool ShowNamesInstruments { get; set; }
 
     int QuoteVolume { get; set; }
     int QuoteSizeVolume { get; set; }
