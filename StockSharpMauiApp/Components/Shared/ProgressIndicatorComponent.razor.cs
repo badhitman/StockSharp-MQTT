@@ -25,7 +25,7 @@ public partial class ProgressIndicatorComponent : BlazorBusyComponentBaseModel
 
     int rotateDeg;
 
-    ulong allBytesCount;
+    long allBytesCount;
     uint allMessagesCount;
 
     protected override async Task OnInitializedAsync()
