@@ -25,6 +25,9 @@ public partial class ProgressIndicatorComponent : BlazorBusyComponentBaseModel
 
     int rotateDeg;
 
+    ulong allBytesCount;
+    uint allMessagesCount;
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -42,17 +45,10 @@ public partial class ProgressIndicatorComponent : BlazorBusyComponentBaseModel
         {
             rotateDeg = 0;
         }
-
+        Interlocked.Add(ref allBytesCount, e.ApplicationMessage.PayloadSegment.Count);
+        Interlocked.Increment(ref allMessagesCount);
         StateHasChangedCall();
         return Task.CompletedTask;
-    }
-
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-        using IServiceScope scope = servicesProvider.CreateScope();
-        mqttClient = mqttFactory.CreateMqttClient();
-
     }
 
     public override void Dispose()
