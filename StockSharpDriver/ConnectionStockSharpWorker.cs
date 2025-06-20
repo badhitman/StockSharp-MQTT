@@ -6,6 +6,7 @@ using StockSharp.BusinessEntities;
 using StockSharp.Algo;
 using Newtonsoft.Json;
 using SharedLib;
+using StockSharp.Algo.Indicators;
 
 namespace StockSharpDriver;
 
@@ -95,8 +96,12 @@ public class ConnectionStockSharpWorker(
     void OrderReceivedHandle(Subscription subscription, Order orderSource)
     {
         _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(orderSource)}");
+
+        InstrumentTradeStockSharpViewModel instrumentDBRes = dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(orderSource.Security)).Result.Response;
+
         OrderStockSharpModel order = new OrderStockSharpModel().Bind(orderSource);
-        TResponseModel<OrderStockSharpViewModel> dbRes = dataRepo.SaveOrder(order).Result;
+
+        TResponseModel<OrderStockSharpViewModel> dbRes = dataRepo.SaveOrder(order, instrumentDBRes).Result;
         if (dbRes.Response is null)
             _logger.LogError("result is null: TResponseModel<OrderStockSharpViewModel> dbRes = dataRepo.SaveOrder(order).Result;");
         else
@@ -106,8 +111,11 @@ public class ConnectionStockSharpWorker(
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
         _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
+        InstrumentTradeStockSharpViewModel instrument = dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(tr.Order.Security)).Result.Response;
+
         MyTradeStockSharpModel myTrade = new MyTradeStockSharpModel().Bind(tr);
-        TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade).Result;
+
+        TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade, instrument).Result;
 
         if (dbRes.Response is null)
             _logger.LogError("result is null: TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade).Result;");

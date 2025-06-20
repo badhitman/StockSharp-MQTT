@@ -21,7 +21,11 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         IQueryable<InstrumentStockSharpModelDB> q = ids is null || ids.Length == 0
             ? context.Instruments.AsQueryable()
             : context.Instruments.Where(x => ids.Contains(x.Id));
-        List<InstrumentStockSharpModelDB> data = await q.Include(x => x.Board).ThenInclude(x => x.Exchange).ToListAsync(cancellationToken: cancellationToken);
+
+        List<InstrumentStockSharpModelDB> data = await q
+            .Include(x => x.Board)
+            .ThenInclude(x => x.Exchange)
+            .ToListAsync(cancellationToken: cancellationToken);
 
         return new()
         {
@@ -176,7 +180,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         }
 
         List<InstrumentStockSharpModelDB> _data = await q
-            .Include(x=> x.Markers)
+            .Include(x => x.Markers)
             .Include(x => x.Board)
             .ThenInclude(x => x.Exchange)
             .OrderBy(x => x.Name)

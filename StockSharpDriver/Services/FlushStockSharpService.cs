@@ -40,6 +40,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             context.Update(instrumentDb);
         }
         context.SaveChanges();
+        instrumentDb.Board = board;
         return Task.FromResult(new TResponseModel<InstrumentTradeStockSharpViewModel>() { Response = instrumentDb });
     }
 
@@ -78,7 +79,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<MyTradeStockSharpViewModel>> SaveTrade(MyTradeStockSharpModel myTrade)
+    public async Task<TResponseModel<MyTradeStockSharpViewModel>> SaveTrade(MyTradeStockSharpModel myTrade, InstrumentTradeStockSharpViewModel instrument)
     {
         TResponseModel<MyTradeStockSharpViewModel> res = new();
 
@@ -92,7 +93,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         MyTradeStockSharpModelDB myTradeDb = new MyTradeStockSharpModelDB().Bind(myTrade);
         myTradeDb.LastUpdatedAtUTC = DateTime.UtcNow;
 
-        myTradeDb.OrderId = SaveOrder(myTrade.Order).Result.Response.IdPK;
+        myTradeDb.OrderId = SaveOrder(myTrade.Order, instrument).Result.Response.IdPK;
         await context.MyTrades.AddAsync(myTradeDb);
         await context.SaveChangesAsync();
         res.Response = myTradeDb;
@@ -100,14 +101,10 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<OrderStockSharpViewModel>> SaveOrder(OrderStockSharpModel req)
+    public async Task<TResponseModel<OrderStockSharpViewModel>> SaveOrder(OrderStockSharpModel req, InstrumentTradeStockSharpViewModel instrument)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
         OrderStockSharpModelDB orderDb = await context.Orders.FirstOrDefaultAsync(x => x.TransactionId == req.TransactionId);
-
-        InstrumentStockSharpModelDB instrumentDb = null;
-        if (!string.IsNullOrWhiteSpace(req.Instrument.Name))
-            instrumentDb = (InstrumentStockSharpModelDB)SaveInstrument(req.Instrument).Result.Response;
 
         PortfolioTradeModelDB portfolioDb = null;
         if (!string.IsNullOrWhiteSpace(req.Portfolio.Name))
@@ -124,10 +121,10 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
 
         if (orderDb is null)
         {
-            orderDb = OrderStockSharpModelDB.Build(req, instrumentDb.Id); // req;
+            orderDb = OrderStockSharpModelDB.Build(req, instrument.Id); // req;
             orderDb.CreatedAtUTC = DateTime.UtcNow;
             orderDb.LastUpdatedAtUTC = DateTime.UtcNow;
-            orderDb.InstrumentId = instrumentDb.Id;
+            orderDb.InstrumentId = instrument.Id;
             orderDb.Instrument = null;
 
             orderDb.PortfolioId = portfolioDb.Id;
