@@ -46,7 +46,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     public async Task<TResponseModel<PortfolioStockSharpViewModel>> SavePortfolio(PortfolioStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        BoardStockSharpModelDB board = (BoardStockSharpModelDB)SaveBoard(req.Board).Result.Response;
+        BoardStockSharpModelDB board = req.Board is null ? null : (BoardStockSharpModelDB)SaveBoard(req.Board).Result.Response;
 
         IQueryable<PortfolioTradeModelDB> q = context.Portfolios
             .Where(x => x.Name == req.Name && x.DepoName == req.DepoName && x.Currency == req.Currency);
