@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace SharedLib;
@@ -11,14 +10,8 @@ namespace SharedLib;
 /// Биржа
 /// </summary>
 [Index(nameof(Name))]
-public class ExchangeStockSharpModelDB : ExchangeStockSharpModel
+public class ExchangeStockSharpModelDB : ExchangeStockSharpViewModel
 {
-    /// <summary>
-    /// Идентификатор/Key
-    /// </summary>
-    [Key]
-    public int Id { get; set; }
-
     /// <summary>
     /// Boards
     /// </summary>

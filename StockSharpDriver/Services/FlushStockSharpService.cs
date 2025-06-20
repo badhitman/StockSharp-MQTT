@@ -17,9 +17,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     public Task<TResponseModel<InstrumentTradeStockSharpViewModel>> SaveInstrument(InstrumentTradeStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        BoardStockSharpModelDB board = null;
-        if (!string.IsNullOrWhiteSpace(req.Board.Code))
-            board = context.Boards.First(x => x.Id == SaveBoard(req.Board).Result.Response);
+        BoardStockSharpModelDB board = (BoardStockSharpModelDB)SaveBoard(req.Board).Result.Response;
 
         InstrumentStockSharpModelDB instrumentDb = context.Instruments
             .FirstOrDefault(x => x.Name == req.Name && x.Code == req.Code && x.BoardId == board.Id);
@@ -48,9 +46,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     public async Task<TResponseModel<PortfolioStockSharpViewModel>> SavePortfolio(PortfolioStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        BoardStockSharpModelDB board = null;
-        if (!string.IsNullOrWhiteSpace(req.Board?.Code))
-            board = context.Boards.First(x => x.Id == SaveBoard(req.Board).Result.Response);
+        BoardStockSharpModelDB board = (BoardStockSharpModelDB)SaveBoard(req.Board).Result.Response;
 
         IQueryable<PortfolioTradeModelDB> q = context.Portfolios
             .Where(x => x.Name == req.Name && x.DepoName == req.DepoName && x.Currency == req.Currency);
@@ -75,6 +71,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             context.Update(portDb);
         }
         await context.SaveChangesAsync();
+        portDb.Board = board;
         return new TResponseModel<PortfolioStockSharpViewModel>() { Response = portDb };
     }
 
@@ -116,12 +113,14 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
                 x.ClientCode == req.Portfolio.ClientCode &&
                 x.Currency == req.Portfolio.Currency);
 
-            portfolioDb = (PortfolioTradeModelDB)SavePortfolio(req.Portfolio).Result.Response;
+            portfolioDb ??= (PortfolioTradeModelDB)SavePortfolio(req.Portfolio).Result.Response;
         }
+        else
+            portfolioDb = (PortfolioTradeModelDB)SavePortfolio(req.Portfolio).Result.Response;
 
         if (orderDb is null)
         {
-            orderDb = OrderStockSharpModelDB.Build(req, instrument.Id); // req;
+            orderDb = OrderStockSharpModelDB.Build(req, instrument.Id);
             orderDb.CreatedAtUTC = DateTime.UtcNow;
             orderDb.LastUpdatedAtUTC = DateTime.UtcNow;
             orderDb.InstrumentId = instrument.Id;
@@ -138,22 +137,21 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             context.Update(orderDb);
         }
         context.SaveChanges();
+
+        orderDb.Instrument = (InstrumentStockSharpModelDB)instrument;
+        orderDb.Portfolio = portfolioDb;
+
         return new TResponseModel<OrderStockSharpViewModel>() { Response = orderDb };
     }
 
     /// <inheritdoc/>
-    public Task<TResponseModel<int>> SaveBoard(BoardStockSharpModel req)
+    public async Task<TResponseModel<BoardStockSharpViewModel>> SaveBoard(BoardStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        ExchangeStockSharpModelDB exchange = null;
-        if (!string.IsNullOrWhiteSpace(req.Exchange.Name))
-        {
-            SaveExchange(req.Exchange);
-            exchange = context.Exchanges.First(x => x.Name == req.Exchange.Name && x.CountryCode == req.Exchange.CountryCode);
-        }
-        bool withOutExchange = exchange is null;
+        ExchangeStockSharpModelDB exchange = (ExchangeStockSharpModelDB)(await SaveExchange(req.Exchange)).Response;
+
         BoardStockSharpModelDB boardDb = context.Boards
-            .FirstOrDefault(x => x.Code == req.Code && (withOutExchange || x.ExchangeId == exchange.Id));
+            .FirstOrDefault(x => x.Code == req.Code && x.ExchangeId == exchange.Id);
         if (boardDb is null)
         {
             boardDb = new BoardStockSharpModelDB().Bind(req);
@@ -169,11 +167,14 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             context.Update(boardDb);
         }
         context.SaveChanges();
-        return Task.FromResult(new TResponseModel<int>() { Response = boardDb.Id });
+
+        boardDb.Exchange = exchange;
+
+        return new TResponseModel<BoardStockSharpViewModel>() { Response = boardDb };
     }
 
     /// <inheritdoc/>
-    public Task<TResponseModel<int>> SaveExchange(ExchangeStockSharpModel req)
+    public Task<TResponseModel<ExchangeStockSharpViewModel>> SaveExchange(ExchangeStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
         ExchangeStockSharpModelDB exchangeDb = context.Exchanges
@@ -189,6 +190,6 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             context.Update(exchangeDb);
         }
         context.SaveChanges();
-        return Task.FromResult(new TResponseModel<int>() { Response = exchangeDb.Id });
+        return Task.FromResult(new TResponseModel<ExchangeStockSharpViewModel>() { Response = exchangeDb });
     }
 }

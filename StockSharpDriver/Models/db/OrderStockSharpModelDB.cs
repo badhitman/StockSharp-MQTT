@@ -63,17 +63,15 @@ public class OrderStockSharpModelDB : OrderStockSharpViewModel, IBaseStockSharpM
             Time = req.Time,
             TimeInForce = req.TimeInForce,
             Type = req.Type,
-             TransactionId = req.TransactionId,
-              UserOrderId = req.UserOrderId,
-               VisibleVolume = req.VisibleVolume,
-                Volume = req.Volume ,
-                 
+            TransactionId = req.TransactionId,
+            UserOrderId = req.UserOrderId,
+            VisibleVolume = req.VisibleVolume,
+            Volume = req.Volume,
         };
-
     }
 
     /// <inheritdoc/>
-    internal void SetUpdate(OrderStockSharpModel inc)
+    public void SetUpdate(OrderStockSharpModel inc)
     {
         Id = inc.Id;
         LastUpdatedAtUTC = DateTime.UtcNow;

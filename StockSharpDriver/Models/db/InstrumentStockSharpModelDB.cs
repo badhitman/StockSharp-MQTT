@@ -30,7 +30,7 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
     /// <inheritdoc/>
     public void SetUpdate(InstrumentTradeStockSharpModel req)
     {
-        NameNormalizedUpper = req.Name.ToUpper();
+        NameNormalizedUpper = req.Name is null ? "" : req.Name.ToUpper();
         IdRemoteNormalizedUpper = req.IdRemote.ToUpper();
 
         LastUpdatedAtUTC = DateTime.UtcNow;

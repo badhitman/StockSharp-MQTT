@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace SharedLib;
@@ -11,20 +10,8 @@ namespace SharedLib;
 /// Площадка
 /// </summary>
 [Index(nameof(Code))]
-public class BoardStockSharpModelDB : BoardStockSharpModel, IBaseStockSharpModel
+public class BoardStockSharpModelDB : BoardStockSharpViewModel, IBaseStockSharpModel
 {
-    /// <summary>
-    /// Идентификатор/Key
-    /// </summary>
-    [Key]
-    public int Id { get; set; }
-
-    /// <inheritdoc/>
-    public DateTime LastUpdatedAtUTC { get; set; }
-
-    /// <inheritdoc/>
-    public DateTime CreatedAtUTC { get; set; }
-
     /// <summary>
     /// Exchange
     /// </summary>
@@ -43,5 +30,6 @@ public class BoardStockSharpModelDB : BoardStockSharpModel, IBaseStockSharpModel
     public void SetUpdate(BoardStockSharpModel req)
     {
         Code = req.Code;
+        LastUpdatedAtUTC = DateTime.UtcNow;
     }
 }

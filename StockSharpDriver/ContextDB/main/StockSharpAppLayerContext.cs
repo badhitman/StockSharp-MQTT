@@ -63,6 +63,9 @@ public abstract partial class StockSharpAppLayerContext : DbContext
         modelBuilder.Entity<PortfolioTradeModelDB>()
        .HasKey(b => b.Id);
 
+        modelBuilder.Entity<ExchangeStockSharpModelDB>()
+       .HasKey(b => b.Id);
+
         modelBuilder.Entity<InstrumentStockSharpModelDB>()
        .HasKey(b => b.Id);
 
