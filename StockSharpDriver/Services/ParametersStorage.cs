@@ -373,6 +373,7 @@ public class ParametersStorage(
                 CreatedAt = DateTime.UtcNow,
                 OwnerPrimaryKey = x.OwnerPrimaryKey,
                 PrefixPropertyName = x.PrefixPropertyName,
+                TypeName = x.TypeName,
             })];
 
         return res;

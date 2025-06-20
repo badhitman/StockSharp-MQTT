@@ -128,7 +128,7 @@ public class DriverStockSharpService(
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
         AboutConnectResponseModel _ac = await AboutConnection();
-        if(_ac.ConnectionState != ConnectionStatesEnum.Disconnected)
+        if (_ac.ConnectionState != ConnectionStatesEnum.Connected)
             return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState.DescriptionInfo()})");
 
         ClearStrategy();
@@ -162,6 +162,14 @@ public class DriverStockSharpService(
             .GroupBy(x => x.OwnerPrimaryKey)
             .Where(x => x.Key.HasValue)
             .AsQueryable();
+
+#if DEBUG
+        foreach (IGrouping<int?, FoundParameterModel> x in _q)
+        {
+            FoundParameterModel _dbg1 = x.OrderByDescending(x => x.CreatedAt).First();
+            StrategyTradeStockSharpModel _dbg2 = JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(_dbg1.SerializedDataJson);
+        }
+#endif
 
         List<KeyValuePair<int?, StrategyTradeStockSharpModel>> dataParse = [.. _q.Select(x => new KeyValuePair<int?, StrategyTradeStockSharpModel>
         (
