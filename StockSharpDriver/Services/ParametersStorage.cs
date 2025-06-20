@@ -123,8 +123,8 @@ public class ParametersStorage(
 
     #region storage parameters
     /// <inheritdoc/>
-    public async Task<T[]> FindAsync<T>(FindStorageBaseModel req, CancellationToken token = default)
-    {
+    public async Task<FundedParametersModel<T>[]> FindAsync<T>(FindStorageBaseModel req, CancellationToken token = default)
+    {//
         req.Normalize();
         using PropertiesStorageContext context = await cloudParametersDbFactory.CreateDbContextAsync(token);
         string _tn = typeof(T).FullName ?? throw new Exception();
@@ -144,7 +144,16 @@ public class ParametersStorage(
         if (req.OwnersPrimaryKeys is not null && req.OwnersPrimaryKeys.Length != 0)
             q = q.Where(x => req.OwnersPrimaryKeys.Contains(x.OwnerPrimaryKey));
 
-        return [.. _dbd.Select(x => JsonConvert.DeserializeObject<T>(x.SerializedDataJson))];
+        return [.. _dbd.Select(x => new FundedParametersModel<T>()
+        {
+             Id = x.Id,
+             ApplicationName = x.ApplicationName,
+             CreatedAt = x.CreatedAt,
+             OwnerPrimaryKey = x.OwnerPrimaryKey,
+             Payload = JsonConvert.DeserializeObject<T>(x.SerializedDataJson),
+             PrefixPropertyName = x.PrefixPropertyName,
+             PropertyName = x.PropertyName,
+        })];
     }
 
     /// <inheritdoc/>

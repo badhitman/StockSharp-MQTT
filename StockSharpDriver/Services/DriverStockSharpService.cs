@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
+using Newtonsoft.Json.Linq;
 
 namespace StockSharpDriver;
 
@@ -148,49 +149,56 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        TResponseModel<FoundParameterModel[]> findStorageRows = await storageRepo.FindRawAsync(new FindStorageBaseModel()
+        FindStorageBaseModel _findParametersQuery = new()
         {
             ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
             PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
             OwnersPrimaryKeys = [.. resInstruments.Response.Select(x => x.Id)]
-        }, cancellationToken);
+        };
 
-        if (!findStorageRows.Success() || findStorageRows.Response is null || findStorageRows.Response.Length == 0)
-            return new() { Messages = findStorageRows.Messages };
+        FundedParametersModel<StrategyTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<StrategyTradeStockSharpModel>(_findParametersQuery, cancellationToken);
 
-        IQueryable<IGrouping<int?, FoundParameterModel>> _q = findStorageRows.Response
-            .GroupBy(x => x.OwnerPrimaryKey)
-            .Where(x => x.Key.HasValue)
-            .AsQueryable();
+        if (findStorageRows.Length == 0)
+            return ResponseBaseModel.CreateError("Dashboard - not set");
 
-#if DEBUG
-        foreach (IGrouping<int?, FoundParameterModel> x in _q)
-        {
-            FoundParameterModel _dbg1 = x.OrderByDescending(x => x.CreatedAt).First();
-            StrategyTradeStockSharpModel _dbg2 = JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(_dbg1.SerializedDataJson);
-        }
-#endif
+        //IQueryable<IGrouping<int?, FoundParameterModel>> _q = findStorageRows
+        //    .GroupBy(x => x.Id)
+        //    .Where(x => x.Key.HasValue)
+        //    .AsQueryable();
 
-        List<KeyValuePair<int?, StrategyTradeStockSharpModel>> dataParse = [.. _q.Select(x => new KeyValuePair<int?, StrategyTradeStockSharpModel>
-        (
-            x.Key,
-            JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(x.OrderByDescending(x => x.CreatedAt).First().SerializedDataJson)
-        ))];
+//#if DEBUG
+//        foreach (IGrouping<int?, FoundParameterModel> x in _q)
+//        {
+//            FoundParameterModel _dbg1 = x.OrderByDescending(x => x.CreatedAt).First();
+//            //JToken token = JToken.Parse(_dbg1.SerializedDataJson);
+//            JObject json = JObject.Parse(_dbg1.SerializedDataJson);
+//            StrategyTradeStockSharpModel _obj = json.ToObject<StrategyTradeStockSharpModel>();
+//            // Regex.Unescape(
+//            //string _dbg2 = HttpUtility.JavaScriptStringEncode(Regex.Unescape(_dbg1.SerializedDataJson));
+//            StrategyTradeStockSharpModel _dbg3 = JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(_dbg1.SerializedDataJson);
+//        }
+//#endif
 
-        foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
-        {
-            int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
-            if (_fx < 0)
-                return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+        //List<KeyValuePair<int?, StrategyTradeStockSharpModel>> dataParse = [.. _q.Select(x => new KeyValuePair<int?, StrategyTradeStockSharpModel>
+        //(
+        //    x.Key,
+        //    JsonConvert.DeserializeObject<StrategyTradeStockSharpModel>(x.OrderByDescending(x => x.CreatedAt).First().SerializedDataJson)
+        //))];
 
-            if (dataParse[_fx].Value.ValueOperation < 1)
-                return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
+        //foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
+        //{
+        //    int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
+        //    if (_fx < 0)
+        //        return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
 
-            if (dataParse[_fx].Value.BasePrice < 1)
-                return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
+        //    if (dataParse[_fx].Value.ValueOperation < 1)
+        //        return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
 
-            StrategyTrades.Add(dataParse[_fx].Value);
-        }
+        //    if (dataParse[_fx].Value.BasePrice < 1)
+        //        return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
+
+        //    StrategyTrades.Add(dataParse[_fx].Value);
+        //}
 
         if (StrategyTrades is null || StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
