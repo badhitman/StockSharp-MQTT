@@ -27,27 +27,6 @@ else if (instruments.Count == 0)
 
 else
 {
-    @* <MudStack Row="true">
-        <MudSelect T="BoardStockSharpModel" Label="Board [restriction]" @bind-Value="SelectedBoard">
-            @foreach (BoardStockSharpModel _port in allBoards)
-            {
-                <MudSelectItem T="BoardStockSharpModel" Value="@_port">@_port</MudSelectItem>
-            }
-        </MudSelect>
-        <MudSelect T="PortfolioStockSharpModel" Label="Portfolio" @bind-Value="SelectedPortfolio">
-            @foreach (PortfolioStockSharpViewModel _port in portfolios)
-            {
-                <MudSelectItem Value="@_port"
-                               T="PortfolioStockSharpModel"
-                               @key="@($"portf_{_port.Id}")"
-                               Disabled="@(EachDisable || _port.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt)">@_port</MudSelectItem>
-            }
-        </MudSelect>
-        <MudSpacer />
-        <MudIconButton OnClick="StartTradeAsync" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="CantStarted" />
-        <MudIconButton OnClick="StopTradeAsync" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" />
-        <MudIconButton OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" />
-    </MudStack> *@
     <MudStack Row="true">
         <MudButton Color="Color.Secondary">x2</MudButton>
         <MudButton Color="Color.Secondary">/2</MudButton>

@@ -82,9 +82,6 @@ public partial class TradingAreaComponent : StockSharpBaseComponent
 
     void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
     {
-        //data += $"{JsonConvert.SerializeObject(model)}\n";
-        //LoggerRepo.LogDebug($"{JsonConvert.SerializeObject(model)}\n");
-        //Console.WriteLine($"{JsonConvert.SerializeObject(model)}\n");
         lock (instruments)
         {
             if (instruments.Count == 0)

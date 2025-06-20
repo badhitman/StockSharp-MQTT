@@ -61,9 +61,9 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         await SetBusyAsync();
         ResponseBaseModel res = await DriverRepo.StartStrategy(req);
         SnackbarRepo.ShowMessagesResponse(res.Messages);
-
         await SetBusyAsync(false);
         _visibleStrategyBoard = false;
+        await GetStatusConnection();
     }
     async Task StopTradeAsync()
     {
@@ -72,41 +72,30 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         ResponseBaseModel res = await DriverRepo.StopStrategy(req);
         SnackbarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
-
         _visibleStrategyBoard = false;
+        await GetStatusConnection();
     }
     async Task DownloadBaseAsync()
     {
         await SetBusyAsync();
         await SetBusyAsync(false);
+        await GetStatusConnection();
     }
 
     async Task Connect()
     {
-        ConnectRequestModel req = new()
-        {
-
-        };
+        ConnectRequestModel req = new() { };
         await Connect(req);
         if (AboutConnection is not null)
             await EventsNotifyRepo.UpdateConnectionHandle(new UpdateConnectionHandleModel() { CanConnect = AboutConnection.CanConnect, ConnectionState = AboutConnection.ConnectionState });
         await SetBusyAsync(false);
     }
 
-    protected  async Task TerminateConnection()
+    protected async Task TerminateConnection()
     {
-        ResponseBaseModel res =  await DriverRepo.Terminate();
+        ResponseBaseModel res = await DriverRepo.Terminate();
         SnackbarRepo.ShowMessagesResponse(res.Messages);
-        await base.GetStatusConnection();
-        if (AboutConnection?.Messages.Count == 0)
-        {
-            SnackbarRepo.Info(AboutConnection.ConnectionState.ToString() ?? "error");
-        }
-    }
-
-    protected override async Task GetStatusConnection()
-    {
-        await base.GetStatusConnection();
+        await GetStatusConnection();
         if (AboutConnection?.Messages.Count == 0)
         {
             SnackbarRepo.Info(AboutConnection.ConnectionState.ToString() ?? "error");
