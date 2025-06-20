@@ -127,6 +127,10 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
+        AboutConnectResponseModel _ac = await AboutConnection();
+        if(_ac.ConnectionState != ConnectionStatesEnum.Disconnected)
+            return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState.DescriptionInfo()})");
+
         ClearStrategy();
 
         if (req.Board is null)
