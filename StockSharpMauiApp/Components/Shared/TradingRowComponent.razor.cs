@@ -31,43 +31,43 @@ public partial class TradingRowComponent : StockSharpBaseComponent
     public required TradingAreaComponent Parent { get; set; }
 
 
-    public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
+    public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, LowLimit, HightLimit);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
-    decimal _l1;
+    decimal _lowLimit;
     /// <inheritdoc/>
-    public decimal L1
+    public decimal LowLimit
     {
-        get => _l1;
+        get => _lowLimit;
         private set
         {
-            _l1 = value;
+            _lowLimit = value;
             InvokeAsync(SaveStrategy);
         }
     }
 
-    decimal _l2;
+    decimal _hightLimitl;
     /// <inheritdoc/>
-    public decimal L2
+    public decimal HightLimit
     {
-        get => _l2;
+        get => _hightLimitl;
         private set
         {
-            _l2 = value;
+            _hightLimitl = value;
             InvokeAsync(SaveStrategy);
         }
     }
 
-    bool _isMM;
-    public bool IsMM
+    bool _isSmall;
+    public bool IsSmall
     {
         get
         {
-            return _isMM;
+            return _isSmall;
         }
         private set
         {
-            _isMM = value;
+            _isSmall = value;
             InvokeAsync(SaveStrategy);
         }
     }
@@ -108,6 +108,52 @@ public partial class TradingRowComponent : StockSharpBaseComponent
         }
     }
 
+
+    decimal _smallBidVolume;
+    public decimal SmallBidVolume
+    {
+        get => _smallBidVolume;
+        private set
+        {
+            _smallBidVolume = value;
+            InvokeAsync(SaveStrategy);
+        }
+    }
+
+    decimal _smallOfferVolume;
+    public decimal SmallOfferVolume
+    {
+        get => _smallOfferVolume;
+        private set
+        {
+            _smallOfferVolume = value;
+            InvokeAsync(SaveStrategy);
+        }
+    }
+
+    decimal _smallOffset;
+    public decimal SmallOffset
+    {
+        get => _smallOffset;
+        private set
+        {
+            _smallOffset = value;
+            InvokeAsync(SaveStrategy);
+        }
+    }
+
+    decimal _workingVolume;
+    public decimal WorkingVolume
+    {
+        get => _workingVolume;
+        private set
+        {
+            _workingVolume = value;
+            InvokeAsync(SaveStrategy);
+        }
+    }
+
+
     StorageMetadataModel StoreKey => new()
     {
         ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
@@ -132,12 +178,17 @@ public partial class TradingRowComponent : StockSharpBaseComponent
 
         if (RestoreStrategy is not null)
         {
-            _l1 = RestoreStrategy.L1;
-            _l2 = RestoreStrategy.L2;
-            _isMM = RestoreStrategy.IsMM;
+            _lowLimit = RestoreStrategy.LowLimit;
+            _hightLimitl = RestoreStrategy.HightLimit;
+            _isSmall = RestoreStrategy.IsSmall;
             _basePrice = RestoreStrategy.BasePrice;
             _valueOperation = RestoreStrategy.ValueOperation;
             _shiftPosition = RestoreStrategy.ShiftPosition;
+
+            _smallBidVolume = RestoreStrategy.SmallBidVolume;
+            _smallOfferVolume = RestoreStrategy.SmallOfferVolume;
+            _smallOffset = RestoreStrategy.SmallOffset;
+            _workingVolume = RestoreStrategy.WorkingVolume;
         }
 
         await SetBusyAsync(false);
@@ -152,9 +203,15 @@ public partial class TradingRowComponent : StockSharpBaseComponent
                 ShiftPosition = _shiftPosition,
                 BasePrice = _basePrice,
                 ValueOperation = _valueOperation,
-                IsMM = _isMM,
-                L2 = _l2,
-                L1 = _l1,
+
+                SmallBidVolume = _smallBidVolume,
+                SmallOfferVolume = _smallOfferVolume,
+                SmallOffset = _smallOffset,
+                WorkingVolume = _workingVolume,
+
+                IsSmall = _isSmall,
+                LowLimit = _lowLimit,
+                HightLimit = _hightLimitl,
 
                 Board = Instrument.Board,
                 CfiCode = Instrument.CfiCode,

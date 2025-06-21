@@ -1,4 +1,4 @@
-## StockSharp - integration (over mqtt) - DEMO VERSION
+## StockSharp - integration (over mqtt) - starter case
 
 Client-server solution compatible with BlankCRM, but has its own/native (local: win/android/ios/macos/tizen) client. The license for the  [StockSharp](https://stocksharp.ru/?rf=202744) is purchased separately.
 
