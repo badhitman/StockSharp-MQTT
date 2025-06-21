@@ -134,7 +134,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
         {
             _l1 = RestoreStrategy.L1;
             _l2 = RestoreStrategy.L2;
-            _isMM = RestoreStrategy.IsMM;
+            _isMM = RestoreStrategy.IsSmall;
             _basePrice = RestoreStrategy.BasePrice;
             _valueOperation = RestoreStrategy.ValueOperation;
             _shiftPosition = RestoreStrategy.ShiftPosition;
@@ -152,7 +152,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
                 ShiftPosition = _shiftPosition,
                 BasePrice = _basePrice,
                 ValueOperation = _valueOperation,
-                IsMM = _isMM,
+                IsSmall = _isMM,
                 L2 = _l2,
                 L1 = _l1,
 
