@@ -193,7 +193,7 @@ public class DriverStockSharpService(
         {
             StrategyTradeStockSharpModel cs = StrategyTrades.Single(x => x.Code == security.Code);
 
-            SBondPositionsList.Add(new SecurityPosition(security, "Quote", cs.L1 / 100, cs.L2 / 100, cs.ValueOperation, cs.ValueOperation, cs.ShiftPosition / 100));
+            SBondPositionsList.Add(new SecurityPosition(security, "Quote", cs.LowLimit / 100, cs.HightLimit / 100, cs.ValueOperation, cs.ValueOperation, cs.ShiftPosition / 100));
 
                 if (cs.IsSmall)
                 {
