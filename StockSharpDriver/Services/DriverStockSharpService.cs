@@ -193,13 +193,12 @@ public class DriverStockSharpService(
         {
             StrategyTradeStockSharpModel cs = StrategyTrades.Single(x => x.Code == security.Code);
 
-            //    SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100,
-            //        (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+            SBondPositionsList.Add(new SecurityPosition(security, "Quote", cs.L1 / 100, cs.L2 / 100, cs.ValueOperation, cs.ValueOperation, cs.ShiftPosition / 100));
 
-            //    if ((bool)IsSmall)
-            //    {
-            //        SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Lowlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
-            //    }
+                if (cs.IsSmall)
+                {
+                    //SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (cs.L1 - (decimal)0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+                }
 
             //    if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
             //        SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
