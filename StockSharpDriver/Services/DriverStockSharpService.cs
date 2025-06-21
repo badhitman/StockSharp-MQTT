@@ -169,34 +169,28 @@ public class DriverStockSharpService(
         StrategyTrades = [];
         foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
         {
-                int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
-                if (_fx < 0)
-                    return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+            int _fx = dataParse.FindIndex(x => x.Key == instrument.Id);
+            if (_fx < 0)
+                return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
 
-                if (dataParse[_fx].Value.ValueOperation < 1)
-                    return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
+            if (dataParse[_fx].Value.ValueOperation < 1)
+                return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
 
-                if (dataParse[_fx].Value.BasePrice < 1)
-                    return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
+            if (dataParse[_fx].Value.BasePrice < 1)
+                return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
 
-                StrategyTrades.Add(dataParse[_fx].Value);
+            StrategyTrades.Add(dataParse[_fx].Value);
         }
 
         if (StrategyTrades is null || StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Instruments - is empty");
 
-        if (!BondList.Any())
+        List<Security> bl = BondList;
+        if (!bl.Any())
             return ResponseBaseModel.CreateError("BondList - not any");
 
-        if (OfzCurve.Length == 0)
-            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
-
-
-        // public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, IsMM, L1, L2);
-        // StrategyTrades = req.Instruments;
-
-        BondList.ForEach(security =>
-        {// if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
+        bl.ForEach(security =>
+        {
             StrategyTradeStockSharpModel cs = StrategyTrades.Single(x => x.Code == security.Code);
 
             //    SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100,
@@ -210,11 +204,13 @@ public class DriverStockSharpService(
             //    if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
             //        SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
 
-
         });
 
-        //_ordersForQuoteBuyReregister = new Dictionary<string, Order>();
-        //_ordersForQuoteSellReregister = new Dictionary<string, Order>();         
+        if (OfzCurve is null || OfzCurve.Length == 0)
+            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+
+        _ordersForQuoteBuyReregister = [];
+        _ordersForQuoteSellReregister = [];
 
         return ResponseBaseModel.CreateInfo("Ok");
     }
@@ -335,7 +331,7 @@ public class DriverStockSharpService(
         if (!conLink.Connector.CanConnect)
         {
             res.AddError("can`t connect");
-            return res; 
+            return res;
         }
 
         await conLink.Connector.ConnectAsync(cancellationToken ?? CancellationToken.None);
