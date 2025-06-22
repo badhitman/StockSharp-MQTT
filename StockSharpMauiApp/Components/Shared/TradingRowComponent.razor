@@ -19,34 +19,30 @@
             @if (ShowNamesInstruments)
             {
                 <span>@Instrument.Name</span>
-            }
-        </th>
-        <td class="@_opClass">
+            }        
             @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
             {
-                <div class="hstack">
-                    @foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)
+                foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)
+                {
+                    string colorClass = _ie.MarkerDescriptor switch
                     {
-                        string colorClass = _ie.MarkerDescriptor switch
-                        {
-                            MarkersInstrumentStockSharpEnum.Illiquid => "primary",
-                            MarkersInstrumentStockSharpEnum.IsNew => "info",
-                            MarkersInstrumentStockSharpEnum.IsMarketMaker => "warning",
-                            _ => "danger",
-                        };
-                        <span class="badge text-bg-@colorClass me-1">@_ie.MarkerDescriptor.DescriptionInfo()</span>
-                    }
-                </div>
+                        MarkersInstrumentStockSharpEnum.Illiquid => "primary",
+                        MarkersInstrumentStockSharpEnum.IsNew => "info",
+                        MarkersInstrumentStockSharpEnum.IsMarketMaker => "warning",
+                        _ => "danger",
+                    };
+                    <span class="badge text-bg-@colorClass me-1">@_ie.MarkerDescriptor.DescriptionInfo()</span>
+                }
             }
-        </td>
+        </th>
         <td><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></td>
         <td class="@_opClass">
             <div class="btn-group btn-group-sm" role="group">
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">buy</button>
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">sell</button>
-                <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">bid</button>
-                <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">off</button>
+                <button disabled="@(!Available)" type="button" class="btn btn-outline-warning" title="bid">B</button>
+                <button disabled="@(!Available)" type="button" class="btn btn-outline-primary" title="offer">O</button>
             </div>
         </td>
 
@@ -61,10 +57,10 @@
                 <div class="input-group-text">
                     <input @bind="IsSmall" class="form-check-input mt-0" type="checkbox" aria-label="IsSmall">
                 </div>
-                <span class="input-group-text">L1</span>
-                <input @bind-value="LowLimit" type="number" class="form-control" @bind-value:event="oninput">
-                <span class="input-group-text">L2</span>
-                <input @bind-value="HightLimit" type="number" class="form-control" @bind-value:event="oninput">
+                <span title="Low Limit" class="input-group-text">LL</span>
+                <input title="Low Limit" @bind-value="LowLimit" type="number" class="form-control" @bind-value:event="oninput">
+                <span title="Hight Limit" class="input-group-text">HL</span>
+                <input title="Hight Limit" @bind-value="HightLimit" type="number" class="form-control" @bind-value:event="oninput">
             </div>
         </td>
         <td class="@_opClass">

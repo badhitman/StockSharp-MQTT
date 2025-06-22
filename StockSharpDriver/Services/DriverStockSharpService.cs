@@ -191,7 +191,8 @@ public class DriverStockSharpService(
 
         ResponseBaseModel response = new();
 
-        bl.ForEach(security =>
+        bl.ForEach(securityHandleAction);
+        void securityHandleAction(Security security)
         {
             StrategyTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
             string msg;
@@ -235,10 +236,13 @@ public class DriverStockSharpService(
 
             if (currentInstrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
                 SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(currentStrategy.HightLimit + (decimal)0.1) / 100, (decimal)(currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-        });
+        }
 
         if (!response.Success())
+        {
+            ClearStrategy();
             return response;
+        }
 
         if (OfzCurve is null || OfzCurve.Length == 0)
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
