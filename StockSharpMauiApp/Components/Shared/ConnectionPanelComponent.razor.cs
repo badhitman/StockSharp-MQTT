@@ -161,19 +161,6 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         SnackbarRepo.Add($"TelegramBot: {JsonConvert.SerializeObject(aboutBot)}");
     }
 
-    void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
-    {
-        lock (portfolios)
-        {
-            int _pf = portfolios.FindIndex(x => x.Id == model.Id);
-            if (_pf < 0)
-                portfolios.Add(model);
-            else
-                portfolios[_pf].Reload(model);
-        }
-        StateHasChangedCall();
-    }
-
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -197,6 +184,19 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
                         portfolios.AddRange(res.Response);
                 }
             })]);
+    }
+
+    void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
+    {
+        lock (portfolios)
+        {
+            int _pf = portfolios.FindIndex(x => x.Id == model.Id);
+            if (_pf == -1)
+                portfolios.Add(model);
+            else
+                portfolios[_pf].Reload(model);
+        }
+        StateHasChangedCall();
     }
 
     private void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
