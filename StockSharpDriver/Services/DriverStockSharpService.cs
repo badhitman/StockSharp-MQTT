@@ -189,21 +189,56 @@ public class DriverStockSharpService(
         if (!bl.Any())
             return ResponseBaseModel.CreateError("BondList - not any");
 
+        ResponseBaseModel response = new();
+
         bl.ForEach(security =>
         {
-            StrategyTradeStockSharpModel cs = StrategyTrades.Single(x => x.Code == security.Code);
+            StrategyTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
+            string msg;
+            if (tryFindStrategy.Length == 0)
+            {
+                msg = $"strategy #{security.Code} not found in BondList ({BondList.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            if (tryFindStrategy.Length != 1)
+            {
+                msg = $"strategy #{security.Code} DOUBLE`s ({tryFindStrategy.Length}) found in BondList ({BondList.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            StrategyTradeStockSharpModel currentStrategy = tryFindStrategy[0];
 
-            SBondPositionsList.Add(new SecurityPosition(security, "Quote", cs.LowLimit / 100, cs.HightLimit / 100, cs.ValueOperation, cs.ValueOperation, cs.ShiftPosition / 100));
+            InstrumentTradeStockSharpViewModel[] tryFindInstrument = [.. resInstruments.Response.Where(x => x.Id == currentStrategy.Id)];
+            if (tryFindInstrument.Length == 0)
+            {
+                msg = $"instrument #{currentStrategy.Id} not found in BondList ({BondList.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            if (tryFindInstrument.Length != 1)
+            {
+                msg = $"instrument #{currentStrategy.Id} DOUBLE`s ({tryFindInstrument.Length}) found ({resInstruments.Response.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            InstrumentTradeStockSharpViewModel currentInstrument = tryFindInstrument[0];
 
-                if (cs.IsSmall)
-                {
-                    //SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (cs.L1 - (decimal)0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
-                }
+            SBondPositionsList.Add(new SecurityPosition(security, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.ShiftPosition / 100));
 
-            //    if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-            //        SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            if (currentStrategy.IsSmall)
+                SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
 
+            if (currentInstrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(currentStrategy.HightLimit + (decimal)0.1) / 100, (decimal)(currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         });
+
+        if (!response.Success())
+            return response;
 
         if (OfzCurve is null || OfzCurve.Length == 0)
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
