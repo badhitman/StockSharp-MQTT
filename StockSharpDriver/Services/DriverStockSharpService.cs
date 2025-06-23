@@ -26,9 +26,11 @@ public class DriverStockSharpService(
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
-    readonly List<SecurityPosition> SBondPositionsList = [];
-    readonly List<SecurityPosition> SBondSizePositionsList = [];
-    readonly List<SecurityPosition> SBondSmallPositionsList = [];
+    readonly List<SecurityPosition> 
+        SBondPositionsList = [],
+        SBondSizePositionsList = [],
+        SBondSmallPositionsList = [];
+
     static readonly List<long?> list = [];
     readonly List<long?> TradesList = list;
 
@@ -52,16 +54,17 @@ public class DriverStockSharpService(
 
     Curve OfzCurve;
 
-    decimal quoteSmallStrategyBidVolume = 2000;
-    decimal quoteSmallStrategyOfferVolume = 2000;
-    decimal quoteStrategyVolume = 1000;
-    decimal skipVolume = 2500;
-    decimal quoteSizeStrategyVolume = 2000;
+    decimal 
+        quoteSmallStrategyBidVolume = 2000,
+        quoteSmallStrategyOfferVolume = 2000,
+        quoteStrategyVolume = 1000,
+        skipVolume = 2500,
+        quoteSizeStrategyVolume = 2000;
 
-    decimal bondPositionTraded;
-    decimal bondSizePositionTraded;
-    decimal bondSmallPositionTraded;
-    decimal bondOutOfRangePositionTraded;
+    decimal bondPositionTraded,
+        bondSizePositionTraded,
+        bondSmallPositionTraded,
+        bondOutOfRangePositionTraded;
 
     readonly List<Order> AllOrders = [];
 
@@ -72,6 +75,7 @@ public class DriverStockSharpService(
 
     decimal lowLimit = 0.19m;
     decimal highLimit = 0.25m;
+    
     readonly decimal
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
@@ -89,56 +93,24 @@ public class DriverStockSharpService(
     readonly List<Security> AllSecurities = [];
     List<Security> SecuritiesBonds()
     {
-            List<Security> res = [];
+        List<Security> res = [];
 
-            if (StrategyTrades.Count == 0)
-                return res;
+        if (StrategyTrades.Count == 0)
+            return res;
 
-            lock (AllSecurities)
+        lock (AllSecurities)
+        {
+            lock (StrategyTrades)
             {
-                lock (StrategyTrades)
+                foreach (Security security in AllSecurities)
                 {
-                    foreach (Security security in AllSecurities)
-                    {
-                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
-                            res.Add(security);
-                    }
+                    if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
+                        res.Add(security);
                 }
             }
+        }
 
-            return res;
-    }
-
-    void ClearStrategy()
-    {
-        Board = null;
-        SelectedPortfolio = null;
-
-        lock (StrategyTrades)
-            StrategyTrades.Clear();
-
-        lock (SBondPositionsList)
-            SBondPositionsList.Clear();
-
-        lock (SBondSizePositionsList)
-            SBondSizePositionsList.Clear();
-
-        lock (SBondSmallPositionsList)
-            SBondSmallPositionsList.Clear();
-
-        lock (OderBookList)
-            OderBookList.Clear();
-
-        lock (AllOrders)
-            AllOrders.Clear();
-
-        bondPositionTraded = 0;
-        bondSizePositionTraded = 0;
-        bondSmallPositionTraded = 0;
-        bondOutOfRangePositionTraded = 0;
-                
-          lowLimit = 0.19m;
-     highLimit = 0.25m;         
+        return res;
     }
 
     /// <inheritdoc/>
@@ -205,9 +177,7 @@ public class DriverStockSharpService(
         List<Security> bl = SecuritiesBonds();
         if (!bl.Any())
             return ResponseBaseModel.CreateError("BondList - not any");
-
         ResponseBaseModel response = new();
-
         bl.ForEach(securityHandleAction);
         void securityHandleAction(Security security)
         {
@@ -255,7 +225,6 @@ public class DriverStockSharpService(
             if (currentInstrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
                 SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(currentStrategy.HightLimit + (decimal)0.1) / 100, (decimal)(currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         }
-
         if (!response.Success())
         {
             ClearStrategy();
@@ -326,7 +295,7 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
     {
         static decimal Calculation(decimal L, OperatorsEnum op, decimal R)
         {
@@ -340,12 +309,10 @@ public class DriverStockSharpService(
             };
         }
 
-        lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
-        highLimit = Calculation(highLimit, req.Operator, req.Operand);
 
 
-
-        SecuritiesBonds().ForEach(security =>
+        List<Security> sbs = SecuritiesBonds();
+        sbs.ForEach(security =>
         {
             //string bndName = security.Code.Substring(2, 5);
             //DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
@@ -359,8 +326,10 @@ public class DriverStockSharpService(
             //}
         });
 
-        throw new NotImplementedException();
+        lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
+        highLimit = Calculation(highLimit, req.Operator, req.Operand);
 
+        return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
     }
 
     /// <inheritdoc/>
@@ -488,7 +457,7 @@ public class DriverStockSharpService(
         }
         UnregisterEvents();
         conLink.Connector.Disconnect();
-        
+
         lock (AllSecurities)
             AllSecurities.Clear();
         return Task.FromResult(ResponseBaseModel.CreateInfo("connection closed"));
@@ -587,6 +556,7 @@ public class DriverStockSharpService(
         throw new NotImplementedException();
     }
 
+    #region events
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
         //_logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}");
@@ -662,7 +632,6 @@ public class DriverStockSharpService(
             }
         }
     }
-
 
     private void OrderBookReceivedConnector2(Subscription subscription, IOrderBookMessage depth)
     {
@@ -764,30 +733,6 @@ public class DriverStockSharpService(
         }
     }
 
-
-    void DeleteAllQuotesByStrategy(string strategy)
-    {
-        IEnumerable<Order> orders = AllOrders.Where(s => (s.State == OrderStates.Active));
-
-        if (string.IsNullOrEmpty(strategy))
-        {
-            foreach (Order order in orders)
-            {
-                conLink.Connector.CancelOrder(order);
-                //conLink.Connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
-            }
-        }
-        else
-        {
-            foreach (Order order in orders)
-            {
-                if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
-                    conLink.Connector.CancelOrder(order);
-
-                //connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
-            }
-        }
-    }
 
     #region todo
     void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
@@ -942,6 +887,63 @@ public class DriverStockSharpService(
         // _logger.LogError(ex, $"Call > `{nameof(ChangePasswordResultHandle)}`: {arg}");
     }
     #endregion
+    #endregion
+
+    void DeleteAllQuotesByStrategy(string strategy)
+    {
+        IEnumerable<Order> orders = AllOrders.Where(s => s.State == OrderStates.Active);
+
+        if (string.IsNullOrEmpty(strategy))
+        {
+            foreach (Order order in orders)
+            {
+                conLink.Connector.CancelOrder(order);
+                //conLink.Connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
+            }
+        }
+        else
+        {
+            foreach (Order order in orders)
+            {
+                if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
+                    conLink.Connector.CancelOrder(order);
+
+                //connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
+            }
+        }
+    }
+
+    void ClearStrategy()
+    {
+        Board = null;
+        SelectedPortfolio = null;
+
+        lock (StrategyTrades)
+            StrategyTrades.Clear();
+
+        lock (SBondPositionsList)
+            SBondPositionsList.Clear();
+
+        lock (SBondSizePositionsList)
+            SBondSizePositionsList.Clear();
+
+        lock (SBondSmallPositionsList)
+            SBondSmallPositionsList.Clear();
+
+        lock (OderBookList)
+            OderBookList.Clear();
+
+        lock (AllOrders)
+            AllOrders.Clear();
+
+        bondPositionTraded = 0;
+        bondSizePositionTraded = 0;
+        bondSmallPositionTraded = 0;
+        bondOutOfRangePositionTraded = 0;
+
+        lowLimit = 0.19m;
+        highLimit = 0.25m;
+    }
 
     /// <inheritdoc/>
     public Task<ResponseBaseModel> PingAsync(CancellationToken cancellationToken = default)
