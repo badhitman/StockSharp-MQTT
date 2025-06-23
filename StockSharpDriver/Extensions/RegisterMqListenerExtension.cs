@@ -26,27 +26,22 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<ReadParameterReceive, StorageMetadataModel, TResponseModel<StorageCloudParameterPayloadModel>>()
             .RegisterMqListener<ReadParametersReceive, StorageMetadataModel[], TResponseModel<List<StorageCloudParameterPayloadModel>>>()
             .RegisterMqListener<FindParametersReceive, FindStorageBaseModel, TResponseModel<FoundParameterModel[]>>()
-
             .RegisterMqListener<TagSetReceive, TagSetModel, ResponseBaseModel>()
             .RegisterMqListener<TagsSelectReceive, TPaginationRequestModel<SelectMetadataRequestModel>, TPaginationResponseModel<TagViewModel>>()
-
             .RegisterMqListener<RubricsListReceive, RubricsListRequestModel, List<UniversalBaseModel>>()
             .RegisterMqListener<RubricCreateOrUpdateReceive, RubricStandardModel, TResponseModel<int>>()
             .RegisterMqListener<RubricMoveReceive, TAuthRequestModel<RowMoveModel>, ResponseBaseModel>()
             .RegisterMqListener<RubricReadReceive, int, TResponseModel<List<RubricStandardModel>>>()
             .RegisterMqListener<RubricsGetReceive, int[], TResponseModel<List<RubricStandardModel>>>()
-
             .RegisterMqListener<GetBotUsernameReceive, object, TResponseModel<UserTelegramBaseModel>>()
             .RegisterMqListener<SendTextMessageTelegramReceive, SendTextMessageTelegramBotModel, TResponseModel<MessageComplexIdsModel>>()
-
-
             .RegisterMqListener<GoToPageForRowReceive, TPaginationRequestStandardModel<int>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<MetadataLogsReceive, PeriodDatesTimesModel, TResponseModel<LogsMetadataResponseModel>>()
             .RegisterMqListener<LogsSelectReceive, TPaginationRequestStandardModel<LogsSelectRequestModel>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<AboutConnectStockSharpDriverReceive, object, AboutConnectResponseModel>()
+            .RegisterMqListener<LimitsStrategiesUpdateStockSharpDriverReceive, LimitsStrategiesUpdateRequestModel, ResponseBaseModel>()
             .RegisterMqListener<DisconnectStockSharpDriverReceive, object, ResponseBaseModel>()
             .RegisterMqListener<TerminateStockSharpDriverReceive, object, ResponseBaseModel>()
-
             .RegisterMqListener<ConnectStockSharpDriverReceive, ConnectRequestModel, ResponseBaseModel>()
             .RegisterMqListener<UpdateOrCreateAdapterStockSharpDriverReceive, FixMessageAdapterModelDB, TResponseModel<FixMessageAdapterModelDB>>()
             .RegisterMqListener<AdaptersSelectStockSharpDriverReceive, TPaginationRequestStandardModel<AdaptersRequestModel>, TPaginationResponseModel<FixMessageAdapterModelDB>>()
