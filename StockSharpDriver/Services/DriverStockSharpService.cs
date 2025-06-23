@@ -8,7 +8,6 @@ using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
 using StockSharp.Algo;
 using System.Security;
-using Newtonsoft.Json;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
@@ -64,7 +63,7 @@ public class DriverStockSharpService(
     decimal bondSmallPositionTraded;
     decimal bondOutOfRangePositionTraded;
 
-    List<Order> AllOrders = [];
+    readonly List<Order> AllOrders = [];
 
     Dictionary<string, Order> _ordersForQuoteBuyReregister;
     Dictionary<string, Order> _ordersForQuoteSellReregister;
@@ -77,13 +76,13 @@ public class DriverStockSharpService(
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
 
-    List<MyTrade> myTrades = [];
-
-    List<StrategyTradeStockSharpModel> StrategyTrades = [];
-    List<FixMessageAdapterModelDB> Adapters = [];
-
     BoardStockSharpModel Board;
     Portfolio SelectedPortfolio;
+
+    readonly List<MyTrade> myTrades = [];
+
+    readonly List<StrategyTradeStockSharpModel> StrategyTrades = [];
+    readonly List<FixMessageAdapterModelDB> Adapters = [];
 
     readonly List<SBond> SBondList = [];
 
@@ -114,30 +113,32 @@ public class DriverStockSharpService(
     {
         Board = null;
         SelectedPortfolio = null;
+
         lock (StrategyTrades)
-        {
             StrategyTrades.Clear();
-        }
 
+        lock (SBondPositionsList)
+            SBondPositionsList.Clear();
 
-        SBondPositionsList.Clear();
-        SBondSizePositionsList.Clear();
-        SBondSmallPositionsList.Clear();
+        lock (SBondSizePositionsList)
+            SBondSizePositionsList.Clear();
+
+        lock (SBondSmallPositionsList)
+            SBondSmallPositionsList.Clear();
 
         lock (OderBookList)
-        {
             OderBookList.Clear();
-        }
 
         lock (AllOrders)
-        {
             AllOrders.Clear();
-        }
 
         bondPositionTraded = 0;
         bondSizePositionTraded = 0;
         bondSmallPositionTraded = 0;
         bondOutOfRangePositionTraded = 0;
+                
+          lowLimit = 0.19m;
+     highLimit = 0.25m;         
     }
 
     /// <inheritdoc/>
@@ -505,8 +506,6 @@ public class DriverStockSharpService(
             StrategyStarted = Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0,
             LowLimit = lowLimit,
             HighLimit = highLimit,
-            LowYieldLimit = lowYieldLimit,
-            HighYieldLimit = highYieldLimit
         };
 
         return Task.FromResult(res);
