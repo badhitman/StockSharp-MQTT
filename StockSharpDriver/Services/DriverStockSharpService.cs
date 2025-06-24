@@ -71,13 +71,13 @@ public class DriverStockSharpService(
 
     readonly List<Order> AllOrders = [];
 
-    Dictionary<string, Order> 
+    Dictionary<string, Order>
         _ordersForQuoteBuyReregister,
         _ordersForQuoteSellReregister;
 
     readonly Dictionary<Security, IOrderBookMessage> OderBookList = [];
 
-    decimal 
+    decimal
         lowLimit = 0.19m,
         highLimit = 0.25m;
 
@@ -378,6 +378,21 @@ public class DriverStockSharpService(
 
         LastConnectedAt = DateTime.UtcNow;
 
+        SecurityCriteriaCodeFilterStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
+        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilterStockSharp))
+        {
+            SecurityLookupMessage lookupMessage = new()
+            {
+                SecurityId = new SecurityId
+                {
+                    SecurityCode = SecurityCriteriaCodeFilterStockSharp.Trim(),
+                },
+                TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
+            };
+            Subscription subscription = new(lookupMessage);
+            conLink.Connector.Subscribe(subscription);
+        }
+
         /*
          SecurityLookupWindow wnd = new()
         {
@@ -458,21 +473,6 @@ public class DriverStockSharpService(
         {
             res.AddError("can`t connect");
             return res;
-        }
-
-        SecurityCriteriaCodeFilterStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
-        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilterStockSharp))
-        {
-            SecurityLookupMessage lookupMessage = new()
-            {
-                SecurityId = new SecurityId
-                {
-                    SecurityCode = $"*{SecurityCriteriaCodeFilterStockSharp.Trim()}*",
-                },
-                TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
-            };
-            Subscription subscription = new(lookupMessage);
-            conLink.Connector.Subscribe(subscription);
         }
 
         await conLink.Connector.ConnectAsync(cancellationToken ?? CancellationToken.None);
@@ -769,7 +769,6 @@ public class DriverStockSharpService(
         }
     }
 
-
     #region todo
     void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
     {
@@ -873,16 +872,15 @@ public class DriverStockSharpService(
         //_logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     #endregion
-
-    #region Exception`s
+    
     void LookupSecuritiesResultHandle(SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
-
+        // _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`");
         // foreach (Security sec in securities)
         //    dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
     }
 
+    #region Exception`s
     void LookupPortfoliosResultHandle(PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
     {
         // _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
