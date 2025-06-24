@@ -71,13 +71,15 @@ public class DriverStockSharpService(
 
     readonly List<Order> AllOrders = [];
 
-    Dictionary<string, Order> _ordersForQuoteBuyReregister;
-    Dictionary<string, Order> _ordersForQuoteSellReregister;
+    Dictionary<string, Order> 
+        _ordersForQuoteBuyReregister,
+        _ordersForQuoteSellReregister;
 
     readonly Dictionary<Security, IOrderBookMessage> OderBookList = [];
 
-    decimal lowLimit = 0.19m;
-    decimal highLimit = 0.25m;
+    decimal 
+        lowLimit = 0.19m,
+        highLimit = 0.25m;
 
     readonly decimal
        lowYieldLimit = 4m,
@@ -375,9 +377,6 @@ public class DriverStockSharpService(
         }
 
         LastConnectedAt = DateTime.UtcNow;
-
-
-
 
         /*
          SecurityLookupWindow wnd = new()
