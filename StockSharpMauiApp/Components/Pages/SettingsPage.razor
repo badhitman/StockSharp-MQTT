@@ -1,0 +1,13 @@
+﻿@page "/settings"
+
+@using BlazorLib.Components
+@using BlazorLib.Components.StockSharp
+
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabPanel Text="Settings">
+        <SettingsStockSharpComponent />
+    </MudTabPanel>
+    <MudTabPanel Text="Logs">
+        <LogsComponent />
+    </MudTabPanel>
+</MudTabs>

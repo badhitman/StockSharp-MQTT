@@ -2,16 +2,17 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using Ecng.Collections;
+using Ecng.Common;
 using Microsoft.Extensions.Caching.Memory;
+using SharedLib;
+using StockSharp.Algo;
+using StockSharp.Algo.Indicators;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
-using StockSharp.Algo;
-using System.Security;
-using Ecng.Common;
 using System.Net;
-using SharedLib;
-using Ecng.Collections;
+using System.Security;
 
 namespace StockSharpDriver;
 
@@ -26,7 +27,7 @@ public class DriverStockSharpService(
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
-    readonly List<SecurityPosition> 
+    readonly List<SecurityPosition>
         SBondPositionsList = [],
         SBondSizePositionsList = [],
         SBondSmallPositionsList = [];
@@ -54,7 +55,9 @@ public class DriverStockSharpService(
 
     Curve OfzCurve;
 
-    decimal 
+    string SecurityCriteriaCodeFilterStockSharp;
+
+    decimal
         quoteSmallStrategyBidVolume = 2000,
         quoteSmallStrategyOfferVolume = 2000,
         quoteStrategyVolume = 1000,
@@ -75,7 +78,7 @@ public class DriverStockSharpService(
 
     decimal lowLimit = 0.19m;
     decimal highLimit = 0.25m;
-    
+
     readonly decimal
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
@@ -309,6 +312,20 @@ public class DriverStockSharpService(
             };
         }
 
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
+        {
+            PageNum = 0,
+            PageSize = int.MaxValue,
+            FavoriteFilter = true,
+        }, cancellationToken);
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        if (dataParse.Count == 0)
+            return ResponseBaseModel.CreateError("Dashboard - not set");
 
 
         List<Security> sbs = SecuritiesBonds();
@@ -358,6 +375,9 @@ public class DriverStockSharpService(
         }
 
         LastConnectedAt = DateTime.UtcNow;
+
+
+
 
         /*
          SecurityLookupWindow wnd = new()
@@ -441,6 +461,21 @@ public class DriverStockSharpService(
             return res;
         }
 
+        SecurityCriteriaCodeFilterStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
+        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilterStockSharp))
+        {
+            SecurityLookupMessage lookupMessage = new()
+            {
+                SecurityId = new SecurityId
+                {
+                    SecurityCode = $"*{SecurityCriteriaCodeFilterStockSharp.Trim()}*",
+                },
+                TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
+            };
+            Subscription subscription = new(lookupMessage);
+            conLink.Connector.Subscribe(subscription);
+        }
+
         await conLink.Connector.ConnectAsync(cancellationToken ?? CancellationToken.None);
         res.AddInfo($"connection: {conLink.Connector.ConnectionState}");
         return res;
@@ -455,6 +490,7 @@ public class DriverStockSharpService(
             conLink.Connector.UnSubscribe(sub);
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
+        SecurityCriteriaCodeFilterStockSharp = "";
         UnregisterEvents();
         conLink.Connector.Disconnect();
 
@@ -475,6 +511,7 @@ public class DriverStockSharpService(
             StrategyStarted = Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0,
             LowLimit = lowLimit,
             HighLimit = highLimit,
+            SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilterStockSharp,
         };
 
         return Task.FromResult(res);
