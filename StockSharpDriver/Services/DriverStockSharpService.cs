@@ -27,6 +27,8 @@ public class DriverStockSharpService(
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
+    SecurityLookupMessage SecurityCriteriaCodeFilterLookup;
+
     readonly List<SecurityPosition>
         SBondPositionsList = [],
         SBondSizePositionsList = [],
@@ -361,10 +363,7 @@ public class DriverStockSharpService(
         TPaginationRequestStandardModel<AdaptersRequestModel> adReq = new()
         {
             PageSize = int.MaxValue,
-            Payload = new()
-            {
-                OnlineOnly = true,
-            }
+            Payload = new() { OnlineOnly = true, }
         };
 
         TPaginationResponseModel<FixMessageAdapterModelDB> adRes = await manageRepo.AdaptersSelectAsync(adReq);
@@ -377,21 +376,6 @@ public class DriverStockSharpService(
         }
 
         LastConnectedAt = DateTime.UtcNow;
-
-        SecurityCriteriaCodeFilterStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
-        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilterStockSharp))
-        {
-            SecurityLookupMessage lookupMessage = new()
-            {
-                SecurityId = new SecurityId
-                {
-                    SecurityCode = SecurityCriteriaCodeFilterStockSharp.Trim(),
-                },
-                TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
-            };
-            Subscription subscription = new(lookupMessage);
-            conLink.Connector.Subscribe(subscription);
-        }
 
         /*
          SecurityLookupWindow wnd = new()
@@ -421,6 +405,21 @@ public class DriverStockSharpService(
          */
 
         RegisterEvents();
+        //
+        SecurityCriteriaCodeFilterStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
+        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilterStockSharp))
+        {
+            SecurityCriteriaCodeFilterLookup = new()
+            {
+                SecurityId = new SecurityId
+                {
+                    SecurityCode = SecurityCriteriaCodeFilterStockSharp.Trim(),
+                },
+                TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
+            };
+            Subscription subscription = new(SecurityCriteriaCodeFilterLookup);
+            conLink.Connector.Subscribe(subscription);
+        }
 
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
@@ -489,7 +488,10 @@ public class DriverStockSharpService(
             conLink.Connector.UnSubscribe(sub);
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
+
         SecurityCriteriaCodeFilterStockSharp = "";
+        SecurityCriteriaCodeFilterLookup = null;
+
         UnregisterEvents();
         conLink.Connector.Disconnect();
 
@@ -609,9 +611,15 @@ public class DriverStockSharpService(
 
     void SecurityReceivedHandle(Subscription subscription, Security security)
     {
-        //if (Instruments.Any(x => x.Code == security.Code) && (BoardsFilter is null || BoardsFilter.Count == 0 || BoardsFilter.Contains(new BoardStockSharpModel().Bind(security.Board))))
         lock (AllSecurities)
-            AllSecurities.Add(security);
+        {
+            int _fi = AllSecurities.FindIndex(x => x.Id == security.Id);
+
+            if (_fi == -1)
+                AllSecurities.Add(security);
+            else
+                AllSecurities[_fi] = security;
+        }
     }
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
@@ -765,7 +773,6 @@ public class DriverStockSharpService(
             //    // New logic???
             //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
             //    connector.OrderBookReceived -= OrderBookReceivedConnector2;
-            //    //
         }
     }
 
@@ -853,7 +860,7 @@ public class DriverStockSharpService(
     }
     void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
     {
-        //_logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`: {JsonConvert.SerializeObject(candleMessage)}");
+        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
     }
     void LogHandle(Ecng.Logging.LogMessage senderLog)
     {
@@ -872,12 +879,28 @@ public class DriverStockSharpService(
         //_logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     #endregion
-    
+
     void LookupSecuritiesResultHandle(SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`");
-        // foreach (Security sec in securities)
-        //    dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
+        if (ex is not null)
+            _logger.LogError(ex, $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`");
+        else
+        {
+            _logger.LogInformation($"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`");
+
+            lock (AllSecurities)
+            {
+                foreach (Security _sec in securities)
+                {
+                    int _fi = AllSecurities.FindIndex(x => x.Id == _sec.Id);
+
+                    if (_fi == -1)
+                        AllSecurities.Add(_sec);
+                    else
+                        AllSecurities[_fi] = _sec;
+                }
+            }
+        }
     }
 
     #region Exception`s

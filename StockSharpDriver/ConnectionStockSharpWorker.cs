@@ -129,10 +129,17 @@ public class ConnectionStockSharpWorker(
     #region Exception`s
     void LookupSecuritiesResultHandle(StockSharp.Messages.SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
-
-        //foreach (Security sec in securities)
-        //    dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(sec));
+        if (ex is not null)
+            _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
+        else
+        {
+            foreach (Security security in securities)
+            {
+                InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(security);
+                InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response;
+                eventTrans.InstrumentReceived(dbRes);
+            }
+        }
     }
 
     void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
