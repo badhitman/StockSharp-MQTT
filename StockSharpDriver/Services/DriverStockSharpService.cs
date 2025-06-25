@@ -28,6 +28,7 @@ public class DriverStockSharpService(
     ConnectionLink conLink) : IDriverStockSharpService
 {
     SecurityLookupMessage SecurityCriteriaCodeFilterLookup;
+    Subscription SecurityCriteriaCodeFilterSubscription;
 
     readonly List<SecurityPosition>
         SBondPositionsList = [],
@@ -58,6 +59,7 @@ public class DriverStockSharpService(
     Curve OfzCurve;
 
     string SecurityCriteriaCodeFilterStockSharp;
+    List<Subscription> DepthSubscriptions = [];
 
     decimal
         quoteSmallStrategyBidVolume = 2000,
@@ -222,20 +224,48 @@ public class DriverStockSharpService(
                 _logger.LogError(msg);
                 return;
             }
-            InstrumentTradeStockSharpViewModel currentInstrument = tryFindInstrument[0];
 
             SBondPositionsList.Add(new SecurityPosition(security, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.ShiftPosition / 100));
 
             if (currentStrategy.IsSmall)
                 SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
 
-            if (currentInstrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+            if (tryFindInstrument[0].Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
                 SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(currentStrategy.HightLimit + (decimal)0.1) / 100, (decimal)(currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         }
         if (!response.Success())
         {
             ClearStrategy();
             return response;
+        }
+
+        lock (DepthSubscriptions)
+        {
+            DepthSubscriptions.Clear();
+            bl.ForEach(MarketDepthRegister);
+        }
+
+
+        void MarketDepthRegister(Security security)
+        {
+            // Создаем подписку на стакан для выбранного инструмента
+            Subscription depthSubscription = new(DataType.MarketDepth, security);
+
+            // Обработка полученных стаканов
+            conLink.Connector.OrderBookReceived += (sub, depth) =>
+            {
+                if (sub != depthSubscription)
+                    return;
+
+                // Обработка стакана
+                Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
+                Console.WriteLine($"Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
+            };
+
+            // Запуск подписки
+            conLink.Connector.Subscribe(depthSubscription);
+
+            DepthSubscriptions.Add(depthSubscription);
         }
 
         if (OfzCurve is null || OfzCurve.Length == 0)
@@ -245,6 +275,13 @@ public class DriverStockSharpService(
         _ordersForQuoteSellReregister = [];
 
         return ResponseBaseModel.CreateInfo("Ok");
+    }
+
+    /// <inheritdoc/>
+    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
+    {
+        ClearStrategy();
+        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
     }
 
     async Task<List<StrategyTradeStockSharpModel>> ReadStrategies(int?[] instrumentsIds, CancellationToken cancellationToken = default)
@@ -267,14 +304,6 @@ public class DriverStockSharpService(
             .AsQueryable();
 
         return [.. _q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)];
-    }
-
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
-    {
-        ClearStrategy();
-
-        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
     }
 
     /// <inheritdoc/>
@@ -417,8 +446,8 @@ public class DriverStockSharpService(
                 },
                 TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
             };
-            Subscription subscription = new(SecurityCriteriaCodeFilterLookup);
-            conLink.Connector.Subscribe(subscription);
+            SecurityCriteriaCodeFilterSubscription = new(SecurityCriteriaCodeFilterLookup);
+            conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscription);
         }
 
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
@@ -482,6 +511,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> Disconnect(CancellationToken? cancellationToken = default)
     {
+        ClearStrategy();
         conLink.Connector.CancelOrders();
         foreach (Subscription sub in conLink.Connector.Subscriptions)
         {
@@ -972,6 +1002,16 @@ public class DriverStockSharpService(
 
     void ClearStrategy()
     {
+        lock (DepthSubscriptions)
+        {
+            DepthSubscriptions.ForEach(conLink.Connector.UnSubscribe);
+            DepthSubscriptions.Clear();
+        }
+
+        if (SecurityCriteriaCodeFilterSubscription is not null)
+            conLink.Connector.UnSubscribe(SecurityCriteriaCodeFilterSubscription);
+        SecurityCriteriaCodeFilterSubscription = null;
+
         Board = null;
         SelectedPortfolio = null;
 
