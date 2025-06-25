@@ -7,7 +7,6 @@ using Ecng.Common;
 using Microsoft.Extensions.Caching.Memory;
 using SharedLib;
 using StockSharp.Algo;
-using StockSharp.Algo.Indicators;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
@@ -76,8 +75,8 @@ public class DriverStockSharpService(
     readonly List<Order> AllOrders = [];
 
     Dictionary<string, Order>
-        _ordersForQuoteBuyReregister,
-        _ordersForQuoteSellReregister;
+        _ordersForQuoteBuyReregister = [],
+        _ordersForQuoteSellReregister = [];
 
     readonly Dictionary<Security, IOrderBookMessage> OderBookList = [];
 
@@ -242,39 +241,38 @@ public class DriverStockSharpService(
         lock (DepthSubscriptions)
         {
             DepthSubscriptions.Clear();
-            bl.ForEach(MarketDepthRegister);
+            bl.ForEach(RegisterMarketDepth);
         }
-
-
-        void MarketDepthRegister(Security security)
+        void RegisterMarketDepth(Security security)
         {
-            // Создаем подписку на стакан для выбранного инструмента
             Subscription depthSubscription = new(DataType.MarketDepth, security);
-
-            // Обработка полученных стаканов
-            conLink.Connector.OrderBookReceived += (sub, depth) =>
-            {
-                if (sub != depthSubscription)
-                    return;
-
-                // Обработка стакана
-                Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
-                Console.WriteLine($"Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
-            };
-
-            // Запуск подписки
             conLink.Connector.Subscribe(depthSubscription);
-
             DepthSubscriptions.Add(depthSubscription);
         }
+        conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
 
         if (OfzCurve is null || OfzCurve.Length == 0)
-            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+        {
+            //ClearStrategy();
+            //return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+        }
 
-        _ordersForQuoteBuyReregister = [];
-        _ordersForQuoteSellReregister = [];
+        lock (_ordersForQuoteBuyReregister)
+            _ordersForQuoteBuyReregister.Clear();
+        lock (_ordersForQuoteSellReregister)
+            _ordersForQuoteSellReregister.Clear();
 
         return ResponseBaseModel.CreateInfo("Ok");
+    }
+
+    private void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
+    {
+        if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
+            return;
+
+        // Обработка стакана
+        Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
+        Console.WriteLine($"Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
     }
 
     /// <inheritdoc/>
@@ -672,7 +670,7 @@ public class DriverStockSharpService(
     {
         lock (AllOrders)
         {
-            int _i = AllOrders.FindIndex(x => x.StringId.Equals(oreder.StringId));
+            int _i = AllOrders.FindIndex(x => x.Id.Equals(oreder.Id));
 
             if (_i == -1)
                 AllOrders.Add(oreder);
@@ -1011,6 +1009,8 @@ public class DriverStockSharpService(
         if (SecurityCriteriaCodeFilterSubscription is not null)
             conLink.Connector.UnSubscribe(SecurityCriteriaCodeFilterSubscription);
         SecurityCriteriaCodeFilterSubscription = null;
+
+        conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
 
         Board = null;
         SelectedPortfolio = null;

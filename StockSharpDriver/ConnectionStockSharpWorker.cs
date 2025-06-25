@@ -53,7 +53,7 @@ public class ConnectionStockSharpWorker(
 
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
-        _logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}");
+        _logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument, GlobalStaticConstants.JsonSerializerSettings)}\n\n{JsonConvert.SerializeObject(dataPayload, GlobalStaticConstants.JsonSerializerSettings)}");
         ConnectorValuesChangedEventPayloadModel valueChangeEvent = new()
         {
             OffsetSlave = dtOffsetSlave,
@@ -67,7 +67,7 @@ public class ConnectionStockSharpWorker(
 
     void SecurityReceivedHandle(Subscription subscription, Security sec)
     {
-        _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec)}");
+        _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec, GlobalStaticConstants.JsonSerializerSettings)}");
         InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(sec);
         InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response;
         eventTrans.InstrumentReceived(dbRes);
@@ -75,7 +75,7 @@ public class ConnectionStockSharpWorker(
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
     {
-        _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
+        _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port, GlobalStaticConstants.JsonSerializerSettings)}");
         PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
         TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
         eventTrans.PortfolioReceived(echoData.Response);
@@ -83,7 +83,7 @@ public class ConnectionStockSharpWorker(
 
     void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)
     {
-        _logger.LogWarning($"Call > `{nameof(BoardReceivedHandle)}`: {JsonConvert.SerializeObject(boardExchange)}");
+        _logger.LogWarning($"Call > `{nameof(BoardReceivedHandle)}`: {JsonConvert.SerializeObject(boardExchange, GlobalStaticConstants.JsonSerializerSettings)}");
         BoardStockSharpModel board = new BoardStockSharpModel().Bind(boardExchange);
         dataRepo.SaveBoard(board);
         eventTrans.BoardReceived(board);
@@ -91,7 +91,7 @@ public class ConnectionStockSharpWorker(
 
     void OrderReceivedHandle(Subscription subscription, Order orderSource)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(orderSource)}");
+        _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(orderSource, GlobalStaticConstants.JsonSerializerSettings)}");
 
         InstrumentTradeStockSharpViewModel instrumentDBRes = dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(orderSource.Security)).Result.Response;
 
@@ -106,7 +106,7 @@ public class ConnectionStockSharpWorker(
 
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
-        _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
+        _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr, GlobalStaticConstants.JsonSerializerSettings)}");
         InstrumentTradeStockSharpViewModel instrument = dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(tr.Order.Security)).Result.Response;
 
         MyTradeStockSharpModel myTrade = new MyTradeStockSharpModel().Bind(tr);
@@ -121,7 +121,7 @@ public class ConnectionStockSharpWorker(
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
     {
-        _logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos)}");
+        _logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings)}");
         PositionStockSharpModel position = new PositionStockSharpModel().Bind(pos);
         eventTrans.PositionReceived(position);
     }
@@ -130,7 +130,7 @@ public class ConnectionStockSharpWorker(
     void LookupSecuritiesResultHandle(StockSharp.Messages.SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
         if (ex is not null)
-            _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm)}");
+            _logger.LogError(ex, $"Call > `{nameof(LookupSecuritiesResultHandle)}`: {JsonConvert.SerializeObject(slm, GlobalStaticConstants.JsonSerializerSettings)}");
         else
         {
             foreach (Security security in securities)
@@ -144,7 +144,7 @@ public class ConnectionStockSharpWorker(
 
     void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
+        _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM, GlobalStaticConstants.JsonSerializerSettings)}");
 
         //foreach (Portfolio port in portfolios)
         //    dataRepo.SavePortfolio(new PortfolioStockSharpModel().Bind(port));
@@ -197,7 +197,7 @@ public class ConnectionStockSharpWorker(
     #region todo
     void TickTradeReceivedHandle(Subscription subscription, StockSharp.Messages.ITickTradeMessage msg)
     {
-        _logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg)}");
+        _logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void SubscriptionStartedHandle(Subscription subscription)
     {
@@ -209,31 +209,31 @@ public class ConnectionStockSharpWorker(
     }
     void ParentRemovedHandle(Ecng.Logging.ILogSource sender)
     {
-        _logger.LogWarning($"Call > `{nameof(ParentRemovedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogWarning($"Call > `{nameof(ParentRemovedHandle)}`: {JsonConvert.SerializeObject(sender, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+        _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
+        _logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void OrderEditFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+        _logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void OrderCancelFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
+        _logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void OrderBookReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderBookMessage orderBM)
     {
-        _logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM)}");
+        _logger.LogWarning($"Call > `{nameof(OrderBookReceivedHandle)}`: {JsonConvert.SerializeObject(orderBM, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void NewsReceivedHandle(Subscription subscription, News sender)
     {
-        _logger.LogWarning($"Call > `{nameof(NewsReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogWarning($"Call > `{nameof(NewsReceivedHandle)}`: {JsonConvert.SerializeObject(sender, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void MassOrderCanceled2Handle(long arg, DateTimeOffset dt)
     {
@@ -241,11 +241,11 @@ public class ConnectionStockSharpWorker(
     }
     void MassOrderCanceledHandle(long sender)
     {
-        _logger.LogWarning($"Call > `{nameof(MassOrderCanceledHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogWarning($"Call > `{nameof(MassOrderCanceledHandle)}`: {JsonConvert.SerializeObject(sender, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void Level1ReceivedHandle(Subscription subscription, StockSharp.Messages.Level1ChangeMessage levelCh)
     {
-        _logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
+        _logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void DisposedHandle()
     {
@@ -273,7 +273,7 @@ public class ConnectionStockSharpWorker(
     }
     void DataTypeReceivedHandle(Subscription subscription, StockSharp.Messages.DataType argDt)
     {
-        _logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
+        _logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void ConnectionRestoredHandle(StockSharp.Messages.IMessageAdapter sender)
     {
@@ -313,7 +313,7 @@ public class ConnectionStockSharpWorker(
     }
     void CandleReceivedHandle(Subscription subscription, StockSharp.Messages.ICandleMessage candleMessage)
     {
-        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`: {JsonConvert.SerializeObject(candleMessage)}");
+        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`: {JsonConvert.SerializeObject(candleMessage, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void LogHandle(Ecng.Logging.LogMessage senderLog)
     {
@@ -321,15 +321,15 @@ public class ConnectionStockSharpWorker(
     }
     void CurrentTimeChangedHandle(TimeSpan sender)
     {
-        _logger.LogTrace($"Call > `{nameof(CurrentTimeChangedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogTrace($"Call > `{nameof(CurrentTimeChangedHandle)}`: {JsonConvert.SerializeObject(sender, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void NewMessageHandle(StockSharp.Messages.Message msg)
     {
-        _logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg)}");
+        _logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     void SubscriptionReceivedHandle(Subscription subscription, object sender)
     {
-        _logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
+        _logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender, GlobalStaticConstants.JsonSerializerSettings)}");
     }
     #endregion
 
