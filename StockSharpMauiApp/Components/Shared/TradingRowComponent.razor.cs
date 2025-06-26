@@ -31,7 +31,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
     public required TradingAreaComponent Parent { get; set; }
 
 
-    public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, LowLimit, HightLimit);
+    public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, IsAlter, LowLimit, HightLimit);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
     decimal _lowLimit;
@@ -68,6 +68,20 @@ public partial class TradingRowComponent : StockSharpBaseComponent
         private set
         {
             _isSmall = value;
+            InvokeAsync(SaveStrategy);
+        }
+    }
+
+    bool _isAlter;
+    public bool IsAlter
+    {
+        get
+        {
+            return _isAlter;
+        }
+        private set
+        {
+            _isAlter = value;
             InvokeAsync(SaveStrategy);
         }
     }
@@ -184,6 +198,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
             _basePrice = RestoreStrategy.BasePrice;
             _valueOperation = RestoreStrategy.ValueOperation;
             _shiftPosition = RestoreStrategy.ShiftPosition;
+            _isAlter = RestoreStrategy.IsAlter;
 
             _smallBidVolume = RestoreStrategy.SmallBidVolume;
             _smallOfferVolume = RestoreStrategy.SmallOfferVolume;
@@ -209,6 +224,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
                 SmallOffset = _smallOffset,
                 WorkingVolume = _workingVolume,
 
+                IsAlter = _isAlter,
                 IsSmall = _isSmall,
                 LowLimit = _lowLimit,
                 HightLimit = _hightLimitl,

@@ -19,7 +19,7 @@
             @if (ShowNamesInstruments)
             {
                 <span>@Instrument.Name</span>
-            }        
+            }
             @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
             {
                 foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)
@@ -41,8 +41,8 @@
             <div class="btn-group btn-group-sm" role="group">
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-warning">buy</button>
                 <button disabled="@(!Available)" type="button" class="btn btn-outline-primary">sell</button>
-                <button disabled="@(!Available)" type="button" class="btn btn-outline-warning" title="bid">B</button>
-                <button disabled="@(!Available)" type="button" class="btn btn-outline-primary" title="offer">O</button>
+                <button disabled="@(!Available)" type="button" class="btn btn-outline-warning" title="Bid">B</button>
+                <button disabled="@(!Available)" type="button" class="btn btn-outline-primary" title="Ask">A</button>
             </div>
         </td>
 
@@ -55,7 +55,16 @@
         <td>
             <div class="input-group input-group-sm">
                 <div class="input-group-text">
-                    <input @bind="IsSmall" class="form-check-input mt-0" type="checkbox" aria-label="IsSmall" title="is small">
+                    <label class="form-check-label me-1">
+                        alt
+                    </label>
+                    <input @bind="IsAlter" class="form-check-input mt-0" type="checkbox" title="alter">
+                </div>
+                <div class="input-group-text">
+                    <label class="form-check-label me-1">
+                        is small
+                    </label>
+                    <input @bind="IsSmall" class="form-check-input mt-0" type="checkbox" title="is small">
                 </div>
                 <span title="Low Limit" class="input-group-text">LL</span>
                 <input title="Low Limit" @bind-value="LowLimit" type="number" class="form-control" @bind-value:event="oninput">
