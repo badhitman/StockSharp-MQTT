@@ -26,6 +26,7 @@ public class DriverStockSharpService(
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
+    #region prop`s
     SecurityLookupMessage SecurityCriteriaCodeFilterLookup;
     Subscription SecurityCriteriaCodeFilterSubscription;
 
@@ -63,9 +64,10 @@ public class DriverStockSharpService(
     decimal
         quoteSmallStrategyBidVolume = 2000,
         quoteSmallStrategyOfferVolume = 2000,
+
+        quoteSizeStrategyVolume = 2000,
         quoteStrategyVolume = 1000,
-        skipVolume = 2500,
-        quoteSizeStrategyVolume = 2000;
+        skipVolume = 2500;
 
     decimal bondPositionTraded,
         bondSizePositionTraded,
@@ -99,6 +101,7 @@ public class DriverStockSharpService(
     readonly List<SBond> SBondList = [];
 
     readonly List<Security> AllSecurities = [];
+    #endregion
     List<Security> SecuritiesBonds()
     {
         List<Security> res = [];
@@ -119,6 +122,133 @@ public class DriverStockSharpService(
         }
 
         return res;
+    }
+
+    public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
+    {
+        if (req.InstrumentId < 1)
+        {
+            quoteSizeStrategyVolume = req.Size;
+            quoteStrategyVolume = req.Volume;
+            skipVolume = req.Skip;
+
+            DeleteAllQuotesByStrategy("Size");
+            DeleteAllQuotesByStrategy("Small");
+            DeleteAllQuotesByStrategy("Quote");
+
+            lock (SBondPositionsList)
+                SBondPositionsList.Clear();
+            lock (SBondSizePositionsList)
+                SBondSizePositionsList.Clear();
+            lock (SBondSmallPositionsList)
+                SBondSmallPositionsList.Clear();
+
+            TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
+            {
+                PageNum = 0,
+                PageSize = int.MaxValue,
+                FavoriteFilter = true,
+            }, cancellationToken);
+
+            if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+                return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+            List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+            if (dataParse.Count == 0)
+                return ResponseBaseModel.CreateError("Dashboard - not set");
+
+            List<Security> bl = SecuritiesBonds();
+            bl.ForEach(security =>
+            {
+                //        string bndName = security.Code.Substring(2, 5);
+                //        DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
+
+                //        if (!decUpD.IsNull())
+                //        {
+                //            long? WorkVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName)).Value;
+                //            long? SmallBidVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName)).Value;
+                //            long? SmallOfferVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName)).Value;
+                //            int? Lowlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName)).Value;
+                //            int? Highlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName)).Value;
+                //            int? SmallOffset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName)).Value;
+                //            int? Offset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName)).Value;
+                //            bool? IsSmall = ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bndName)).IsChecked;
+
+                //            SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100,
+                //              (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+
+                //            if ((bool)IsSmall)
+                //                SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Lowlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+
+
+                //            if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+                //                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                //        }
+                //        else
+                //        {
+                //            SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+
+                //            if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+                //                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                //        }
+
+                //        Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
+                //        OrderBookReceivedConnectorMan(sub, OderBookList[security]);
+            });
+        }
+        else
+        {
+
+
+            //    SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
+            //    if (!SbPos.IsNull())
+            //        SBondPositionsList.Remove(SbPos);
+
+            //    SecurityPosition SbSizePos = SBondSizePositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
+            //    if (!SbSizePos.IsNull())
+            //        SBondSizePositionsList.Remove(SbSizePos);
+
+            //    SecurityPosition SbSmallPos = SBondSmallPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
+            //    if (!SbSmallPos.IsNull())
+            //        SBondSmallPositionsList.Remove(SbSmallPos);
+
+            //    Security security = CurrentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
+
+            //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bondName);
+
+            //    if (!decUpD.IsNull())
+            //    {
+            //        long? WorkVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bondName)).Value;
+            //        long? SmallBidVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bondName)).Value;
+            //        long? SmallOfferVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bondName)).Value;
+            //        int? Lowlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bondName)).Value;
+            //        int? Highlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bondName)).Value;
+            //        int? SmallOffset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bondName)).Value;
+            //        int? Offset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bondName)).Value;
+            //        bool? IsSmall = ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bondName)).IsChecked;
+
+            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+
+            //        if ((bool)IsSmall)
+            //            SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Highlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+
+            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            //    }
+            //    else
+            //    {
+            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+
+            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            //    }
+
+            //    Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
+            //    OrderBookReceivedConnectorMan(sub, OderBookList[security]);
+        }
+
+        throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
@@ -267,8 +397,10 @@ public class DriverStockSharpService(
 
     private void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
     {
-        if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
-            return;
+        _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
+        lock (DepthSubscriptions)
+            if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
+                return;
 
         // Обработка стакана
         Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
@@ -381,7 +513,7 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken? cancellationToken = default)
+    public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken cancellationToken = default)
     {
         Board = null;
         if (SecuritiesBonds().Any())
@@ -501,13 +633,13 @@ public class DriverStockSharpService(
             return res;
         }
 
-        await conLink.Connector.ConnectAsync(cancellationToken ?? CancellationToken.None);
+        await conLink.Connector.ConnectAsync(cancellationToken);
         res.AddInfo($"connection: {conLink.Connector.ConnectionState}");
         return res;
     }
 
     /// <inheritdoc/>
-    public Task<ResponseBaseModel> Disconnect(CancellationToken? cancellationToken = default)
+    public Task<ResponseBaseModel> Disconnect(CancellationToken cancellationToken = default)
     {
         ClearStrategy();
         conLink.Connector.CancelOrders();
@@ -529,7 +661,7 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public Task<AboutConnectResponseModel> AboutConnection(CancellationToken? cancellationToken = null)
+    public Task<AboutConnectResponseModel> AboutConnection(CancellationToken cancellationToken = default)
     {
         DateTime _lc = LastConnectedAt;
         AboutConnectResponseModel res = new()
@@ -1048,7 +1180,7 @@ public class DriverStockSharpService(
         return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(DriverStockSharpService)}"));
     }
 
-    public Task<ResponseBaseModel> Terminate(CancellationToken? cancellationToken = null)
+    public Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
     {
         UnregisterEvents();
         conLink.Connector.Dispose();
