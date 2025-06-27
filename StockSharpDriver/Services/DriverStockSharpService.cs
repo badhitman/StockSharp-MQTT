@@ -124,133 +124,6 @@ public class DriverStockSharpService(
         return res;
     }
 
-    public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
-    {
-        if (req.InstrumentId < 1)
-        {
-            quoteSizeStrategyVolume = req.Size;
-            quoteStrategyVolume = req.Volume;
-            skipVolume = req.Skip;
-
-            DeleteAllQuotesByStrategy("Size");
-            DeleteAllQuotesByStrategy("Small");
-            DeleteAllQuotesByStrategy("Quote");
-
-            lock (SBondPositionsList)
-                SBondPositionsList.Clear();
-            lock (SBondSizePositionsList)
-                SBondSizePositionsList.Clear();
-            lock (SBondSmallPositionsList)
-                SBondSmallPositionsList.Clear();
-
-            TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
-            {
-                PageNum = 0,
-                PageSize = int.MaxValue,
-                FavoriteFilter = true,
-            }, cancellationToken);
-
-            if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-                return ResponseBaseModel.CreateError($"The instruments are not configured.");
-
-            List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
-            if (dataParse.Count == 0)
-                return ResponseBaseModel.CreateError("Dashboard - not set");
-
-            List<Security> bl = SecuritiesBonds();
-            bl.ForEach(security =>
-            {
-                //        string bndName = security.Code.Substring(2, 5);
-                //        DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
-
-                //        if (!decUpD.IsNull())
-                //        {
-                //            long? WorkVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName)).Value;
-                //            long? SmallBidVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName)).Value;
-                //            long? SmallOfferVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName)).Value;
-                //            int? Lowlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName)).Value;
-                //            int? Highlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName)).Value;
-                //            int? SmallOffset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName)).Value;
-                //            int? Offset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName)).Value;
-                //            bool? IsSmall = ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bndName)).IsChecked;
-
-                //            SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100,
-                //              (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
-
-                //            if ((bool)IsSmall)
-                //                SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Lowlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
-
-
-                //            if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-                //                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-                //        }
-                //        else
-                //        {
-                //            SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
-
-                //            if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-                //                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-                //        }
-
-                //        Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
-                //        OrderBookReceivedConnectorMan(sub, OderBookList[security]);
-            });
-        }
-        else
-        {
-
-
-            //    SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-            //    if (!SbPos.IsNull())
-            //        SBondPositionsList.Remove(SbPos);
-
-            //    SecurityPosition SbSizePos = SBondSizePositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-            //    if (!SbSizePos.IsNull())
-            //        SBondSizePositionsList.Remove(SbSizePos);
-
-            //    SecurityPosition SbSmallPos = SBondSmallPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-            //    if (!SbSmallPos.IsNull())
-            //        SBondSmallPositionsList.Remove(SbSmallPos);
-
-            //    Security security = CurrentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
-
-            //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bondName);
-
-            //    if (!decUpD.IsNull())
-            //    {
-            //        long? WorkVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bondName)).Value;
-            //        long? SmallBidVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bondName)).Value;
-            //        long? SmallOfferVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bondName)).Value;
-            //        int? Lowlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bondName)).Value;
-            //        int? Highlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bondName)).Value;
-            //        int? SmallOffset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bondName)).Value;
-            //        int? Offset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bondName)).Value;
-            //        bool? IsSmall = ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bondName)).IsChecked;
-
-            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)Lowlimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
-
-            //        if ((bool)IsSmall)
-            //            SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Highlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
-
-            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(Lowlimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-            //    }
-            //    else
-            //    {
-            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
-
-            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-            //    }
-
-            //    Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
-            //    OrderBookReceivedConnectorMan(sub, OderBookList[security]);
-        }
-
-        throw new NotImplementedException();
-    }
-
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
@@ -354,7 +227,7 @@ public class DriverStockSharpService(
                 return;
             }
 
-            SBondPositionsList.Add(new SecurityPosition(security, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.ShiftPosition / 100));
+            SBondPositionsList.Add(new SecurityPosition(security, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.Offset / 100));
 
             if (currentStrategy.IsSmall)
                 SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
@@ -395,6 +268,145 @@ public class DriverStockSharpService(
         return ResponseBaseModel.CreateInfo("Ok");
     }
 
+    public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
+    {
+        if (req.InstrumentId < 1)
+        {
+            quoteSizeStrategyVolume = req.Size;
+            quoteStrategyVolume = req.Volume;
+            skipVolume = req.Skip;
+
+            DeleteAllQuotesByStrategy("Size");
+            DeleteAllQuotesByStrategy("Small");
+            DeleteAllQuotesByStrategy("Quote");
+
+            lock (SBondPositionsList)
+                SBondPositionsList.Clear();
+            lock (SBondSizePositionsList)
+                SBondSizePositionsList.Clear();
+            lock (SBondSmallPositionsList)
+                SBondSmallPositionsList.Clear();
+
+            TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
+            {
+                PageNum = 0,
+                PageSize = int.MaxValue,
+                FavoriteFilter = true,
+            }, cancellationToken);
+
+            if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+                return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+            List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+            if (dataParse.Count == 0)
+                return ResponseBaseModel.CreateError("Dashboard - not set");
+
+            foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
+            {
+                int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
+                if (_fx < 0)
+                    return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+
+                if (dataParse[_fx].ValueOperation < 1)
+                    return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
+
+                if (dataParse[_fx].BasePrice < 1)
+                    return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
+
+                StrategyTradeStockSharpModel currentStrategy = dataParse[_fx];
+                if (!currentStrategy.IsAlter)
+                {
+                    decimal WorkVol = currentStrategy.WorkingVolume;
+                    decimal SmallBidVol = currentStrategy.SmallBidVolume;
+                    decimal SmallOfferVol = currentStrategy.SmallOfferVolume;
+                    decimal LowLimit = currentStrategy.LowLimit;
+                    decimal Highlimit = currentStrategy.HightLimit;
+                    decimal SmallOffset = currentStrategy.SmallOffset;
+                    decimal Offset = currentStrategy.Offset;
+                    bool IsSmall = currentStrategy.IsSmall;
+
+                    // SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)LowLimit / 100,
+                    //  (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+
+                    // if ((bool)IsSmall)
+                    //  SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(LowLimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+
+
+                    // if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+                    //  SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                }
+                else
+                {
+                    // SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+
+                    // if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+                    //  SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                }
+
+                //Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
+                //OrderBookReceivedConnectorMan(sub, OderBookList[security]);
+            }
+        }
+        else
+        {
+            //    SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
+            //    if (!SbPos.IsNull())
+            //        SBondPositionsList.Remove(SbPos);
+
+            //    SecurityPosition SbSizePos = SBondSizePositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
+            //    if (!SbSizePos.IsNull())
+            //        SBondSizePositionsList.Remove(SbSizePos);
+
+            //    SecurityPosition SbSmallPos = SBondSmallPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
+            //    if (!SbSmallPos.IsNull())
+            //        SBondSmallPositionsList.Remove(SbSmallPos);
+
+            //    Security security = CurrentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
+
+            //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bondName);
+
+            //    if (!decUpD.IsNull())
+            //    {
+            //        long? WorkVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bondName)).Value;
+            //        long? SmallBidVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bondName)).Value;
+            //        long? SmallOfferVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bondName)).Value;
+            //        int? LowLimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bondName)).Value;
+            //        int? Highlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bondName)).Value;
+            //        int? SmallOffset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bondName)).Value;
+            //        int? Offset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bondName)).Value;
+            //        bool? IsSmall = ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bondName)).IsChecked;
+
+            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+
+            //        if ((bool)IsSmall)
+            //            SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Highlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+
+            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            //    }
+            //    else
+            //    {
+            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+
+            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
+            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            //    }
+
+            //    Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
+            //    OrderBookReceivedConnectorMan(sub, OderBookList[security]);
+        }
+
+        throw new NotImplementedException();
+    }
+
+    /// <inheritdoc/>
+    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
+    {
+        ClearStrategy();
+        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
+    }
+
     private void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
     {
         _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
@@ -405,13 +417,6 @@ public class DriverStockSharpService(
         // Обработка стакана
         Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
         Console.WriteLine($"Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
-    }
-
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
-    {
-        ClearStrategy();
-        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
     }
 
     async Task<List<StrategyTradeStockSharpModel>> ReadStrategies(int?[] instrumentsIds, CancellationToken cancellationToken = default)
@@ -499,9 +504,9 @@ public class DriverStockSharpService(
 
             //if (!decUpD.IsNull())
             //{
-            //    IntegerUpDown Lowlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
+            //    IntegerUpDown LowLimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
             //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
-            //    Lowlimit.Value = Lowlimit.Value / 2;
+            //    LowLimit.Value = LowLimit.Value / 2;
             //    Highlimit.Value = Highlimit.Value / 2;
             //}
         });

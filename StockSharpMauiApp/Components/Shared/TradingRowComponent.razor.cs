@@ -31,7 +31,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
     public required TradingAreaComponent Parent { get; set; }
 
 
-    public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, ShiftPosition, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, IsAlter, LowLimit, HightLimit);
+    public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, IsAlter, LowLimit, HightLimit);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
     decimal _lowLimit;
@@ -110,14 +110,14 @@ public partial class TradingRowComponent : StockSharpBaseComponent
         }
     }
 
-    decimal _shiftPosition;
+    decimal _offset;
     /// <inheritdoc/>
-    public decimal ShiftPosition
+    public decimal Offset
     {
-        get => _shiftPosition;
+        get => _offset;
         private set
         {
-            _shiftPosition = value;
+            _offset = value;
             InvokeAsync(SaveStrategy);
         }
     }
@@ -197,7 +197,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
             _isSmall = RestoreStrategy.IsSmall;
             _basePrice = RestoreStrategy.BasePrice;
             _valueOperation = RestoreStrategy.ValueOperation;
-            _shiftPosition = RestoreStrategy.ShiftPosition;
+            _offset = RestoreStrategy.Offset;
             _isAlter = RestoreStrategy.IsAlter;
 
             _smallBidVolume = RestoreStrategy.SmallBidVolume;
@@ -215,7 +215,7 @@ public partial class TradingRowComponent : StockSharpBaseComponent
         if (RestoreStrategy is null)
             RestoreStrategy = new()
             {
-                ShiftPosition = _shiftPosition,
+                Offset = _offset,
                 BasePrice = _basePrice,
                 ValueOperation = _valueOperation,
 
