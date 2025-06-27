@@ -1,15 +1,19 @@
-﻿using Microsoft.AspNetCore.Components.Web;
+﻿using BlazorLib;
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json;
-using BlazorLib;
-using SharedLib;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using MudBlazor;
+using Newtonsoft.Json;
+using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
 
 public partial class ConnectionPanelComponent : StockSharpBaseComponent
 {
+    [Inject]
+    IJSRuntime JS { get; set; } = default!;
+
     [Inject]
     ITelegramBotStandardTransmission TelegramRepo { get; set; } = default!;
 
@@ -24,6 +28,9 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     [Inject]
     IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
+
+    [Inject]
+    IEventNotifyReceive<ToastShowClientModel> ToastClientRepo { get; set; } = default!;
 
 
     private bool _visibleStrategyBoard;
@@ -167,9 +174,10 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
         await PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.PortfolioReceivedStockSharpNotifyReceive, PortfolioNotificationHandle);
         await UpdateConnectionEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive, UpdateConnectionNotificationHandle);
+        await ToastClientRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive,ToastShowHandle);
 
         await AboutBotAsync();
-
+        
         await Task.WhenAll([
               Task.Run(async () => {
                 TResponseModel<List<BoardStockSharpModel>> res = await DataRepo.GetBoardsAsync();
@@ -184,6 +192,11 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
                         portfolios.AddRange(res.Response);
                 }
             })]);
+    }
+
+    private void ToastShowHandle(ToastShowClientModel toast)
+    {
+        JS.InvokeVoidAsync($"Toast.{toast.TypeMessage}", toast.HeadTitle, toast.MessageText);
     }
 
     void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
@@ -209,6 +222,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     {
         PortfolioEventRepo.UnregisterAction();
         UpdateConnectionEventRepo.UnregisterAction();
+        ToastClientRepo.UnregisterAction();
         base.Dispose();
     }
 }

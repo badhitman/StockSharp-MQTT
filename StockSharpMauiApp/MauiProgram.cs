@@ -57,12 +57,12 @@ public static class MauiProgram
                ;
         //
         builder.Services
-            .AddTransient<IEventNotifyReceive<UpdateConnectionHandleModel>, EventNotifyReceive<UpdateConnectionHandleModel>>()
-            .AddTransient<IEventNotifyReceive<PortfolioStockSharpViewModel>, EventNotifyReceive<PortfolioStockSharpViewModel>>()
-            .AddTransient<IEventNotifyReceive<InstrumentTradeStockSharpViewModel>, EventNotifyReceive<InstrumentTradeStockSharpViewModel>>()
-            .AddTransient<IEventNotifyReceive<MyTradeStockSharpModel>, EventNotifyReceive<MyTradeStockSharpModel>>()
-            .AddTransient<IEventNotifyReceive<OrderStockSharpViewModel>, EventNotifyReceive<OrderStockSharpViewModel>>()
-            .AddTransient<IEventNotifyReceive<UserTelegramBaseModel>, EventNotifyReceive<UserTelegramBaseModel>>()
+            .RegisterEventNotify<UpdateConnectionHandleModel>()
+            .RegisterEventNotify<PortfolioStockSharpViewModel>()
+            .RegisterEventNotify<InstrumentTradeStockSharpViewModel>()
+            .RegisterEventNotify<MyTradeStockSharpModel>()
+            .RegisterEventNotify<OrderStockSharpViewModel>()
+            .RegisterEventNotify<UserTelegramBaseModel>()
             ;
         #endregion
         return builder.Build();

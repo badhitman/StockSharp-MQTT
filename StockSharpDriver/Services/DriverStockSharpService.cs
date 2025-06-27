@@ -4,6 +4,7 @@
 
 using Ecng.Collections;
 using Ecng.Common;
+using Ecng.Net;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using SharedLib;
@@ -268,7 +269,7 @@ public class DriverStockSharpService(
         lock (_ordersForQuoteSellReregister)
             _ordersForQuoteSellReregister.Clear();
 
-        ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
+        ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp, cancellationToken);
 
         return ResponseBaseModel.CreateInfo("Ok");
     }
@@ -423,7 +424,7 @@ public class DriverStockSharpService(
     }
 
 
-    private void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
+    void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
     {
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = DataRepo.InstrumentsSelectAsync(new()
         {
@@ -492,7 +493,7 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         conLink.Connector.RegisterOrder(ord);
-                        //conLink.Connector.AddWarningLog("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume);
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume), TypeMessage = MessagesTypesEnum.Warning });
                     }
                 }
                 else
@@ -526,17 +527,17 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         _ordersForQuoteBuyReregister.Add(tmpOrder.Security.Code, newOrder);
-
-                        //conLink.Connector.AddWarningLog("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume);
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
                         conLink.Connector.CancelOrder(tmpOrder);
                     }
 
                     Orders.Skip(1).ForEach(s =>
                     {
-                        //conLink.Connector.AddWarningLog("Order buy duplication!");
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order buy duplication!"), TypeMessage = MessagesTypesEnum.Warning });
                         if (s.Id != tmpOrder.Id)
                         {
-                            //conLink.Connector.AddWarningLog("Duplicate buy order cancelled: ins ={0}, price = {1}, volume = {2}",                                                       s.Security, s.Price, s.Volume);
+                            eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Duplicate buy order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                            //                                                       s.Security, s.Price, s.Volume);
                             conLink.Connector.CancelOrder(s);
                         }
                     });
@@ -566,7 +567,7 @@ public class DriverStockSharpService(
                         };
 
                         conLink.Connector.RegisterOrder(ord);
-                        //conLink.Connector.AddWarningLog("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume);
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume), TypeMessage = MessagesTypesEnum.Warning });
                     }
                 }
                 else
@@ -600,16 +601,16 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         _ordersForQuoteSellReregister.Add(tmpOrder.Security.Code, newOrder);
-                        //conLink.Connector.AddWarningLog(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume);
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
                         conLink.Connector.CancelOrder(tmpOrder);
                     }
 
                     Orders.Skip(1).ForEach(s =>
                     {
-                        //conLink.Connector.AddWarningLog("Order sell duplication!");
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order sell duplication!"), TypeMessage = MessagesTypesEnum.Warning });
                         if (s.Id != tmpOrder.Id)
                         {
-                            //conLink.Connector.AddWarningLog("Duplicate sell order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume);
+                            eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Duplicate sell order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
                             conLink.Connector.CancelOrder(s);
                         }
                     });
@@ -1119,7 +1120,7 @@ public class DriverStockSharpService(
             //};
 
             //    conLink.Connector.RegisterOrder(ord);
-            //    conLink.Connector.AddWarningLog("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
+            // eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume), TypeMessage = MessagesTypesEnum.Warning });
 
             //    // New logic???
             //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
@@ -1153,7 +1154,7 @@ public class DriverStockSharpService(
             //    };
 
             //    conLink.Connector.RegisterOrder(ord);
-            //    conLink.Connector.AddWarningLog("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
+            // eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume), TypeMessage = MessagesTypesEnum.Warning });
 
             //    // New logic???
             //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
@@ -1340,7 +1341,7 @@ public class DriverStockSharpService(
             foreach (Order order in orders)
             {
                 conLink.Connector.CancelOrder(order);
-                //conLink.Connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
+                eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
             }
         }
         else
@@ -1350,7 +1351,7 @@ public class DriverStockSharpService(
                 if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
                     conLink.Connector.CancelOrder(order);
 
-                //conLink.Connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
+                eventTrans.ToastClientShow(new() { HeadTitle = "Warninng", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
             }
         }
     }
