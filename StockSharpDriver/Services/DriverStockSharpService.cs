@@ -273,6 +273,8 @@ public class DriverStockSharpService(
         ProgramDataPathStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, cancellationToken);
         ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, cancellationToken);
 
+        await eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Start!"), TypeMessage = MessagesTypesEnum.Warning }, cancellationToken);
+
         return ResponseBaseModel.CreateInfo("Ok");
     }
 
@@ -375,6 +377,9 @@ public class DriverStockSharpService(
         }
         else
         {
+            TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await DataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
+
+
             //    SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
             //    if (!SbPos.IsNull())
             //        SBondPositionsList.Remove(SbPos);
