@@ -20,13 +20,13 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         BoardStockSharpModelDB board = (BoardStockSharpModelDB)SaveBoard(req.Board).Result.Response;
 
         InstrumentStockSharpModelDB instrumentDb = context.Instruments
-            .FirstOrDefault(x => x.Name == req.Name && x.Code == req.Code && x.BoardId == board.Id);
+            .FirstOrDefault(x => x.Code == req.Code && x.BoardId == board.Id);
 
         if (instrumentDb is null)
         {
             instrumentDb = new InstrumentStockSharpModelDB().Bind(req);
             instrumentDb.CreatedAtUTC = DateTime.UtcNow;
-            instrumentDb.LastUpdatedAtUTC = DateTime.UtcNow;
+            instrumentDb.LastUpdatedAtUTC = instrumentDb.CreatedAtUTC;
             instrumentDb.BoardId = board.Id;
             instrumentDb.Board = null;
 
