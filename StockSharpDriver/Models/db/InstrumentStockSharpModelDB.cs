@@ -30,7 +30,12 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
     /// <inheritdoc/>
     public void SetUpdate(InstrumentTradeStockSharpModel req)
     {
-        //NameNormalizedUpper = req.Name is null ? "" : req.Name.ToUpper();
+        if (string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(req.Name))
+        {
+            Name = req.Name;
+            NameNormalizedUpper = req.Name is null ? "" : req.Name.ToUpper();
+        }
+
         IdRemoteNormalizedUpper = req.IdRemote.ToUpper();
 
         LastUpdatedAtUTC = DateTime.UtcNow;
@@ -46,7 +51,6 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
         ShortName = req.ShortName;
         Shortable = req.Shortable;
         SettlementType = req.SettlementType;
-        //Name = req.Name;
         IdRemote = req.IdRemote;
         Multiplier = req.Multiplier;
         FaceValue = req.FaceValue;
