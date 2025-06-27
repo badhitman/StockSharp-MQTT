@@ -287,6 +287,10 @@ public class DriverStockSharpService(
             lock (SBondSmallPositionsList)
                 SBondSmallPositionsList.Clear();
 
+            List<Security> currentSecurities = SecuritiesBonds();
+            if (!currentSecurities.Any())
+                return ResponseBaseModel.CreateError("BondList - not any");
+
             TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
             {
                 PageNum = 0,
@@ -315,6 +319,10 @@ public class DriverStockSharpService(
                     return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
 
                 StrategyTradeStockSharpModel currentStrategy = dataParse[_fx];
+
+                Security currentSecurity = currentSecurities.FirstOrDefault(x => x.Code == currentStrategy.Code && x.Board.Code == currentStrategy.Board.Code);
+                // currentSecurities
+
                 if (!currentStrategy.IsAlter)
                 {
                     decimal WorkVol = currentStrategy.WorkingVolume;
@@ -326,8 +334,8 @@ public class DriverStockSharpService(
                     decimal Offset = currentStrategy.Offset;
                     bool IsSmall = currentStrategy.IsSmall;
 
-                    // SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)LowLimit / 100,
-                    //  (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+                    //SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)LowLimit / 100,
+                    // (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
 
                     // if ((bool)IsSmall)
                     //  SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(LowLimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
