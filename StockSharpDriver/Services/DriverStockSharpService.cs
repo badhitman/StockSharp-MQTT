@@ -5,6 +5,7 @@
 using Ecng.Collections;
 using Ecng.Common;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 using SharedLib;
 using StockSharp.Algo;
 using StockSharp.BusinessEntities;
@@ -23,6 +24,7 @@ public class DriverStockSharpService(
     IManageStockSharpService manageRepo,
     IDataStockSharpService DataRepo,
     IParametersStorage storageRepo,
+    IEventsStockSharpService eventTrans,
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {
@@ -58,6 +60,7 @@ public class DriverStockSharpService(
 
     Curve OfzCurve;
 
+    string ClientCodeStockSharp;
     string SecurityCriteriaCodeFilterStockSharp;
     List<Subscription> DepthSubscriptions = [];
 
@@ -127,7 +130,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
-        AboutConnectResponseModel _ac = await AboutConnection();
+        AboutConnectResponseModel _ac = await AboutConnection(cancellationToken);
         if (_ac.ConnectionState != ConnectionStatesEnum.Connected)
             return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState.DescriptionInfo()})");
 
@@ -233,7 +236,7 @@ public class DriverStockSharpService(
                 SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
 
             if (tryFindInstrument[0].Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
-                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(currentStrategy.HightLimit + (decimal)0.1) / 100, (decimal)(currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         }
         if (!response.Success())
         {
@@ -264,6 +267,8 @@ public class DriverStockSharpService(
             _ordersForQuoteBuyReregister.Clear();
         lock (_ordersForQuoteSellReregister)
             _ordersForQuoteSellReregister.Clear();
+
+        ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
 
         return ResponseBaseModel.CreateInfo("Ok");
     }
@@ -306,6 +311,7 @@ public class DriverStockSharpService(
             if (dataParse.Count == 0)
                 return ResponseBaseModel.CreateError("Dashboard - not set");
 
+            string msg;
             foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
             {
                 int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
@@ -320,8 +326,17 @@ public class DriverStockSharpService(
 
                 StrategyTradeStockSharpModel currentStrategy = dataParse[_fx];
 
-                Security currentSecurity = currentSecurities.FirstOrDefault(x => x.Code == currentStrategy.Code && x.Board.Code == currentStrategy.Board.Code);
-                // currentSecurities
+                Security currentSecurity = currentSecurities.FirstOrDefault(x =>
+                x.Code == currentStrategy.Code &&
+                (int)x.Currency == currentStrategy.Currency &&
+                x.Board.Code == currentStrategy.Board.Code);
+
+                if (currentSecurity is null)
+                {
+                    msg = $"Security - not found for strategy: {JsonConvert.SerializeObject(currentStrategy, Formatting.Indented)}";
+                    _logger.LogError(msg);
+                    return ResponseBaseModel.CreateError(msg);
+                }
 
                 if (!currentStrategy.IsAlter)
                 {
@@ -334,26 +349,25 @@ public class DriverStockSharpService(
                     decimal Offset = currentStrategy.Offset;
                     bool IsSmall = currentStrategy.IsSmall;
 
-                    //SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)LowLimit / 100,
-                    // (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+                    SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", LowLimit / 100,
+                     Highlimit / 100, WorkVol, WorkVol, Offset / 100));
 
-                    // if ((bool)IsSmall)
-                    //  SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(LowLimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+                    if (IsSmall)
+                        SBondSmallPositionsList.Add(new SecurityPosition(currentSecurity, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
 
-
-                    // if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-                    //  SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                    if (!instrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                        SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
                 }
                 else
                 {
-                    // SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+                    SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
 
-                    // if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-                    //  SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                    if (!instrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                        SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
                 }
 
-                //Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
-                //OrderBookReceivedConnectorMan(sub, OderBookList[security]);
+                Subscription sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
+                OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
             }
         }
         else
@@ -370,7 +384,7 @@ public class DriverStockSharpService(
             //    if (!SbSmallPos.IsNull())
             //        SBondSmallPositionsList.Remove(SbSmallPos);
 
-            //    Security security = CurrentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
+            //    Security currentSecurity = CurrentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
 
             //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bondName);
 
@@ -385,28 +399,225 @@ public class DriverStockSharpService(
             //        int? Offset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bondName)).Value;
             //        bool? IsSmall = ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bondName)).IsChecked;
 
-            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+            //        SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
 
             //        if ((bool)IsSmall)
-            //            SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)(0.0301), (decimal)(Highlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+            //            SBondSmallPositionsList.Add(new SecurityPosition(currentSecurity, "Small", (decimal)(0.0301), (decimal)(Highlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
 
-            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            //        if (OfzCodes.Contains(currentSecurity.Code) || OfzCodesNew.Contains(currentSecurity.Code))
+            //            SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
             //    }
             //    else
             //    {
-            //        SBondPositionsList.Add(new SecurityPosition(security, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+            //        SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
 
-            //        if (OfzCodes.Contains(security.Code) || OfzCodesNew.Contains(security.Code))
-            //            SBondSizePositionsList.Add(new SecurityPosition(security, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+            //        if (OfzCodes.Contains(currentSecurity.Code) || OfzCodesNew.Contains(currentSecurity.Code))
+            //            SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
             //    }
 
-            //    Subscription sub = connector.FindSubscriptions(security, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
-            //    OrderBookReceivedConnectorMan(sub, OderBookList[security]);
+            //    Subscription sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
+            //    OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
         }
 
         throw new NotImplementedException();
     }
+
+
+    private void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
+    {
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = DataRepo.InstrumentsSelectAsync(new()
+        {
+            PageNum = 0,
+            PageSize = int.MaxValue,
+            FavoriteFilter = true,
+        }).Result;
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+        {
+            _logger.LogError($"The instruments are not configured.");
+            return;
+        }
+        List<StrategyTradeStockSharpModel> dataParse = ReadStrategies([.. resInstruments.Response.Select(x => x.Id)]).Result;
+
+        if (dataParse.Count == 0)
+        {
+            _logger.LogError("Dashboard - not set");
+            return;
+        }
+
+        Order tmpOrder;
+        Order newOrder;
+        IOrderBookMessage tmpDepth;
+        decimal price;
+
+        Security sec = conLink.Connector.Securities.FirstOrDefault(s => s.ToSecurityId() == depth.SecurityId);
+        SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Equals(sec));
+
+        InstrumentTradeStockSharpViewModel currentInstrument = resInstruments.Response
+            .FirstOrDefault(x => x.Code == sec.Code && x.Currency == (int)sec.Currency && x.Board.Code == sec.Board.Code);
+
+        if (currentInstrument is null)
+        {
+            _logger.LogError($"Instrument not found - {JsonConvert.SerializeObject(sec, Formatting.Indented)}");
+            return;
+        }
+
+        StrategyTradeStockSharpModel currentStrategy = dataParse.FirstOrDefault(x => x.Id == currentInstrument.Id);
+        if (currentStrategy is null)
+        {
+            _logger.LogError($"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}");
+            return;
+        }
+        bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsMarketMaker);
+        if (!SbPos.IsNull() && !sec.IsNull())
+        {
+            if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && !depth.Bids.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
+            {
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Buy));
+
+                if (Orders.IsEmpty()) //if there is no orders in stakan
+                {
+                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    if (price > 0)
+                    {
+                        Order ord = new()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Buy,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.BidVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+                        conLink.Connector.RegisterOrder(ord);
+                        //conLink.Connector.AddWarningLog("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume);
+                    }
+                }
+                else
+                {
+                    tmpOrder = Orders.First();
+                    tmpDepth = (IOrderBookMessage)depth.Clone();
+
+                    int Len = tmpDepth.Bids.Length;
+                    for (int i = 0; i < Len; i++)
+                    {
+                        if ((tmpDepth.Bids[i].Price == tmpOrder.Price) && (tmpDepth.Bids[i].Volume >= tmpOrder.Balance))
+                        {
+                            tmpDepth.Bids[i].Volume = tmpDepth.Bids[i].Volume - tmpOrder.Balance;
+                            break;
+                        }
+                    }
+
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+
+                    if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.BidVolume)))
+                    {
+                        newOrder = new Order()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Buy,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.BidVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+                        _ordersForQuoteBuyReregister.Add(tmpOrder.Security.Code, newOrder);
+
+                        //conLink.Connector.AddWarningLog("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume);
+                        conLink.Connector.CancelOrder(tmpOrder);
+                    }
+
+                    Orders.Skip(1).ForEach(s =>
+                    {
+                        //conLink.Connector.AddWarningLog("Order buy duplication!");
+                        if (s.Id != tmpOrder.Id)
+                        {
+                            //conLink.Connector.AddWarningLog("Duplicate buy order cancelled: ins ={0}, price = {1}, volume = {2}",                                                       s.Security, s.Price, s.Volume);
+                            conLink.Connector.CancelOrder(s);
+                        }
+                    });
+                }
+            }
+
+            //only for sell orders
+            if (!_ordersForQuoteSellReregister.ContainsKey(sec.Code) && !depth.Asks.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Sell))))
+            {
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Sell));
+
+                if (Orders.IsEmpty()) //if there is no orders in stakan
+                {
+                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    if (price > 0)
+                    {
+                        Order ord = new()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Sell,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.OfferVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+
+                        conLink.Connector.RegisterOrder(ord);
+                        //conLink.Connector.AddWarningLog("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume);
+                    }
+                }
+                else
+                {
+                    tmpOrder = Orders.First();
+                    tmpDepth = (IOrderBookMessage)depth.Clone();
+
+                    int Len = tmpDepth.Asks.Length;
+                    for (int i = 0; i < Len; i++)
+                    {
+                        if ((tmpDepth.Asks[i].Price == tmpOrder.Price) && (tmpDepth.Asks[i].Volume >= tmpOrder.Balance))
+                        {
+                            tmpDepth.Asks[i].Volume = tmpDepth.Asks[i].Volume - tmpOrder.Balance;
+                            break;
+                        }
+                    }
+
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+
+                    if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.OfferVolume)))
+                    {
+                        newOrder = new Order()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Sell,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.OfferVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+                        _ordersForQuoteSellReregister.Add(tmpOrder.Security.Code, newOrder);
+                        //conLink.Connector.AddWarningLog(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume);
+                        conLink.Connector.CancelOrder(tmpOrder);
+                    }
+
+                    Orders.Skip(1).ForEach(s =>
+                    {
+                        //conLink.Connector.AddWarningLog("Order sell duplication!");
+                        if (s.Id != tmpOrder.Id)
+                        {
+                            //conLink.Connector.AddWarningLog("Duplicate sell order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume);
+                            conLink.Connector.CancelOrder(s);
+                        }
+                    });
+                }
+            }
+        }
+    }
+
 
     /// <inheritdoc/>
     public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
@@ -552,20 +763,20 @@ public class DriverStockSharpService(
         /*
          SecurityLookupWindow wnd = new()
         {
-            ShowAllOption = connector.Adapter.IsSupportSecuritiesLookupAll(),
+            ShowAllOption = conLink.Connector.Adapter.IsSupportSecuritiesLookupAll(),
             Criteria = new Security { Type = SecurityTypes.Stock, Code = "SU" }
         };
 
         if (!wnd.ShowModal(this))
             return;
 
-        connector.LookupSecurities(wnd.CriteriaMessage);
+        conLink.Connector.LookupSecurities(wnd.CriteriaMessage);
 
         //SecurityEditor.SecurityProvider = QTrader;
-        PortfolioEditor.Portfolios = new PortfolioDataSource(connector);
+        PortfolioEditor.Portfolios = new PortfolioDataSource(conLink.Connector);
 
         //Подписаться на событие появления новых портфелей
-        connector.PortfolioReceived += (Sub, portfolios) =>
+        conLink.Connector.PortfolioReceived += (Sub, portfolios) =>
         {
             if (portfolios.Name == PortName)
             {
@@ -573,7 +784,7 @@ public class DriverStockSharpService(
             }
         };
 
-        connector.OrderBookReceived += TraderOnMarketDepthReceived;        
+        conLink.Connector.OrderBookReceived += TraderOnMarketDepthReceived;        
          */
 
         RegisterEvents();
@@ -686,6 +897,7 @@ public class DriverStockSharpService(
             LowLimit = lowLimit,
             HighLimit = highLimit,
             SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilterStockSharp,
+            ClientCode = ClientCodeStockSharp
         };
 
         return Task.FromResult(res);
@@ -742,7 +954,7 @@ public class DriverStockSharpService(
             {
                 req.ConfirmRequestToken = Guid.NewGuid().ToString();
                 memoryCache.Set(req.ConfirmRequestToken, req, new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(30)));
-                res.AddAlert("Подтверждение просрочено. Повторите попытку! ");
+                res.AddWarning("Подтверждение просрочено. Повторите попытку! ");
                 return Task.FromResult(res);
             }
             else
@@ -903,15 +1115,15 @@ public class DriverStockSharpService(
             //    Comment = "OfRStrategy",
             //    IsMarketMaker = OfzCodes.Contains(sec.Code),
             //    Volume = ofrVolume,
-            //    ClientCode = ClCode,
+            //    ClientCode = ClientCodeStockSharp,
             //};
 
-            //    connector.RegisterOrder(ord);
-            //    connector.AddWarningLog("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
+            //    conLink.Connector.RegisterOrder(ord);
+            //    conLink.Connector.AddWarningLog("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
 
             //    // New logic???
             //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
-            //    connector.OrderBookReceived -= OrderBookReceivedConnector2;
+            //    conLink.Connector.OrderBookReceived -= OrderBookReceivedConnector2;
             //    //
         }
         else if (bAsk.Value.Price < OfzCurve.GetNode(sec).ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
@@ -937,15 +1149,15 @@ public class DriverStockSharpService(
             //        Comment = "OfRStrategy",
             //        IsMarketMaker = OfzCodes.Contains(sec.Code),
             //        Volume = ofrVolume,
-            //        ClientCode = ClCode,
+            //        ClientCode = ClientCodeStockSharp,
             //    };
 
-            //    connector.RegisterOrder(ord);
-            //    connector.AddWarningLog("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
+            //    conLink.Connector.RegisterOrder(ord);
+            //    conLink.Connector.AddWarningLog("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
 
             //    // New logic???
             //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
-            //    connector.OrderBookReceived -= OrderBookReceivedConnector2;
+            //    conLink.Connector.OrderBookReceived -= OrderBookReceivedConnector2;
         }
     }
 
@@ -1138,7 +1350,7 @@ public class DriverStockSharpService(
                 if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
                     conLink.Connector.CancelOrder(order);
 
-                //connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
+                //conLink.Connector.AddWarningLog("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume);
             }
         }
     }
@@ -1159,6 +1371,7 @@ public class DriverStockSharpService(
 
         Board = null;
         SelectedPortfolio = null;
+        ClientCodeStockSharp = null;
 
         lock (StrategyTrades)
             StrategyTrades.Clear();
