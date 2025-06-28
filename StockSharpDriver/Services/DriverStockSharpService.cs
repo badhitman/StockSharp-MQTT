@@ -12,6 +12,7 @@ using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
+using System.Diagnostics.Tracing;
 using System.Net;
 using System.Security;
 
@@ -430,7 +431,7 @@ public class DriverStockSharpService(
         throw new NotImplementedException();
     }
 
-
+    /// <inheritdoc/>
     void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
     {
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = DataRepo.InstrumentsSelectAsync(new()
@@ -439,17 +440,22 @@ public class DriverStockSharpService(
             PageSize = int.MaxValue,
             FavoriteFilter = true,
         }).Result;
-
+        string _msg;
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
         {
-            _logger.LogError($"The instruments are not configured.");
+            _msg = $"The instruments are not configured.";
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
         List<StrategyTradeStockSharpModel> dataParse = ReadStrategies([.. resInstruments.Response.Select(x => x.Id)]).Result;
 
         if (dataParse.Count == 0)
         {
-            _logger.LogError("Dashboard - not set");
+            _msg = "Dashboard - not set";
+
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
 
@@ -466,14 +472,18 @@ public class DriverStockSharpService(
 
         if (currentInstrument is null)
         {
-            _logger.LogError($"Instrument not found - {JsonConvert.SerializeObject(sec, Formatting.Indented)}");
+            _msg = $"Instrument not found - {JsonConvert.SerializeObject(sec, Formatting.Indented)}";
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
 
         StrategyTradeStockSharpModel currentStrategy = dataParse.FirstOrDefault(x => x.Id == currentInstrument.Id);
         if (currentStrategy is null)
         {
-            _logger.LogError($"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}");
+            _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
         bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsMarketMaker);
@@ -640,6 +650,8 @@ public class DriverStockSharpService(
         lock (DepthSubscriptions)
             if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
                 return;
+
+        eventTrans.ToastClientShow(new() { HeadTitle = nameof(MarketDepthOrderBookHandle), TypeMessage = MessagesTypesEnum.Info, MessageText = $"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}" });
 
         // Обработка стакана
         Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
@@ -990,7 +1002,7 @@ public class DriverStockSharpService(
     #region events
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
-        //_logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}");
+        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.ValuesChanged), TypeMessage = MessagesTypesEnum.Info, MessageText = $"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}" });
         //ConnectorValuesChangedEventPayloadModel req = new()
         //{
         //    OffsetSlave = dtOffsetSlave,
@@ -1033,6 +1045,7 @@ public class DriverStockSharpService(
 
     void OrderReceivedHandle(Subscription subscription, Order oreder)
     {
+        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.OrderReceived), TypeMessage = MessagesTypesEnum.Info, MessageText = JsonConvert.SerializeObject(oreder) });
         lock (AllOrders)
         {
             int _i = AllOrders.FindIndex(x => x.Id.Equals(oreder.Id));
@@ -1050,6 +1063,7 @@ public class DriverStockSharpService(
     }
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
+        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.OwnTradeReceived), TypeMessage = MessagesTypesEnum.Info, MessageText = JsonConvert.SerializeObject(tr) });
         lock (myTrades)
             myTrades.Add(tr);
 
@@ -1057,6 +1071,7 @@ public class DriverStockSharpService(
     }
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
+        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.OrderBookReceived), TypeMessage = MessagesTypesEnum.Info, MessageText = orderBM.SecurityId.ToString() });
         Security sec = conLink.Connector.Securities.FirstOrDefault(s => s.ToSecurityId() == orderBM.SecurityId);
         lock (OderBookList)
         {
@@ -1275,12 +1290,18 @@ public class DriverStockSharpService(
 
     void LookupSecuritiesResultHandle(SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
+        string _msg;
         if (ex is not null)
-            _logger.LogError(ex, $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`");
+        {
+            _msg = $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`";
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult), TypeMessage = MessagesTypesEnum.Error, MessageText = _msg });
+            _logger.LogError(ex, _msg);
+        }
         else
         {
-            _logger.LogInformation($"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`");
-
+            _msg = $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`";
+            _logger.LogInformation(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult), TypeMessage = MessagesTypesEnum.Info, MessageText = _msg });
             lock (AllSecurities)
             {
                 foreach (Security _sec in securities)
@@ -1299,42 +1320,85 @@ public class DriverStockSharpService(
     #region Exception`s
     void LookupPortfoliosResultHandle(PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM)}");
-
-        //foreach (Portfolio port in portfolios)
-        //    dataRepo.SavePortfolio(new PortfolioStockSharpModel().Bind(port));
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.LookupPortfoliosResult),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = ex.Message,
+        });
     }
     void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(SubscriptionFailedHandle)}`: [{nameof(arg)}:{arg}]");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.SubscriptionFailed),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = ex.Message
+        });
     }
     void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(SubscriptionStoppedHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.SubscriptionStopped),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = ex.Message
+        });
     }
     void MassOrderCancelFailed2Handle(long arg, Exception ex, DateTimeOffset dt)
     {
-        //_logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailed2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed2),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = $"arg: {arg}; dt: {dt}. {ex.Message}"
+        });
     }
     void MassOrderCancelFailedHandle(long arg, Exception ex)
     {
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = $"arg: {arg}. {ex.Message}"
+        });
         //_logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
     }
     void ConnectionErrorExHandle(IMessageAdapter sender, Exception ex)
     {
-        //_logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.ConnectionErrorEx),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = ex.Message,
+        });
     }
     void ConnectionErrorHandle(Exception ex)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.ConnectionError),
+            TypeMessage = MessagesTypesEnum.Error,
+            MessageText = ex.Message
+        });
     }
     void ErrorHandle(Exception ex)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(ErrorHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.Error),
+            TypeMessage = MessagesTypesEnum.Error,
+            MessageText = ex.Message
+        });
     }
     void ChangePasswordResultHandle(long arg, Exception ex)
     {
-        // _logger.LogError(ex, $"Call > `{nameof(ChangePasswordResultHandle)}`: {arg}");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.ChangePasswordResult),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = $"arg: {arg}. {ex.Message}"
+        });
     }
     #endregion
     #endregion

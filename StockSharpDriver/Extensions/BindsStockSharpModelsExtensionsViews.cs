@@ -19,7 +19,7 @@ public static class BindsStockSharpModelsExtensionsViews
              MarkerDescriptor = x.MarkerDescriptor,
         })];
 
-        main.Board = inc.Board is null ? null : new BoardStockSharpModel().Bind(inc.Board);
+        main.Board = (BoardStockSharpViewModel)(inc.Board is null ? null : new BoardStockSharpViewModel().Bind(inc.Board));
         main.Id = inc.Id;
         main.LastUpdatedAtUTC = inc.LastUpdatedAtUTC;
         main.CreatedAtUTC = inc.CreatedAtUTC;

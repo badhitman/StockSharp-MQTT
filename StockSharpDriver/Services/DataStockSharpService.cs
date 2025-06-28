@@ -161,6 +161,9 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             .Where(x => req.FavoriteFilter == null || x.IsFavorite == req.FavoriteFilter)
             .AsQueryable();
 
+        if (req.BoardsFilter is not null && req.BoardsFilter.Length != 0)
+            q = q.Where(x => req.BoardsFilter.Any(y => y == x.Currency));
+
         if (req.CurrenciesFilter is not null && req.CurrenciesFilter.Length != 0)
         {
             int[] ids = [.. req.CurrenciesFilter.Cast<int>()];
