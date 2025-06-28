@@ -926,7 +926,7 @@ public class DriverStockSharpService(
             ? null
             : conLink.Connector.ExchangeBoards.FirstOrDefault(x => x.Code == req.Instrument.Board.Code && (x.Exchange.Name == req.Instrument.Board.Exchange.Name || x.Exchange.CountryCode.ToString() == req.Instrument.Board.Exchange.CountryCode.ToString()));
 
-        Security currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Name == req.Instrument.Name && x.Code == req.Instrument.Code && x.Board.Code == board.Code && x.Board.Exchange.Name == board.Exchange.Name && x.Board.Exchange.CountryCode == board.Exchange.CountryCode);
+        Security currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == req.Instrument.Code && x.Board.Code == board.Code && x.Board.Exchange.CountryCode == board.Exchange.CountryCode);
         if (currentSec is null)
             return Task.FromResult(ResponseBaseModel.CreateError($"Инструмент не найден: {req.Instrument}"));
 
