@@ -4,7 +4,6 @@
 
 using Ecng.Collections;
 using Ecng.Common;
-using Ecng.Net;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using SharedLib;
@@ -12,7 +11,6 @@ using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
-using System.Diagnostics.Tracing;
 using System.Net;
 using System.Security;
 
@@ -273,8 +271,6 @@ public class DriverStockSharpService(
 
         ProgramDataPathStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, cancellationToken);
         ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, cancellationToken);
-
-        await eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Start!"), TypeMessage = MessagesTypesEnum.Warning }, cancellationToken);
 
         return ResponseBaseModel.CreateInfo("Ok");
     }
@@ -1000,19 +996,7 @@ public class DriverStockSharpService(
     }
 
     #region events
-    void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
-    {
-        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.ValuesChanged), TypeMessage = MessagesTypesEnum.Info, MessageText = $"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument)}\n\n{JsonConvert.SerializeObject(dataPayload)}" });
-        //ConnectorValuesChangedEventPayloadModel req = new()
-        //{
-        //    OffsetSlave = dtOffsetSlave,
-        //    OffsetMaster = dtOffsetMaster,
-        //    DataPayload = [.. dataPayload.Select(x => new KeyValuePair<Level1FieldsStockSharpEnum, object>((Level1FieldsStockSharpEnum)Enum.Parse(typeof(Level1FieldsStockSharpEnum), Enum.GetName(x.Key)!), x.Value))],
-        //    Instrument = new InstrumentTradeStockSharpModel().Bind(instrument),
-        //};
-        //dataRepo.SaveInstrument(req.Instrument);
-        //eventTrans.ValuesChangedEvent(req);
-    }
+    //void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave) { }
 
     void SecurityReceivedHandle(Subscription subscription, Security security)
     {
@@ -1063,10 +1047,6 @@ public class DriverStockSharpService(
         }
     }
 
-    void PositionReceivedHandle(Subscription subscription, Position pos)
-    {
-        //_logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos)}");
-    }
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
         eventTrans.ToastClientShow(new()
@@ -1198,102 +1178,19 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
     }
-    void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
-    {
-        //_logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
-    }
-    void OrderCancelFailReceivedHandle(Subscription subscription, OrderFail orderF)
-    {
-        //_logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
-    }
-    void OrderEditFailReceivedHandle(Subscription subscription, OrderFail orderF)
-    {
-        //_logger.LogWarning($"Call > `{nameof(OrderEditFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF)}");
-    }
-    void TickTradeReceivedHandle(Subscription subscription, ITickTradeMessage msg)
-    {
-        //_logger.LogWarning($"Call > `{nameof(TickTradeReceivedHandle)}`: {JsonConvert.SerializeObject(msg)}");
-    }
-    void SubscriptionStartedHandle(Subscription subscription)
-    {
-        //_logger.LogWarning($"Call > `{nameof(SubscriptionStartedHandle)}`");
-    }
-    void SubscriptionOnlineHandle(Subscription subscription)
-    {
-        //_logger.LogWarning($"Call > `{nameof(SubscriptionOnlineHandle)}`");
-    }
-    void ParentRemovedHandle(Ecng.Logging.ILogSource sender)
-    {
-        //_logger.LogWarning($"Call > `{nameof(ParentRemovedHandle)}`: {JsonConvert.SerializeObject(sender)}");
-    }
-    void NewsReceivedHandle(Subscription subscription, News sender)
-    {
-        //_logger.LogWarning($"Call > `{nameof(NewsReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
-    }
-    void MassOrderCanceled2Handle(long arg, DateTimeOffset dt)
-    {
-        //_logger.LogWarning($"Call > `{nameof(MassOrderCanceled2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
-    }
-    void MassOrderCanceledHandle(long sender)
-    {
-        //_logger.LogWarning($"Call > `{nameof(MassOrderCanceledHandle)}`: {JsonConvert.SerializeObject(sender)}");
-    }
+
     void Level1ReceivedHandle(Subscription subscription, Level1ChangeMessage levelCh)
     {
         //_logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
     }
-    void DisposedHandle()
-    {
-        //_logger.LogWarning($"Call > `{nameof(DisposedHandle)}`");
-    }
-    void DisconnectedExHandle(IMessageAdapter sender)
-    {
-        //_logger.LogWarning($"Call > `{nameof(DisconnectedExHandle)}`: {JsonConvert.SerializeObject(sender)}");
-        UnregisterEvents();
-    }
-    void DisconnectedHandle()
-    {
-        _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
-    }
+
     void DataTypeReceivedHandle(Subscription subscription, DataType argDt)
     {
         //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
     }
-    void ConnectionRestoredHandle(IMessageAdapter sender)
-    {
-        //_logger.LogWarning($"Call > `{nameof(ConnectionRestoredHandle)}`: {JsonConvert.SerializeObject(sender)}");
-    }
-    void ConnectionLostHandle(IMessageAdapter sender)
-    {
-        //_logger.LogWarning($"Call > `{nameof(ConnectionLostHandle)}`: {JsonConvert.SerializeObject(sender)}");
-    }
-    void ConnectedExHandle(IMessageAdapter sender)
-    {
-        //_logger.LogWarning($"Call > `{nameof(ConnectedExHandle)}`: {JsonConvert.SerializeObject(new { sender.Name, sender.Categories })}");
-    }
-    void ConnectedHandle()
-    {
-        //_logger.LogWarning($"Call > `{nameof(ConnectedHandle)}`");
-    }
     void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
     {
         _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
-    }
-    void LogHandle(Ecng.Logging.LogMessage senderLog)
-    {
-        //_logger.LogTrace($"Call > `{nameof(LogHandle)}`: {senderLog}");
-    }
-    void CurrentTimeChangedHandle(TimeSpan sender)
-    {
-        //_logger.LogTrace($"Call > `{nameof(CurrentTimeChangedHandle)}`: {JsonConvert.SerializeObject(sender)}");
-    }
-    void NewMessageHandle(Message msg)
-    {
-        //_logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg)}");
-    }
-    void SubscriptionReceivedHandle(Subscription subscription, object sender)
-    {
-        //_logger.LogTrace($"Call > `{nameof(SubscriptionReceivedHandle)}`: {JsonConvert.SerializeObject(sender)}");
     }
     #endregion
 
@@ -1326,90 +1223,6 @@ public class DriverStockSharpService(
         }
     }
 
-    #region Exception`s
-    void LookupPortfoliosResultHandle(PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.LookupPortfoliosResult),
-            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex?.Message,
-        });
-    }
-    void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.SubscriptionFailed),
-            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex?.Message
-        });
-    }
-    void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.SubscriptionStopped),
-            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex?.Message
-        });
-    }
-    void MassOrderCancelFailed2Handle(long arg, Exception ex, DateTimeOffset dt)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed2),
-            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = $"arg: {arg}; dt: {dt}. {ex?.Message}"
-        });
-    }
-    void MassOrderCancelFailedHandle(long arg, Exception ex)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed),
-            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = $"arg: {arg}. {ex?.Message}"
-        });
-        //_logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
-    }
-    void ConnectionErrorExHandle(IMessageAdapter sender, Exception ex)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.ConnectionErrorEx),
-            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex?.Message,
-        });
-    }
-    void ConnectionErrorHandle(Exception ex)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.ConnectionError),
-            TypeMessage = MessagesTypesEnum.Error,
-            MessageText = ex?.Message
-        });
-    }
-    void ErrorHandle(Exception ex)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.Error),
-            TypeMessage = MessagesTypesEnum.Error,
-            MessageText = ex?.Message
-        });
-    }
-    void ChangePasswordResultHandle(long arg, Exception ex)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.ChangePasswordResult),
-            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = $"arg: {arg}. {ex?.Message}"
-        });
-    }
-    #endregion
     #endregion
 
     void DeleteAllQuotesByStrategy(string strategy)
@@ -1502,97 +1315,33 @@ public class DriverStockSharpService(
     {
         conLink.Unsubscribe();
 
-        conLink.Connector.Connected -= ConnectedHandle;
-        conLink.Connector.ConnectedEx -= ConnectedExHandle;
-        conLink.Connector.Disconnected -= DisconnectedHandle;
         conLink.Connector.BoardReceived -= BoardReceivedHandle;
         conLink.Connector.CandleReceived -= CandleReceivedHandle;
-        conLink.Connector.ConnectionLost -= ConnectionLostHandle;
-        conLink.Connector.ConnectionError -= ConnectionErrorHandle;
         conLink.Connector.DataTypeReceived -= DataTypeReceivedHandle;
-        conLink.Connector.ConnectionErrorEx -= ConnectionErrorExHandle;
-        conLink.Connector.ConnectionRestored -= ConnectionRestoredHandle;
-        conLink.Connector.CurrentTimeChanged -= CurrentTimeChangedHandle;
-        conLink.Connector.ChangePasswordResult -= ChangePasswordResultHandle;
-        conLink.Connector.DisconnectedEx -= DisconnectedExHandle;
-        conLink.Connector.Disposed -= DisposedHandle;
-        conLink.Connector.Error -= ErrorHandle;
         conLink.Connector.Level1Received -= Level1ReceivedHandle;
-        conLink.Connector.Log -= LogHandle;
-        conLink.Connector.LookupPortfoliosResult -= LookupPortfoliosResultHandle;
         conLink.Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
-        conLink.Connector.MassOrderCanceled -= MassOrderCanceledHandle;
-        conLink.Connector.MassOrderCanceled2 -= MassOrderCanceled2Handle;
-        conLink.Connector.MassOrderCancelFailed -= MassOrderCancelFailedHandle;
-        conLink.Connector.MassOrderCancelFailed2 -= MassOrderCancelFailed2Handle;
-        conLink.Connector.NewMessage -= NewMessageHandle;
-        conLink.Connector.NewsReceived -= NewsReceivedHandle;
         conLink.Connector.OrderBookReceived -= OrderBookReceivedHandle;
-        conLink.Connector.OrderCancelFailReceived -= OrderCancelFailReceivedHandle;
-        conLink.Connector.OrderEditFailReceived -= OrderEditFailReceivedHandle;
         conLink.Connector.OrderLogReceived -= OrderLogReceivedHandle;
         conLink.Connector.OrderReceived -= OrderReceivedHandle;
-        conLink.Connector.OrderRegisterFailReceived -= OrderRegisterFailReceivedHandle;
         conLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
-        conLink.Connector.ParentRemoved -= ParentRemovedHandle;
         conLink.Connector.PortfolioReceived -= PortfolioReceivedHandle;
-        conLink.Connector.PositionReceived -= PositionReceivedHandle;
         conLink.Connector.SecurityReceived -= SecurityReceivedHandle;
-        conLink.Connector.SubscriptionFailed -= SubscriptionFailedHandle;
-        conLink.Connector.SubscriptionOnline -= SubscriptionOnlineHandle;
-        conLink.Connector.SubscriptionReceived -= SubscriptionReceivedHandle;
-        conLink.Connector.SubscriptionStarted -= SubscriptionStartedHandle;
-        conLink.Connector.SubscriptionStopped -= SubscriptionStoppedHandle;
-        conLink.Connector.TickTradeReceived -= TickTradeReceivedHandle;
-        conLink.Connector.ValuesChanged -= ValuesChangedHandle;
     }
 
     void RegisterEvents()
     {
         conLink.Subscribe();
 
-        conLink.Connector.Connected += ConnectedHandle;
-        conLink.Connector.ConnectedEx += ConnectedExHandle;
-        conLink.Connector.Disconnected += DisconnectedHandle;
-        conLink.Connector.DisconnectedEx += DisconnectedExHandle;
         conLink.Connector.BoardReceived += BoardReceivedHandle;
         conLink.Connector.CandleReceived += CandleReceivedHandle;
-        conLink.Connector.ConnectionLost += ConnectionLostHandle;
-        conLink.Connector.ConnectionError += ConnectionErrorHandle;
         conLink.Connector.DataTypeReceived += DataTypeReceivedHandle;
-        conLink.Connector.ConnectionErrorEx += ConnectionErrorExHandle;
-        conLink.Connector.ConnectionRestored += ConnectionRestoredHandle;
-        conLink.Connector.CurrentTimeChanged += CurrentTimeChangedHandle;
-        conLink.Connector.ChangePasswordResult += ChangePasswordResultHandle;
-        conLink.Connector.Disposed += DisposedHandle;
-        conLink.Connector.Error += ErrorHandle;
         conLink.Connector.Level1Received += Level1ReceivedHandle;
-        conLink.Connector.Log += LogHandle;
-        conLink.Connector.LookupPortfoliosResult += LookupPortfoliosResultHandle;
         conLink.Connector.LookupSecuritiesResult += LookupSecuritiesResultHandle;
-        conLink.Connector.MassOrderCanceled += MassOrderCanceledHandle;
-        conLink.Connector.MassOrderCanceled2 += MassOrderCanceled2Handle;
-        conLink.Connector.MassOrderCancelFailed += MassOrderCancelFailedHandle;
-        conLink.Connector.MassOrderCancelFailed2 += MassOrderCancelFailed2Handle;
-        conLink.Connector.NewMessage += NewMessageHandle;
-        conLink.Connector.NewsReceived += NewsReceivedHandle;
         conLink.Connector.OrderBookReceived += OrderBookReceivedHandle;
-        conLink.Connector.OrderCancelFailReceived += OrderCancelFailReceivedHandle;
-        conLink.Connector.OrderEditFailReceived += OrderEditFailReceivedHandle;
         conLink.Connector.OrderLogReceived += OrderLogReceivedHandle;
         conLink.Connector.OrderReceived += OrderReceivedHandle;
-        conLink.Connector.OrderRegisterFailReceived += OrderRegisterFailReceivedHandle;
         conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
-        conLink.Connector.ParentRemoved += ParentRemovedHandle;
         conLink.Connector.PortfolioReceived += PortfolioReceivedHandle;
-        conLink.Connector.PositionReceived += PositionReceivedHandle;
         conLink.Connector.SecurityReceived += SecurityReceivedHandle;
-        conLink.Connector.SubscriptionFailed += SubscriptionFailedHandle;
-        conLink.Connector.SubscriptionOnline += SubscriptionOnlineHandle;
-        conLink.Connector.SubscriptionReceived += SubscriptionReceivedHandle;
-        conLink.Connector.SubscriptionStarted += SubscriptionStartedHandle;
-        conLink.Connector.SubscriptionStopped += SubscriptionStoppedHandle;
-        conLink.Connector.TickTradeReceived += TickTradeReceivedHandle;
-        conLink.Connector.ValuesChanged += ValuesChangedHandle;
     }
 }

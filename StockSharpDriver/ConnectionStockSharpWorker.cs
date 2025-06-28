@@ -54,6 +54,7 @@ public class ConnectionStockSharpWorker(
     void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<StockSharp.Messages.Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave)
     {
         _logger.LogInformation($"Call > `{nameof(ValuesChangedHandle)}` [{dtOffsetMaster}]/[{dtOffsetSlave}]: {JsonConvert.SerializeObject(instrument, GlobalStaticConstants.JsonSerializerSettings)}\n\n{JsonConvert.SerializeObject(dataPayload, GlobalStaticConstants.JsonSerializerSettings)}");
+        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.ValuesChanged), TypeMessage = MessagesTypesEnum.Info, MessageText = $"[{dtOffsetMaster}]/[{dtOffsetSlave}]" });
         ConnectorValuesChangedEventPayloadModel valueChangeEvent = new()
         {
             OffsetSlave = dtOffsetSlave,
@@ -75,7 +76,7 @@ public class ConnectionStockSharpWorker(
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
     {
-        _logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port, GlobalStaticConstants.JsonSerializerSettings)}");
+        _logger.LogTrace($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port, GlobalStaticConstants.JsonSerializerSettings)}");
         PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
         TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
         eventTrans.PortfolioReceived(echoData.Response);
@@ -121,9 +122,15 @@ public class ConnectionStockSharpWorker(
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
     {
-        _logger.LogWarning($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings)}");
-        PositionStockSharpModel position = new PositionStockSharpModel().Bind(pos);
-        eventTrans.PositionReceived(position);
+        _logger.LogTrace($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings)}");
+        //eventTrans.ToastClientShow(new()
+        //{
+        //    HeadTitle = nameof(conLink.Connector.OrderRegisterFailReceived),
+        //    TypeMessage = MessagesTypesEnum.Error,
+        //    MessageText = $"[{pos.Security.Id}]/[{pos.Description}]"
+        //});
+        //PositionStockSharpModel position = new PositionStockSharpModel().Bind(pos);
+        //eventTrans.PositionReceived(position);
     }
 
     #region Exception`s
@@ -145,30 +152,69 @@ public class ConnectionStockSharpWorker(
     void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM, GlobalStaticConstants.JsonSerializerSettings)}");
-
-        //foreach (Portfolio port in portfolios)
-        //    dataRepo.SavePortfolio(new PortfolioStockSharpModel().Bind(port));
+        foreach (Portfolio port in portfolios)
+        {
+            PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
+            TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
+            eventTrans.PortfolioReceived(echoData.Response).Wait();
+        }
     }
 
     void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
     {
         _logger.LogError(ex, $"Call > `{nameof(SubscriptionFailedHandle)}`: [{nameof(arg)}:{arg}]");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.SubscriptionFailed),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = ex?.Message
+        });
     }
     void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(SubscriptionStoppedHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.SubscriptionStopped),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = ex?.Message
+        });
     }
     void MassOrderCancelFailed2Handle(long arg, Exception ex, DateTimeOffset dt)
     {
         _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailed2Handle)}` [{nameof(arg)}:{arg}]: {dt}");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed2),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = $"arg: {arg}; dt: {dt}. {ex?.Message}"
+        });
     }
     void MassOrderCancelFailedHandle(long arg, Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = $"arg: {arg}. {ex?.Message}"
+        }).Wait();
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = $"arg: {arg}. {ex?.Message}"
+        }).Wait();
     }
     void ConnectionErrorExHandle(StockSharp.Messages.IMessageAdapter sender, Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorExHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.ConnectionErrorEx),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = ex?.Message,
+        }).Wait();
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
@@ -178,6 +224,12 @@ public class ConnectionStockSharpWorker(
     void ConnectionErrorHandle(Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(ConnectionErrorHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.ConnectionError),
+            TypeMessage = MessagesTypesEnum.Error,
+            MessageText = ex?.Message
+        }).Wait();
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
@@ -187,10 +239,22 @@ public class ConnectionStockSharpWorker(
     void ErrorHandle(Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(ErrorHandle)}`");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.Error),
+            TypeMessage = MessagesTypesEnum.Error,
+            MessageText = ex?.Message
+        });
     }
     void ChangePasswordResultHandle(long arg, Exception ex)
     {
         _logger.LogError(ex, $"Call > `{nameof(ChangePasswordResultHandle)}`: {arg}");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.ChangePasswordResult),
+            TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
+            MessageText = $"arg: {arg}. {ex?.Message}"
+        });
     }
     #endregion
 
@@ -214,6 +278,12 @@ public class ConnectionStockSharpWorker(
     void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
         _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF, GlobalStaticConstants.JsonSerializerSettings)}");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.OrderRegisterFailReceived),
+            TypeMessage = MessagesTypesEnum.Error,
+            MessageText = $"[{orderF.Error.GetType().Name}]/[{orderF.Error.Message}]"
+        });
     }
     void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
     {
@@ -226,6 +296,12 @@ public class ConnectionStockSharpWorker(
     void OrderCancelFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
         _logger.LogWarning($"Call > `{nameof(OrderCancelFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF, GlobalStaticConstants.JsonSerializerSettings)}");
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.OrderCancelFailReceived),
+            TypeMessage = MessagesTypesEnum.Error,
+            MessageText = $"[{orderF.Error.GetType().Name}]/[{orderF.Error.Message}]"
+        });
     }
     void OrderBookReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderBookMessage orderBM)
     {
@@ -263,8 +339,6 @@ public class ConnectionStockSharpWorker(
     void DisconnectedHandle()
     {
         _logger.LogWarning($"Call > `{nameof(DisconnectedHandle)}`");
-        UnregisterEvents();
-
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,

@@ -20,7 +20,6 @@ public class ReadParameterReceive(IParametersStorage serializeStorageRepo, ILogg
     public async Task<TResponseModel<StorageCloudParameterPayloadModel>> ResponseHandleActionAsync(StorageMetadataModel request, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        LoggerRepo.LogDebug($"call `{GetType().Name}`: {JsonConvert.SerializeObject(request)}");
         return await serializeStorageRepo.ReadParameterAsync(request, token);
     }
 }
