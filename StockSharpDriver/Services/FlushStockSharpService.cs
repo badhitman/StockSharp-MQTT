@@ -155,7 +155,8 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         if (boardDb is null)
         {
             boardDb = new BoardStockSharpModelDB().Bind(req);
-            boardDb.LastUpdatedAtUTC = DateTime.UtcNow;
+            boardDb.CreatedAtUTC = DateTime.UtcNow;
+            boardDb.LastUpdatedAtUTC = boardDb.CreatedAtUTC;
             boardDb.ExchangeId = exchange.Id;
             boardDb.Exchange = null;
 
