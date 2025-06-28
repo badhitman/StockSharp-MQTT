@@ -1043,17 +1043,23 @@ public class DriverStockSharpService(
         //eventTrans.BoardReceived(req);
     }
 
-    void OrderReceivedHandle(Subscription subscription, Order oreder)
+    void OrderReceivedHandle(Subscription subscription, Order order)
     {
-        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.OrderReceived), TypeMessage = MessagesTypesEnum.Info, MessageText = JsonConvert.SerializeObject(oreder) });
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.OrderReceived),
+            TypeMessage = MessagesTypesEnum.Info,
+            MessageText = $"{nameof(order.Security)}:{order.Security.Id}; {nameof(order.Price)}:{order.Price}; {nameof(order.Volume)}:{order.Volume};"
+        });
+
         lock (AllOrders)
         {
-            int _i = AllOrders.FindIndex(x => x.Id.Equals(oreder.Id));
+            int _i = AllOrders.FindIndex(x => x.Id.Equals(order.Id));
 
             if (_i == -1)
-                AllOrders.Add(oreder);
+                AllOrders.Add(order);
             else
-                AllOrders[_i] = oreder;
+                AllOrders[_i] = order;
         }
     }
 
@@ -1063,11 +1069,14 @@ public class DriverStockSharpService(
     }
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
-        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.OwnTradeReceived), TypeMessage = MessagesTypesEnum.Info, MessageText = JsonConvert.SerializeObject(tr) });
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
+            TypeMessage = MessagesTypesEnum.Info,
+            MessageText = $"{nameof(tr.Order.Security)}:{tr.Order.Security.Id}; {nameof(tr.Order.Volume)}:{tr.Order.Volume};"
+        });
         lock (myTrades)
             myTrades.Add(tr);
-
-        //_logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr)}");
     }
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
