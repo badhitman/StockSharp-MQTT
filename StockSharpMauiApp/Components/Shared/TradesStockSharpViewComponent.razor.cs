@@ -12,7 +12,7 @@ namespace StockSharpMauiApp.Components.Shared;
 /// <summary>
 /// TradesStockSharpViewComponent
 /// </summary>
-public partial class TradesStockSharpViewComponent : StockSharpBaseComponent
+public partial class TradesStockSharpViewComponent : StockSharpAboutComponent
 {
     [Inject]
     IManageStockSharpService SsRepo { get; set; } = default!;

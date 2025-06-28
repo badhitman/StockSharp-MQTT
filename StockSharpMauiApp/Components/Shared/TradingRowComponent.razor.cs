@@ -12,7 +12,7 @@ namespace StockSharpMauiApp.Components.Shared;
 /// <summary>
 /// TradingRowComponent
 /// </summary>
-public partial class TradingRowComponent : StockSharpBaseComponent
+public partial class TradingRowComponent : StockSharpAboutComponent
 {
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;

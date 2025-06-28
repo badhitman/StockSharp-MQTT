@@ -11,7 +11,7 @@ namespace StockSharpMauiApp.Components.Shared;
 /// <summary>
 /// TradingAreaComponent
 /// </summary>
-public partial class TradingAreaComponent : StockSharpBaseComponent
+public partial class TradingAreaComponent : StockSharpAboutComponent
 {
     /// <inheritdoc/>
     [Inject]

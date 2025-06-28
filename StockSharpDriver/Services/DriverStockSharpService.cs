@@ -1324,7 +1324,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.LookupPortfoliosResult),
             TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex.Message,
+            MessageText = ex?.Message,
         });
     }
     void SubscriptionFailedHandle(Subscription subscription, Exception ex, bool arg)
@@ -1333,7 +1333,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.SubscriptionFailed),
             TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex.Message
+            MessageText = ex?.Message
         });
     }
     void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
@@ -1342,7 +1342,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.SubscriptionStopped),
             TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex.Message
+            MessageText = ex?.Message
         });
     }
     void MassOrderCancelFailed2Handle(long arg, Exception ex, DateTimeOffset dt)
@@ -1351,7 +1351,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed2),
             TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = $"arg: {arg}; dt: {dt}. {ex.Message}"
+            MessageText = $"arg: {arg}; dt: {dt}. {ex?.Message}"
         });
     }
     void MassOrderCancelFailedHandle(long arg, Exception ex)
@@ -1360,7 +1360,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.MassOrderCancelFailed),
             TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = $"arg: {arg}. {ex.Message}"
+            MessageText = $"arg: {arg}. {ex?.Message}"
         });
         //_logger.LogError(ex, $"Call > `{nameof(MassOrderCancelFailedHandle)}` [{nameof(arg)}:{arg}]");
     }
@@ -1370,7 +1370,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.ConnectionErrorEx),
             TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = ex.Message,
+            MessageText = ex?.Message,
         });
     }
     void ConnectionErrorHandle(Exception ex)
@@ -1379,7 +1379,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.ConnectionError),
             TypeMessage = MessagesTypesEnum.Error,
-            MessageText = ex.Message
+            MessageText = ex?.Message
         });
     }
     void ErrorHandle(Exception ex)
@@ -1388,7 +1388,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.Error),
             TypeMessage = MessagesTypesEnum.Error,
-            MessageText = ex.Message
+            MessageText = ex?.Message
         });
     }
     void ChangePasswordResultHandle(long arg, Exception ex)
@@ -1397,7 +1397,7 @@ public class DriverStockSharpService(
         {
             HeadTitle = nameof(conLink.Connector.ChangePasswordResult),
             TypeMessage = ex is null ? MessagesTypesEnum.Warning : MessagesTypesEnum.Error,
-            MessageText = $"arg: {arg}. {ex.Message}"
+            MessageText = $"arg: {arg}. {ex?.Message}"
         });
     }
     #endregion

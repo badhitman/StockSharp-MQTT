@@ -162,7 +162,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             .AsQueryable();
 
         if (req.BoardsFilter is not null && req.BoardsFilter.Length != 0)
-            q = q.Where(x => req.BoardsFilter.Any(y => y == x.Currency));
+            q = q.Where(x => req.BoardsFilter.Any(y => y == x.BoardId));
 
         if (req.CurrenciesFilter is not null && req.CurrenciesFilter.Length != 0)
         {
