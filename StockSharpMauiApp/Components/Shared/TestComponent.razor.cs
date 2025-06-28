@@ -17,7 +17,7 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
     IDriverStockSharpService SsDrvRepo { get; set; } = default!;
 
 
-    List<BoardStockSharpModel>? myBoards;
+    List<BoardStockSharpViewModel>? myBoards;
     BoardStockSharpModel? SelectedBoard { get; set; }
 
     OrderTypesEnum orderTypeCreate = OrderTypesEnum.Market;
@@ -79,16 +79,22 @@ public partial class TestComponent : BlazorBusyComponentBaseModel
     {
         await SetBusyAsync();
 
-        TResponseModel<List<PortfolioStockSharpViewModel>> res = await SsMainRepo.GetPortfoliosAsync();
-        SnackbarRepo.ShowMessagesResponse(res.Messages);
-        myPortfolios = res.Response;
-
-        TResponseModel<List<BoardStockSharpModel>> res2 = await SsMainRepo.GetBoardsAsync();
-        SnackbarRepo.ShowMessagesResponse(res2.Messages);
-        myBoards = res2.Response;
-        InstrumentsRequestModel req = new() { PageSize = 100, FavoriteFilter = true };
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res3 = await SsMainRepo.InstrumentsSelectAsync(req);
-        myInstruments = res3.Response;
+        await Task.WhenAll([
+                Task.Run(async () => {
+                    TResponseModel<List<PortfolioStockSharpViewModel>> resPortfolios = await SsMainRepo.GetPortfoliosAsync();
+                    SnackbarRepo.ShowMessagesResponse(resPortfolios.Messages);
+                    myPortfolios = resPortfolios.Response;
+                }),
+                Task.Run(async () => {
+                    TResponseModel<List<BoardStockSharpViewModel>> resBoards = await SsMainRepo.GetBoardsAsync();
+                    SnackbarRepo.ShowMessagesResponse(resBoards.Messages);
+                    myBoards = resBoards.Response;
+                }),
+                Task.Run(async () => {
+                    TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await SsMainRepo.InstrumentsSelectAsync(new() { PageSize = 100, FavoriteFilter = true });
+                    myInstruments = resInstruments.Response;
+                }),
+            ]);
 
         await SetBusyAsync(false);
     }

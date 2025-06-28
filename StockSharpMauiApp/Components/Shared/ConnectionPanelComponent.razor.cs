@@ -47,8 +47,8 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     readonly List<PortfolioStockSharpViewModel> portfolios = [];
 
-    List<BoardStockSharpModel>? allBoards;
-    BoardStockSharpModel? SelectedBoard { get; set; }
+    List<BoardStockSharpViewModel>? allBoards;
+    BoardStockSharpViewModel? SelectedBoard { get; set; }
 
     bool CanStarted => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && !AboutConnection.StrategyStarted;
     bool CanStopped => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.StrategyStarted;
@@ -180,7 +180,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         
         await Task.WhenAll([
               Task.Run(async () => {
-                TResponseModel<List<BoardStockSharpModel>> res = await DataRepo.GetBoardsAsync();
+                TResponseModel<List<BoardStockSharpViewModel>> res = await DataRepo.GetBoardsAsync();
                 allBoards = res.Response;
             }),
             Task.Run(async () => {
