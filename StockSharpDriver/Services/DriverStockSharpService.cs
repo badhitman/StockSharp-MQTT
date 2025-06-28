@@ -996,8 +996,6 @@ public class DriverStockSharpService(
     }
 
     #region events
-    //void ValuesChangedHandle(Security instrument, IEnumerable<KeyValuePair<Level1Fields, object>> dataPayload, DateTimeOffset dtOffsetMaster, DateTimeOffset dtOffsetSlave) { }
-
     void SecurityReceivedHandle(Subscription subscription, Security security)
     {
         lock (AllSecurities)
@@ -1058,6 +1056,7 @@ public class DriverStockSharpService(
         lock (myTrades)
             myTrades.Add(tr);
     }
+
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
         eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.OrderBookReceived), TypeMessage = MessagesTypesEnum.Info, MessageText = orderBM.SecurityId.ToString() });
@@ -1222,7 +1221,6 @@ public class DriverStockSharpService(
             }
         }
     }
-
     #endregion
 
     void DeleteAllQuotesByStrategy(string strategy)
