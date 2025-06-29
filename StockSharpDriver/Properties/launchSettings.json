@@ -3,8 +3,8 @@
     "StockSharpDriver": {
       "commandName": "Project",
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development",
-        "TransmissionQueueNamePrefix": "main"
+        "DOTNET_ENVIRONMENT": "Development"
+        //"TransmissionQueueNamePrefix": "main"
       },
       "dotnetRunMessages": true
     }

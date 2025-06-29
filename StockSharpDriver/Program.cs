@@ -145,8 +145,6 @@ public class Program
                 ConnectionLink _connector = new();
                 _conf.Reload(bx.Configuration.GetSection("StockSharpDriverConfig").Get<StockSharpClientConfigModel>());
 
-                string _transmissionQueueNamePrefix = bx.Configuration.GetValue<string>("TransmissionQueueNamePrefix");
-                GlobalStaticConstantsTransmission.TransmissionQueueNamePrefixMQTT += $".{_transmissionQueueNamePrefix}";
                 services
                     .AddSingleton(sp => _conf)
                     .AddSingleton(sp => _connector)
