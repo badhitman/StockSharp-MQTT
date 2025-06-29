@@ -50,7 +50,7 @@ public partial class OrdersStockSharpViewComponent : StockSharpAboutComponent
         if (partData?.Any(x => x.Id == model.Id) == true && _tableRef is not null)
         {
             InvokeAsync(_tableRef.ReloadServerData);
-            SnackbarRepo.Info($"Order handle: {JsonConvert.SerializeObject(model)}");
+            SnackBarRepo.Info($"Order handle: {JsonConvert.SerializeObject(model)}");
         }
     }
 

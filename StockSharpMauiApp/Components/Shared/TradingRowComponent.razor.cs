@@ -257,7 +257,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
         TResponseModel<int> storeRes = await StorageRepo.SaveParameterAsync(RestoreStrategy, StoreKey, true, false);
         if (!storeRes.Success())
-            SnackbarRepo.ShowMessagesResponse(storeRes.Messages);
+            SnackBarRepo.ShowMessagesResponse(storeRes.Messages);
     }
 
     public void Update(InstrumentTradeStockSharpViewModel sender)

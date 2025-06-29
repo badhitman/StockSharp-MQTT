@@ -67,7 +67,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         };
         await SetBusyAsync();
         ResponseBaseModel res = await DriverRepo.StartStrategy(req);
-        SnackbarRepo.ShowMessagesResponse(res.Messages);
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
         _visibleStrategyBoard = false;
         await GetStatusConnection();
@@ -77,7 +77,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         StrategyStopRequestModel req = new();
         await SetBusyAsync();
         ResponseBaseModel res = await DriverRepo.StopStrategy(req);
-        SnackbarRepo.ShowMessagesResponse(res.Messages);
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
         _visibleStrategyBoard = false;
         await GetStatusConnection();
@@ -101,11 +101,11 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     protected async Task TerminateConnection()
     {
         ResponseBaseModel res = await DriverRepo.Terminate();
-        SnackbarRepo.ShowMessagesResponse(res.Messages);
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
         await GetStatusConnection();
         if (AboutConnection?.Messages.Count == 0)
         {
-            SnackbarRepo.Info(AboutConnection.ConnectionState.ToString() ?? "error");
+            SnackBarRepo.Info(AboutConnection.ConnectionState.ToString() ?? "error");
         }
     }
 
@@ -163,9 +163,9 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     async Task AboutBotAsync()
     {
         TResponseModel<UserTelegramBaseModel> rest = await TelegramRepo.AboutBotAsync();
-        SnackbarRepo.ShowMessagesResponse(rest.Messages);
+        SnackBarRepo.ShowMessagesResponse(rest.Messages);
         aboutBot = rest.Response;
-        SnackbarRepo.Info($"TelegramBot: {JsonConvert.SerializeObject(aboutBot)}");
+        SnackBarRepo.Info($"TelegramBot: {JsonConvert.SerializeObject(aboutBot)}");
     }
 
     protected override async Task OnInitializedAsync()
