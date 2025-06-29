@@ -29,5 +29,7 @@ public class PortfolioTradeModelDB : PortfolioStockSharpViewModel, IBaseStockSha
         Currency = req.Currency;
         DepoName = req.DepoName;
         ClientCode = req.ClientCode;
+        BeginValue = req.BeginValue;
+        CurrentValue = req.CurrentValue;
     }
 }
