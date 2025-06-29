@@ -177,7 +177,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         await ToastClientRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.ToastClientShowStockSharpNotifyReceive, ToastShowHandle);
 
         await AboutBotAsync();
-        
+
         await Task.WhenAll([
               Task.Run(async () => {
                 TResponseModel<List<BoardStockSharpViewModel>> res = await DataRepo.GetBoardsAsync();
@@ -197,6 +197,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     private void ToastShowHandle(ToastShowClientModel toast)
     {
         JS.InvokeVoidAsync($"Toast.{toast.TypeMessage}", toast.HeadTitle, toast.MessageText);
+        SnackBarRepo.SaveToast(toast);
     }
 
     void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
