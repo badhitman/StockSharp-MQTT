@@ -165,7 +165,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         TResponseModel<UserTelegramBaseModel> rest = await TelegramRepo.AboutBotAsync();
         SnackbarRepo.ShowMessagesResponse(rest.Messages);
         aboutBot = rest.Response;
-        SnackbarRepo.Add($"TelegramBot: {JsonConvert.SerializeObject(aboutBot)}");
+        SnackbarRepo.Info($"TelegramBot: {JsonConvert.SerializeObject(aboutBot)}");
     }
 
     protected override async Task OnInitializedAsync()

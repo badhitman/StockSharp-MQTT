@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
 using MudBlazor;
 using SharedLib;
+using BlazorLib;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -49,7 +50,7 @@ public partial class OrdersStockSharpViewComponent : StockSharpAboutComponent
         if (partData?.Any(x => x.Id == model.Id) == true && _tableRef is not null)
         {
             InvokeAsync(_tableRef.ReloadServerData);
-            SnackbarRepo.Add($"Order handle: {JsonConvert.SerializeObject(model)}", Severity.Info, c => c.DuplicatesBehavior = SnackbarDuplicatesBehavior.Allow);
+            SnackbarRepo.Info($"Order handle: {JsonConvert.SerializeObject(model)}");
         }
     }
 
