@@ -144,6 +144,8 @@ namespace StockSharpDriver.Migrations
                     Currency = table.Column<int>(type: "INTEGER", nullable: true),
                     ClientCode = table.Column<string>(type: "TEXT", nullable: true),
                     DepoName = table.Column<string>(type: "TEXT", nullable: true),
+                    BeginValue = table.Column<decimal>(type: "TEXT", nullable: true),
+                    CurrentValue = table.Column<decimal>(type: "TEXT", nullable: true),
                     IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)

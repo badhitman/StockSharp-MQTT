@@ -514,6 +514,9 @@ namespace StockSharpDriver.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal?>("BeginValue")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("BoardId")
                         .HasColumnType("INTEGER");
 
@@ -525,6 +528,9 @@ namespace StockSharpDriver.Migrations
 
                     b.Property<int?>("Currency")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("CurrentValue")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("DepoName")
                         .HasColumnType("TEXT");

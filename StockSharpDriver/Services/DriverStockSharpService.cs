@@ -1009,22 +1009,6 @@ public class DriverStockSharpService(
         }
     }
 
-    void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
-    {
-        //_logger.LogInformation($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port)}");
-        //PortfolioStockSharpModel req = new PortfolioStockSharpModel().Bind(port);
-        //dataRepo.SavePortfolio(req);
-        //eventTrans.PortfolioReceived(req);
-    }
-
-    void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)
-    {
-        //_logger.LogWarning($"Call > `{nameof(BoardReceivedHandle)}`: {JsonConvert.SerializeObject(boardExchange)}");
-        //BoardStockSharpModel req = new BoardStockSharpModel().Bind(boardExchange);
-        //dataRepo.SaveBoard(req);
-        //eventTrans.BoardReceived(req);
-    }
-
     void OrderReceivedHandle(Subscription subscription, Order order)
     {
         eventTrans.ToastClientShow(new()
@@ -1046,13 +1030,7 @@ public class DriverStockSharpService(
     }
 
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
-    {
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
-            TypeMessage = MessagesTypesEnum.Info,
-            MessageText = $"{nameof(tr.Order.Security)}:{tr.Order.Security.Id}; {nameof(tr.Order.Volume)}:{tr.Order.Volume};"
-        });
+    {       
         lock (myTrades)
             myTrades.Add(tr);
     }
@@ -1313,7 +1291,6 @@ public class DriverStockSharpService(
     {
         conLink.Unsubscribe();
 
-        conLink.Connector.BoardReceived -= BoardReceivedHandle;
         conLink.Connector.CandleReceived -= CandleReceivedHandle;
         conLink.Connector.DataTypeReceived -= DataTypeReceivedHandle;
         conLink.Connector.Level1Received -= Level1ReceivedHandle;
@@ -1322,7 +1299,6 @@ public class DriverStockSharpService(
         conLink.Connector.OrderLogReceived -= OrderLogReceivedHandle;
         conLink.Connector.OrderReceived -= OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
-        conLink.Connector.PortfolioReceived -= PortfolioReceivedHandle;
         conLink.Connector.SecurityReceived -= SecurityReceivedHandle;
     }
 
@@ -1330,7 +1306,6 @@ public class DriverStockSharpService(
     {
         conLink.Subscribe();
 
-        conLink.Connector.BoardReceived += BoardReceivedHandle;
         conLink.Connector.CandleReceived += CandleReceivedHandle;
         conLink.Connector.DataTypeReceived += DataTypeReceivedHandle;
         conLink.Connector.Level1Received += Level1ReceivedHandle;
@@ -1339,7 +1314,6 @@ public class DriverStockSharpService(
         conLink.Connector.OrderLogReceived += OrderLogReceivedHandle;
         conLink.Connector.OrderReceived += OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
-        conLink.Connector.PortfolioReceived += PortfolioReceivedHandle;
         conLink.Connector.SecurityReceived += SecurityReceivedHandle;
     }
 }

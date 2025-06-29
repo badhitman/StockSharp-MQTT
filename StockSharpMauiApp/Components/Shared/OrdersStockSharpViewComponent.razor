@@ -2,13 +2,15 @@
 
 @inherits StockSharpAboutComponent
 
-<h3>OrdersStockSharpViewComponent</h3>
+<h3>Orders</h3>
 
 <MudTable ServerData="ServerReload" Dense="true" Hover="true" @ref="_tableRef">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Orders</MudText>
     </ToolBarContent>
     <HeaderContent>
+        <MudTh>Instrument</MudTh>
+        <MudTh>Portfolio</MudTh>
         <MudTh>AveragePrice</MudTh>
         <MudTh>Balance</MudTh>
         <MudTh>BoardId</MudTh>
@@ -37,6 +39,8 @@
         <MudTh>Volume</MudTh>
     </HeaderContent>
     <RowTemplate>
+        <MudTd DataLabel="Instrument">@context.Instrument</MudTd>
+        <MudTd DataLabel="Portfolio">@context.Portfolio</MudTd>
         <MudTd DataLabel="AveragePrice">@context.AveragePrice</MudTd>
         <MudTd DataLabel="Balance">@context.Balance</MudTd>
         <MudTd DataLabel="BoardId">@context.BoardId</MudTd>

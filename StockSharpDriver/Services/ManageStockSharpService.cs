@@ -121,6 +121,8 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             .ThenBy(x => x.Id)
             .Skip(req.PageSize * req.PageNum)
             .Take(req.PageSize)
+            .Include(x => x.Instrument)
+            .Include(x => x.Portfolio)
             .ToListAsync(cancellationToken: cancellationToken);
 
         return new(req)

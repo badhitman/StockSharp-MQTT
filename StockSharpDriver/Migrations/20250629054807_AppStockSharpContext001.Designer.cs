@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250621064935_AppStockSharpContext001")]
+    [Migration("20250629054807_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -516,6 +516,9 @@ namespace StockSharpDriver.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal?>("BeginValue")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("BoardId")
                         .HasColumnType("INTEGER");
 
@@ -527,6 +530,9 @@ namespace StockSharpDriver.Migrations
 
                     b.Property<int?>("Currency")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("CurrentValue")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("DepoName")
                         .HasColumnType("TEXT");

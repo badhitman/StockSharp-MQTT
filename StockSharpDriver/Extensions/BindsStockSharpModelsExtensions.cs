@@ -124,6 +124,9 @@ public static class BindsStockSharpModelsExtensions
         main.Name = inc.Name;
         main.DepoName = inc.DepoName;
         //
+        main.BeginValue = inc.BeginValue;
+        main.CurrentValue = inc.CurrentValue;
+
         return main;
     }
 
