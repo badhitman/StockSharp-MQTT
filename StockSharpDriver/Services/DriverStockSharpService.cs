@@ -989,24 +989,6 @@ public class DriverStockSharpService(
 
         RegisterEvents();
         //
-        SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
-        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
-        {
-            lock (SecuritiesCriteriaCodesFilterLookup)
-            {
-                SecuritiesCriteriaCodesFilterLookup.Add(new()
-                {
-                    SecurityId = new SecurityId
-                    {
-                        SecurityCode = SecurityCriteriaCodeFilter.Trim(),
-                    },
-                    TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
-                });
-            }
-
-            SecurityCriteriaCodeFilterSubscription = new(SecuritiesCriteriaCodesFilterLookup.Last());
-            conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscription);
-        }
 
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
@@ -1060,8 +1042,35 @@ public class DriverStockSharpService(
             res.AddError("can`t connect");
             return res;
         }
+        SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp, cancellationToken);
+
+
+        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
+            conLink.Connector.SubscriptionsOnConnect.RemoveRange(conLink.Connector.SubscriptionsOnConnect.Where(x => x.DataType == DataType.Securities));
 
         await conLink.Connector.ConnectAsync(cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
+        {
+            lock (SecuritiesCriteriaCodesFilterLookup)
+            {
+                SecuritiesCriteriaCodesFilterLookup.Clear();
+                foreach (string _sc in Regex.Split(SecurityCriteriaCodeFilter, @"\s+").Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct())
+                {
+                    SecuritiesCriteriaCodesFilterLookup.Add(new()
+                    {
+                        SecurityId = new SecurityId
+                        {
+                            SecurityCode = _sc.Trim(),
+                        },
+                        TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
+                    });
+                    SecurityCriteriaCodeFilterSubscription = new(SecuritiesCriteriaCodesFilterLookup.Last());
+                    conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscription);
+                }
+            }
+        }
+
         res.AddInfo($"connection: {conLink.Connector.ConnectionState}");
         return res;
     }
@@ -1079,8 +1088,9 @@ public class DriverStockSharpService(
 
         SecurityCriteriaCodeFilter = "";
         lock (SecuritiesCriteriaCodesFilterLookup)
+            SecuritiesCriteriaCodesFilterLookup.Clear();
 
-            UnregisterEvents();
+        UnregisterEvents();
         conLink.Connector.Disconnect();
 
         lock (AllSecurities)

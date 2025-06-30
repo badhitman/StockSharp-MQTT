@@ -68,7 +68,7 @@ public class ConnectionStockSharpWorker(
 
     void SecurityReceivedHandle(Subscription subscription, Security sec)
     {
-        _logger.LogTrace($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec, GlobalStaticConstants.JsonSerializerSettings)}");
+        _logger.LogDebug($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec, GlobalStaticConstants.JsonSerializerSettings)}");
         InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(sec);
         InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response;
         eventTrans.InstrumentReceived(dbRes);
@@ -76,7 +76,7 @@ public class ConnectionStockSharpWorker(
 
     void PortfolioReceivedHandle(Subscription subscription, Portfolio port)
     {
-        _logger.LogTrace($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port, GlobalStaticConstants.JsonSerializerSettings)}");
+        _logger.LogDebug($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port, GlobalStaticConstants.JsonSerializerSettings)}");
         PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
         TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
         eventTrans.PortfolioReceived(echoData.Response);
