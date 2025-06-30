@@ -107,24 +107,7 @@ public class ConnectionStockSharpWorker(
 
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
-        _logger.LogWarning($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr, GlobalStaticConstants.JsonSerializerSettings)}");
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
-            TypeMessage = MessagesTypesEnum.Info,
-            MessageText = $"{nameof(tr.Order.Security)}:{tr.Order.Security.Id}; {nameof(tr.Order.Volume)}:{tr.Order.Volume};"
-        });
-
-        InstrumentTradeStockSharpViewModel instrument = dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(tr.Order.Security)).Result.Response;
-
-        MyTradeStockSharpModel myTrade = new MyTradeStockSharpModel().Bind(tr);
-
-        TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade, instrument).Result;
-
-        if (dbRes.Response is null)
-            _logger.LogError("result is null: TResponseModel<MyTradeStockSharpViewModel> dbRes = dataRepo.SaveTrade(myTrade).Result;");
-        else
-            eventTrans.OwnTradeReceived(dbRes.Response);
+        _logger.LogTrace($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr, GlobalStaticConstants.JsonSerializerSettings)}");        
     }
 
     void PositionReceivedHandle(Subscription subscription, Position pos)

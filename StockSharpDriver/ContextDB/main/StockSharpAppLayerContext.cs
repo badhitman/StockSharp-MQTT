@@ -72,9 +72,6 @@ public abstract partial class StockSharpAppLayerContext : DbContext
         modelBuilder.Entity<OrderStockSharpModelDB>()
        .HasKey(b => b.IdPK);
 
-        modelBuilder.Entity<MyTradeStockSharpModelDB>()
-       .HasKey(b => b.Id);
-
         modelBuilder.Entity<InstrumentMarkersModelDB>()
        .HasKey(b => b.Id);
     }
@@ -100,7 +97,4 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
     /// <inheritdoc/>
     public DbSet<OrderStockSharpModelDB> Orders { get; set; }
-
-    /// <inheritdoc/>
-    public DbSet<MyTradeStockSharpModelDB> MyTrades { get; set; }
 }

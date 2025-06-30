@@ -131,31 +131,4 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             Response = [.. res.Response.Select(x => (OrderStockSharpViewModel)x)]
         };
     }
-
-    /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<MyTradeStockSharpViewModel>> TradesSelectAsync(TPaginationRequestStandardModel<MyTradeSelectStockSharpRequestModel> req, CancellationToken cancellationToken = default)
-    {
-        if (req.PageSize < 10)
-            req.PageSize = 10;
-
-        TPaginationResponseModel<MyTradeStockSharpModelDB> res = new(req);
-        StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-
-        IQueryable<MyTradeStockSharpModelDB> q = ctx.MyTrades.AsQueryable();
-
-        res.TotalRowsCount = await q.CountAsync(cancellationToken: cancellationToken);
-        res.Response = await q
-            .OrderBy(x => x.CreatedAtUTC)
-            .ThenBy(x => x.LastUpdatedAtUTC)
-            .ThenBy(x => x.Id)
-            .Skip(req.PageSize * req.PageNum)
-            .Take(req.PageSize)
-            .ToListAsync(cancellationToken: cancellationToken);
-
-        return new(req)
-        {
-            TotalRowsCount = res.TotalRowsCount,
-            Response = [.. res.Response.Select(x => (MyTradeStockSharpViewModel)x)]
-        };
-    }
 }

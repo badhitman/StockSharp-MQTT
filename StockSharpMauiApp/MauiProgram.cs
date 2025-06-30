@@ -60,7 +60,6 @@ public static class MauiProgram
             .RegisterEventNotify<UpdateConnectionHandleModel>()
             .RegisterEventNotify<PortfolioStockSharpViewModel>()
             .RegisterEventNotify<InstrumentTradeStockSharpViewModel>()
-            .RegisterEventNotify<MyTradeStockSharpModel>()
             .RegisterEventNotify<OrderStockSharpViewModel>()
             .RegisterEventNotify<UserTelegramBaseModel>()
             .RegisterEventNotify<ToastShowClientModel>()

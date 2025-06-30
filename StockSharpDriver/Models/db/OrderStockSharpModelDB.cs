@@ -20,9 +20,6 @@ public class OrderStockSharpModelDB : OrderStockSharpViewModel, IBaseStockSharpM
     ///<inheritdoc/>
     public int PortfolioId { get; set; }
 
-    ///<inheritdoc/>
-    public List<MyTradeStockSharpModelDB> MyTrades { get; set; }
-
     public static OrderStockSharpModelDB Build(OrderStockSharpModel req, int instrumentId)
     {
         return new()

@@ -130,21 +130,6 @@ public static class BindsStockSharpModelsExtensions
         return main;
     }
 
-    /// <inheritdoc/>
-    public static MyTradeStockSharpModel Bind(this MyTradeStockSharpModel main, MyTrade inc)
-    {
-        main.Commission = inc.Commission;
-        main.Position = inc.Position;
-        main.CommissionCurrency = inc.CommissionCurrency;
-        main.Initiator = inc.Initiator;
-        main.Yield = inc.Yield;
-        main.Slippage = inc.Slippage;
-        main.PnL = inc.PnL;
-        main.Order = new OrderStockSharpModel().Bind(inc.Order);
-        //
-        return main;
-    }
-
     public static PositionStockSharpModel Bind(this PositionStockSharpModel main, Position inc)
     {
         main.PortfolioName = inc.PortfolioName;
