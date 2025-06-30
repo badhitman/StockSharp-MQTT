@@ -872,9 +872,9 @@ public class DriverStockSharpService(
 
         if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
         {
-            SecuritiesCriteriaCodesFilterLookup.Clear();
             lock (SecuritiesCriteriaCodesFilterLookup)
             {
+                SecuritiesCriteriaCodesFilterLookup.Clear();
                 foreach (string _sc in Regex.Split(SecurityCriteriaCodeFilter, @"\s+").Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()))
                 {
                     SecuritiesCriteriaCodesFilterLookup.Add(new()
