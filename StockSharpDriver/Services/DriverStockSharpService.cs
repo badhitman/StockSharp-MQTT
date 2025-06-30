@@ -58,12 +58,12 @@ public class DriverStockSharpService(
         }
     }
 
-    Curve OfzCurve;
+    readonly Curve OfzCurve;
 
-    string ProgramDataPathStockSharp;
+    string ProgramDataPath;
     string ClientCodeStockSharp;
-    string SecurityCriteriaCodeFilterStockSharp;
-    List<Subscription> DepthSubscriptions = [];
+    string SecurityCriteriaCodeFilter;
+    readonly List<Subscription> DepthSubscriptions = [];
 
     decimal
         quoteSmallStrategyBidVolume = 2000,
@@ -136,6 +136,10 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState.DescriptionInfo()})");
 
         ClearStrategy();
+
+        ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(ProgramDataPath))
+            return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
 
         if (req.Board is null)
             return ResponseBaseModel.CreateError("Board - not set");
@@ -269,7 +273,6 @@ public class DriverStockSharpService(
         lock (_ordersForQuoteSellReregister)
             _ordersForQuoteSellReregister.Clear();
 
-        ProgramDataPathStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, cancellationToken);
         ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, cancellationToken);
 
         return ResponseBaseModel.CreateInfo("Ok");
@@ -805,14 +808,14 @@ public class DriverStockSharpService(
 
         RegisterEvents();
         //
-        SecurityCriteriaCodeFilterStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
-        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilterStockSharp))
+        SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
+        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
         {
             SecurityCriteriaCodeFilterLookup = new()
             {
                 SecurityId = new SecurityId
                 {
-                    SecurityCode = SecurityCriteriaCodeFilterStockSharp.Trim(),
+                    SecurityCode = SecurityCriteriaCodeFilter.Trim(),
                 },
                 TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
             };
@@ -889,7 +892,7 @@ public class DriverStockSharpService(
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
 
-        SecurityCriteriaCodeFilterStockSharp = "";
+        SecurityCriteriaCodeFilter = "";
         SecurityCriteriaCodeFilterLookup = null;
 
         UnregisterEvents();
@@ -912,8 +915,9 @@ public class DriverStockSharpService(
             StrategyStarted = Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0,
             LowLimit = lowLimit,
             HighLimit = highLimit,
-            SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilterStockSharp,
-            ClientCode = ClientCodeStockSharp
+            SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilter,
+            ClientCode = ClientCodeStockSharp,
+            ProgramPath = ProgramDataPath
         };
 
         return Task.FromResult(res);
@@ -1030,7 +1034,7 @@ public class DriverStockSharpService(
     }
 
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
-    {       
+    {
         lock (myTrades)
             myTrades.Add(tr);
     }
@@ -1242,7 +1246,7 @@ public class DriverStockSharpService(
         Board = null;
         SelectedPortfolio = null;
         ClientCodeStockSharp = null;
-        ProgramDataPathStockSharp = null;
+        ProgramDataPath = null;
 
         lock (StrategyTrades)
             StrategyTrades.Clear();
