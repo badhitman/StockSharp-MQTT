@@ -59,7 +59,7 @@ public class DriverStockSharpService(
         }
     }
 
-    readonly Curve OfzCurve;
+    Curve OfzCurve;
 
     string ProgramDataPath;
     string ClientCodeStockSharp;
@@ -127,6 +127,186 @@ public class DriverStockSharpService(
         }
 
         return res;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
+    {
+        SBond SBnd;
+        DateTime curDate;
+        decimal BndPrice;
+        decimal bondDV;
+
+        if (!SecuritiesBonds().Any())
+            return ResponseBaseModel.CreateError($"!{nameof(SecuritiesBonds)}().Any()");
+
+        OfzCurve = new Curve(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
+        //OfzCurve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector);
+
+        //if (OfzCurve.Length == 0)
+        //    return;
+
+        //if (CurrentSecurities.Count < OfzCodes.Length + OfzCodesNew.Length + OfzCodesIlliquid.Length)
+        //    return;
+
+        //quoteStrategyVolume = (decimal)QuoteVolume.Value;
+        //quoteSizeStrategyVolume = (decimal)QuoteSizeVolume.Value;
+        //skipVolume = (decimal)SkipSizeVolume.Value;
+
+        //curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramPath + "RedArrowData.db");
+
+        //CurrentSecurities.ForEach(security =>
+        //{
+        //    string bndName = security.Code.Substring(2, 5);
+
+        //    BndPrice = OfzCurve.GetNode(security).ModelPrice;
+        //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
+
+        //    if (!decUpD.IsNull())
+        //    {
+        //        decUpD.Value = BndPrice;
+        //    }
+
+        //    LongUpDown SmallBidVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName);
+
+        //    if (!SmallBidVolUpD.IsNull())
+        //        SmallBidVolUpD.Value = (long)quoteSmallStrategyBidVolume;
+
+        //    LongUpDown SmallOfferVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName);
+
+        //    if (!SmallOfferVolUpD.IsNull())
+        //        SmallOfferVolUpD.Value = (long)quoteSmallStrategyOfferVolume;
+
+        //    LongUpDown WorkVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName);
+
+        //    if (!WorkVolUpD.IsNull())
+        //        WorkVolUpD.Value = (long)quoteStrategyVolume;
+
+        //    IntegerUpDown SmallOffset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName);
+
+        //    if (!SmallOffset.IsNull())
+        //        SmallOffset.Value = 0;
+
+        //    IntegerUpDown Offset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName);
+
+        //    if (!Offset.IsNull())
+        //        Offset.Value = 0;
+
+        //    IntegerUpDown Lowlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
+        //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
+
+        //    SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
+
+        //    if (!SBnd.IsNull())
+        //    {
+        //        decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
+
+        //        if (yield > 0)  //Regular bonds
+        //        {
+        //            if (!Lowlimit.IsNull())
+        //            {
+        //                Lowlimit.Value =
+        //                    (int)
+        //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) *
+        //                         10000);
+
+        //                if (Lowlimit.Value < 9)
+        //                    Lowlimit.Value = 9;
+        //                if (Lowlimit.Value > lowLimit * 100)
+        //                    Lowlimit.Value = (int)(lowLimit * 100);
+        //            }
+
+        //            if (!Highlimit.IsNull())
+        //            {
+        //                Highlimit.Value =
+        //                    (int)
+        //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) *
+        //                         10000);
+
+        //                if (Highlimit.Value < 11)
+        //                    Highlimit.Value = 11;
+        //                if (Highlimit.Value > highLimit * 100)
+        //                    Highlimit.Value = (int)(highLimit * 100);
+        //            }
+
+        //            if ((SBnd.Maturity - curDate).Days < 400)
+        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+        //            else if ((SBnd.Maturity - curDate).Days < 1100)
+        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+        //            else if ((SBnd.Maturity - curDate).Days < 1500)
+        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+        //            else
+        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+        //        }
+        //        else
+        //        {
+        //            if (OfzCodesIlliquid.Contains(SBnd.UnderlyingSecurity.Code))
+        //            {
+        //                if ((SBnd.Maturity - curDate).Days < 300)
+        //                {
+        //                    WorkVolUpD.Value = 1000;
+        //                    Lowlimit.Value = (int)(lowLimit * 100);
+        //                    Highlimit.Value = (int)(highLimit * 100);
+        //                }
+        //                else
+        //                {
+        //                    WorkVolUpD.Value = 1000;
+        //                    Lowlimit.Value = (int)(lowLimit * 2 * 100);
+        //                    Highlimit.Value = (int)(highLimit * 2 * 100);
+        //                }
+        //            }
+        //            else
+        //            {
+        //                if ((SBnd.Maturity - curDate).Days < 500)
+        //                {
+        //                    WorkVolUpD.Value = 2000;
+        //                    Lowlimit.Value = (int)(lowLimit / 2 * 100);
+        //                    Highlimit.Value = (int)(highLimit / 2 * 100);
+        //                }
+
+        //                else if ((SBnd.Maturity - curDate).Days < 2000)
+        //                {
+        //                    WorkVolUpD.Value = 2000;
+        //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
+        //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
+        //                }
+
+        //                else
+        //                {
+        //                    WorkVolUpD.Value = 2000;
+        //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
+        //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
+        //                }
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (!Lowlimit.IsNull())
+        //            Lowlimit.Value = (int)(lowLimit * 100);
+
+        //        if (!Highlimit.IsNull())
+        //            Highlimit.Value = (int)(highLimit * 100);
+        //    }
+        //});
+
+        //btnStart.IsEnabled = true;
+        //X2.IsEnabled = true;
+        //Del2.IsEnabled = true;
+        //SPlus.IsEnabled = true;
+        //SMinus.IsEnabled = true;
+        //Reset_All.IsEnabled = true;
+
+        //CurrentSecurities.ForEach(security =>
+        //{
+        //    string bndName = security.Code.Substring(2, 5);
+        //    Button btnRst = (Button)LogicalTreeHelper.FindLogicalNode(MyProgram, "Reset_" + bndName);
+
+        //    if (!btnRst.IsNull())
+        //        btnRst.IsEnabled = true;
+        //});
+
+        throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
@@ -809,6 +989,24 @@ public class DriverStockSharpService(
 
         RegisterEvents();
         //
+        SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp);
+        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
+        {
+            lock (SecuritiesCriteriaCodesFilterLookup)
+            {
+                SecuritiesCriteriaCodesFilterLookup.Add(new()
+                {
+                    SecurityId = new SecurityId
+                    {
+                        SecurityCode = SecurityCriteriaCodeFilter.Trim(),
+                    },
+                    TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
+                });
+            }
+
+            SecurityCriteriaCodeFilterSubscription = new(SecuritiesCriteriaCodesFilterLookup.Last());
+            conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscription);
+        }
 
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
@@ -862,35 +1060,8 @@ public class DriverStockSharpService(
             res.AddError("can`t connect");
             return res;
         }
-        SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp, cancellationToken);
-
-
-        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
-            conLink.Connector.SubscriptionsOnConnect.RemoveRange(conLink.Connector.SubscriptionsOnConnect.Where(x => x.DataType == DataType.Securities));
 
         await conLink.Connector.ConnectAsync(cancellationToken);
-
-        if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
-        {
-            lock (SecuritiesCriteriaCodesFilterLookup)
-            {
-                SecuritiesCriteriaCodesFilterLookup.Clear();
-                foreach (string _sc in Regex.Split(SecurityCriteriaCodeFilter, @"\s+").Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct())
-                {
-                    SecuritiesCriteriaCodesFilterLookup.Add(new()
-                    {
-                        SecurityId = new SecurityId
-                        {
-                            SecurityCode = _sc.Trim(),
-                        },
-                        TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
-                    });
-                    SecurityCriteriaCodeFilterSubscription = new(SecuritiesCriteriaCodesFilterLookup.Last());
-                    conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscription);
-                }
-            }
-        }
-        
         res.AddInfo($"connection: {conLink.Connector.ConnectionState}");
         return res;
     }
@@ -908,9 +1079,8 @@ public class DriverStockSharpService(
 
         SecurityCriteriaCodeFilter = "";
         lock (SecuritiesCriteriaCodesFilterLookup)
-            SecuritiesCriteriaCodesFilterLookup.Clear();
 
-        UnregisterEvents();
+            UnregisterEvents();
         conLink.Connector.Disconnect();
 
         lock (AllSecurities)
