@@ -32,3 +32,20 @@
         })
     }
 }
+function autoGrow(el) {
+    if (el.style == undefined)
+        return;
+
+    el.style.height = '5px';
+    el.style.height = el.scrollHeight + 'px';
+}
+
+window.autoGrowManage = (() => {
+    return {
+        registerGrow(dom_id, dotNetReference) {
+            autoGrow(this);
+            if (this.scrollHeight !== undefined)
+                dotNetReference.invokeMethodAsync('EditorDataChanged', this.scrollHeight);
+        }
+    };
+})();
