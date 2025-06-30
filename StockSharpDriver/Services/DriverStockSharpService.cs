@@ -890,7 +890,7 @@ public class DriverStockSharpService(
                 }
             }
         }
-        //sbs = [.. conLink.Connector.Subscriptions];
+        
         res.AddInfo($"connection: {conLink.Connector.ConnectionState}");
         return res;
     }
@@ -1203,7 +1203,7 @@ public class DriverStockSharpService(
         {
             _msg = $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`";
             _logger.LogInformation(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult), TypeMessage = MessagesTypesEnum.Info, MessageText = _msg });
+            // eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult), TypeMessage = MessagesTypesEnum.Info, MessageText = _msg });
             lock (AllSecurities)
             {
                 foreach (Security _sec in securities)

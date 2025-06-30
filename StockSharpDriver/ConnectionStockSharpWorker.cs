@@ -179,6 +179,9 @@ public class ConnectionStockSharpWorker(
     }
     void SubscriptionStoppedHandle(Subscription subscription, Exception ex)
     {
+        if (ex is null)
+            return;
+
         _logger.LogError(ex, $"Call > `{nameof(SubscriptionStoppedHandle)}`");
         eventTrans.ToastClientShow(new()
         {
