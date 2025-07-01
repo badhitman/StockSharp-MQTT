@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250629054807_AppStockSharpContext001")]
+    [Migration("20250701051548_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -308,49 +308,6 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Instruments");
                 });
 
-            modelBuilder.Entity("SharedLib.MyTradeStockSharpModelDB", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("Commission")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CommissionCurrency")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAtUTC")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool?>("Initiator")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("LastUpdatedAtUTC")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("PnL")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Position")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Slippage")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Yield")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("MyTrades");
-                });
-
             modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>
                 {
                     b.Property<int>("IdPK")
@@ -591,17 +548,6 @@ namespace StockSharpDriver.Migrations
                     b.Navigation("Board");
                 });
 
-            modelBuilder.Entity("SharedLib.MyTradeStockSharpModelDB", b =>
-                {
-                    b.HasOne("SharedLib.OrderStockSharpModelDB", "Order")
-                        .WithMany("MyTrades")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-                });
-
             modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>
                 {
                     b.HasOne("SharedLib.InstrumentStockSharpModelDB", "Instrument")
@@ -643,11 +589,6 @@ namespace StockSharpDriver.Migrations
             modelBuilder.Entity("SharedLib.InstrumentStockSharpModelDB", b =>
                 {
                     b.Navigation("Markers");
-                });
-
-            modelBuilder.Entity("SharedLib.OrderStockSharpModelDB", b =>
-                {
-                    b.Navigation("MyTrades");
                 });
 
             modelBuilder.Entity("SharedLib.PortfolioTradeModelDB", b =>

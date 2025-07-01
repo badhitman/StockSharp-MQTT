@@ -248,34 +248,6 @@ namespace StockSharpDriver.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "MyTrades",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OrderId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Commission = table.Column<decimal>(type: "TEXT", nullable: true),
-                    CommissionCurrency = table.Column<string>(type: "TEXT", nullable: true),
-                    Slippage = table.Column<decimal>(type: "TEXT", nullable: true),
-                    PnL = table.Column<decimal>(type: "TEXT", nullable: true),
-                    Position = table.Column<decimal>(type: "TEXT", nullable: true),
-                    Initiator = table.Column<bool>(type: "INTEGER", nullable: true),
-                    Yield = table.Column<decimal>(type: "TEXT", nullable: true),
-                    LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MyTrades", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MyTrades_Orders_OrderId",
-                        column: x => x.OrderId,
-                        principalTable: "Orders",
-                        principalColumn: "IdPK",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_Adapters_AdapterTypeName",
                 table: "Adapters",
@@ -367,11 +339,6 @@ namespace StockSharpDriver.Migrations
                 column: "MarkerDescriptor");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyTrades_OrderId",
-                table: "MyTrades",
-                column: "OrderId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Orders_BoardId",
                 table: "Orders",
                 column: "BoardId");
@@ -434,9 +401,6 @@ namespace StockSharpDriver.Migrations
 
             migrationBuilder.DropTable(
                 name: "InstrumentsMarkers");
-
-            migrationBuilder.DropTable(
-                name: "MyTrades");
 
             migrationBuilder.DropTable(
                 name: "Orders");
