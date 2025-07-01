@@ -134,8 +134,7 @@ public class DriverStockSharpService(
     {
         SBond SBnd;
         DateTime curDate;
-        decimal BndPrice;
-        decimal bondDV;
+        decimal BndPrice, bondDV;
 
         if (!SecuritiesBonds().Any())
             return ResponseBaseModel.CreateError($"!{nameof(SecuritiesBonds)}().Any()");
