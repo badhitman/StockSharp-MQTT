@@ -27,15 +27,14 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
 
-    StorageMetadataModel StoreKey(string _propName) => new()
-    {
-        ApplicationName = GlobalStaticConstantsRoutes.Routes.QUOTE_CONTROLLER_NAME,
-        PropertyName = _propName,
-    };
-
-
     bool ShowNamesInstruments { get; set; }
 
+    StorageMetadataModel StoreKey(string _propName) => new()
+    {
+        ApplicationName = Path.Combine(GlobalStaticConstantsRoutes.Routes.STOCKSHARP_CONTROLLER_NAME, GlobalStaticConstantsRoutes.Routes.QUOTE_CONTROLLER_NAME, GlobalStaticConstantsRoutes.Routes.FORM_CONTROLLER_NAME),
+        PropertyName = _propName,
+        PrefixPropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME
+    };
 
     decimal _quoteVolume;
     decimal QuoteVolume
@@ -44,6 +43,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _quoteVolume = value;
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteVolume, StoreKey(nameof(QuoteVolume)), true, false); });
         }
     }
 
@@ -54,6 +54,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _quoteSizeVolume = value;
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteSizeVolume, StoreKey(nameof(QuoteSizeVolume)), true, false); });
         }
     }
 
@@ -64,6 +65,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _skipSizeVolume = value;
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_skipSizeVolume, StoreKey(nameof(SkipSizeVolume)), true, false); });
         }
     }
 
