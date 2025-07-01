@@ -140,19 +140,16 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError($"!{nameof(SecuritiesBonds)}().Any()");
 
         OfzCurve = new Curve(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
-        //OfzCurve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector);
+        OfzCurve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector, Board);
 
-        //if (OfzCurve.Length == 0)
-        //    return;
-
-        //if (CurrentSecurities.Count < OfzCodes.Length + OfzCodesNew.Length + OfzCodesIlliquid.Length)
-        //    return;
+        if (OfzCurve.Length == 0)
+            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
 
         //quoteStrategyVolume = (decimal)QuoteVolume.Value;
         //quoteSizeStrategyVolume = (decimal)QuoteSizeVolume.Value;
         //skipVolume = (decimal)SkipSizeVolume.Value;
 
-        //curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramPath + "RedArrowData.db");
+        curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
 
         //CurrentSecurities.ForEach(security =>
         //{

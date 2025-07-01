@@ -23,11 +23,49 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     [Inject]
     protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
 
+    [Inject]
+    IParametersStorageTransmission StorageRepo { get; set; } = default!;
+
+
+    StorageMetadataModel StoreKey(string _propName) => new()
+    {
+        ApplicationName = GlobalStaticConstantsRoutes.Routes.QUOTE_CONTROLLER_NAME,
+        PropertyName = _propName,
+    };
+
+
     bool ShowNamesInstruments { get; set; }
 
-    int QuoteVolume { get; set; }
-    int QuoteSizeVolume { get; set; }
-    int SkipSizeVolume { get; set; }
+
+    decimal _quoteVolume;
+    decimal QuoteVolume
+    {
+        get => _quoteVolume;
+        set
+        {
+            _quoteVolume = value;
+        }
+    }
+
+    decimal _quoteSizeVolume;
+    decimal QuoteSizeVolume
+    {
+        get => _quoteSizeVolume;
+        set
+        {
+            _quoteSizeVolume = value;
+        }
+    }
+
+    decimal _skipSizeVolume;
+    decimal SkipSizeVolume
+    {
+        get => _skipSizeVolume;
+        set
+        {
+            _skipSizeVolume = value;
+        }
+    }
 
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
 
@@ -45,25 +83,48 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
         await SetBusyAsync();
-
-        await UpdateConnectionEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive, UpdateConnectionNotificationHandle);
-        await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
-
-        InstrumentsRequestModel req = new()
-        {
-            PageNum = 0,
-            PageSize = int.MaxValue,
-            FavoriteFilter = true,
-        };
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
-        lock (instruments)
-        {
-            instruments.Clear();
-            if (res.Response is not null)
-                instruments.AddRange(res.Response);
-        }
+        await Task.WhenAll([
+                Task.Run(async () =>
+                {
+                    TResponseModel<decimal> restoreSkipSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(StoreKey(nameof(SkipSizeVolume)));
+                    _skipSizeVolume = restoreSkipSizeVolume.Response;
+                }),
+                Task.Run(async () =>
+                {
+                    TResponseModel<decimal> restoreQuoteSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(StoreKey(nameof(QuoteSizeVolume)));
+                    _quoteSizeVolume = restoreQuoteSizeVolume.Response;
+                }),
+                Task.Run(async () =>
+                {
+                    TResponseModel<decimal> restoreQuoteVolume = await StorageRepo.ReadParameterAsync<decimal>(StoreKey(nameof(QuoteVolume)));
+                    _quoteVolume = restoreQuoteVolume.Response;
+                }),
+                Task.Run(async () =>
+                {
+                    await UpdateConnectionEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive, UpdateConnectionNotificationHandle);
+                }),
+                Task.Run(async () =>
+                {
+                    await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
+                }),
+                Task.Run(async () =>
+                {
+                    InstrumentsRequestModel req = new()
+                    {
+                        PageNum = 0,
+                        PageSize = int.MaxValue,
+                        FavoriteFilter = true,
+                    };
+                    TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
+                    lock (instruments)
+                    {
+                        instruments.Clear();
+                        if (res.Response is not null)
+                            instruments.AddRange(res.Response);
+                    }
+                })
+            ]);
 
         await SetBusyAsync(false);
     }
