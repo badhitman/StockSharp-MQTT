@@ -29,13 +29,6 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
 
     bool ShowNamesInstruments { get; set; }
 
-    StorageMetadataModel StoreKey(string _propName) => new()
-    {
-        ApplicationName = Path.Combine(GlobalStaticConstantsRoutes.Routes.STOCKSHARP_CONTROLLER_NAME, GlobalStaticConstantsRoutes.Routes.QUOTE_CONTROLLER_NAME, GlobalStaticConstantsRoutes.Routes.FORM_CONTROLLER_NAME),
-        PropertyName = _propName,
-        PrefixPropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME
-    };
-
     decimal _quoteVolume;
     decimal QuoteVolume
     {
@@ -43,7 +36,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _quoteVolume = value;
-            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteVolume, StoreKey(nameof(QuoteVolume)), true, false); });
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteVolume, GlobalStaticCloudStorageMetadata.QuoteVolume, true, false); });
         }
     }
 
@@ -54,7 +47,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _quoteSizeVolume = value;
-            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteSizeVolume, StoreKey(nameof(QuoteSizeVolume)), true, false); });
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteSizeVolume, GlobalStaticCloudStorageMetadata.QuoteSizeVolume, true, false); });
         }
     }
 
@@ -65,7 +58,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _skipSizeVolume = value;
-            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_skipSizeVolume, StoreKey(nameof(SkipSizeVolume)), true, false); });
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_skipSizeVolume, GlobalStaticCloudStorageMetadata.SkipSizeVolume, true, false); });
         }
     }
 
@@ -89,17 +82,17 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         await Task.WhenAll([
                 Task.Run(async () =>
                 {
-                    TResponseModel<decimal> restoreSkipSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(StoreKey(nameof(SkipSizeVolume)));
+                    TResponseModel<decimal> restoreSkipSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.SkipSizeVolume);
                     _skipSizeVolume = restoreSkipSizeVolume.Response;
                 }),
                 Task.Run(async () =>
                 {
-                    TResponseModel<decimal> restoreQuoteSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(StoreKey(nameof(QuoteSizeVolume)));
+                    TResponseModel<decimal> restoreQuoteSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume);
                     _quoteSizeVolume = restoreQuoteSizeVolume.Response;
                 }),
                 Task.Run(async () =>
                 {
-                    TResponseModel<decimal> restoreQuoteVolume = await StorageRepo.ReadParameterAsync<decimal>(StoreKey(nameof(QuoteVolume)));
+                    TResponseModel<decimal> restoreQuoteVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume);
                     _quoteVolume = restoreQuoteVolume.Response;
                 }),
                 Task.Run(async () =>
