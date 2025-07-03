@@ -1007,7 +1007,7 @@ public class DriverStockSharpService(
                             Address = x.Address.To<EndPoint>(),
                             Login = x.Login,
                             Password = secure,
-                            IsDemo = true,
+                            IsDemo = x.IsDemo,
                         };
                         conLink.Connector.Adapter.InnerAdapters.Add(luaFixMarketDataMessageAdapter);
                         break;
@@ -1017,7 +1017,7 @@ public class DriverStockSharpService(
                             Address = x.Address.To<EndPoint>(),
                             Login = x.Login,
                             Password = secure,
-                            IsDemo = true,
+                            IsDemo = x.IsDemo,
                         };
                         conLink.Connector.Adapter.InnerAdapters.Add(luaFixTransactionMessageAdapter);
                         break;
