@@ -301,8 +301,7 @@ public class DriverStockSharpService(
         //    if (!btnRst.IsNull())
         //        btnRst.IsEnabled = true;
         //});
-
-        throw new NotImplementedException();
+        return ResponseBaseModel.CreateError(nameof(NotImplementedException));
     }
 
     /// <inheritdoc/>
@@ -449,8 +448,6 @@ public class DriverStockSharpService(
             _ordersForQuoteBuyReregister.Clear();
         lock (_ordersForQuoteSellReregister)
             _ordersForQuoteSellReregister.Clear();
-
-        ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, cancellationToken);
 
         return ResponseBaseModel.CreateInfo("Ok");
     }
@@ -956,36 +953,6 @@ public class DriverStockSharpService(
 
         LastConnectedAt = DateTime.UtcNow;
 
-        /*
-         SecurityLookupWindow wnd = new()
-        {
-            ShowAllOption = conLink.Connector.Adapter.IsSupportSecuritiesLookupAll(),
-            Criteria = new Security { Type = SecurityTypes.Stock, Code = "SU" }
-        };
-
-        if (!wnd.ShowModal(this))
-            return;
-
-        conLink.Connector.LookupSecurities(wnd.CriteriaMessage);
-
-        //SecurityEditor.SecurityProvider = QTrader;
-        PortfolioEditor.Portfolios = new PortfolioDataSource(conLink.Connector);
-
-        //Подписаться на событие появления новых портфелей
-        conLink.Connector.PortfolioReceived += (Sub, portfolios) =>
-        {
-            if (portfolios.Name == PortName)
-            {
-                MyPortf = portfolios;
-            }
-        };
-
-        conLink.Connector.OrderBookReceived += TraderOnMarketDepthReceived;        
-         */
-
-        RegisterEvents();
-        //
-
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
         ResponseBaseModel res = new();
@@ -1038,9 +1005,13 @@ public class DriverStockSharpService(
             res.AddError("can`t connect");
             return res;
         }
-        SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp, cancellationToken);
 
+        await Task.WhenAll([
+                Task.Run(async () => { SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp, cancellationToken); }, cancellationToken),
+                Task.Run(async () => { ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, cancellationToken); }, cancellationToken)
+            ]);
 
+        RegisterEvents();
         if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
             conLink.Connector.SubscriptionsOnConnect.RemoveRange(conLink.Connector.SubscriptionsOnConnect.Where(x => x.DataType == DataType.Securities));
 
@@ -1141,6 +1112,7 @@ public class DriverStockSharpService(
             IsMarketMaker = req.IsMarketMaker,
             IsSystem = req.IsSystem,
             Comment = req.Comment,
+            ClientCode = ClientCodeStockSharp
         };
 
         conLink.Connector.RegisterOrder(order);
@@ -1360,6 +1332,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
     }
+    
     void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
     {
         _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
