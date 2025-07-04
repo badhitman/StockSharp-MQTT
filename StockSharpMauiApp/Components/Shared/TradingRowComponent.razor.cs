@@ -46,14 +46,14 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         }
     }
 
-    decimal _hightLimitl;
+    decimal _hightLimit;
     /// <inheritdoc/>
     public decimal HightLimit
     {
-        get => _hightLimitl;
+        get => _hightLimit;
         private set
         {
-            _hightLimitl = value;
+            _hightLimit = value;
             InvokeAsync(SaveStrategy);
         }
     }
@@ -168,12 +168,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     }
 
 
-    StorageMetadataModel StoreKey => new()
-    {
-        ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
-        OwnerPrimaryKey = Instrument.Id,
-        PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
-    };
 
     public void UpdateConnectionNotificationHandle(AboutConnectResponseModel req)
     {
@@ -187,13 +181,13 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     {
         await base.OnInitializedAsync();
         await SetBusyAsync();
-        TResponseModel<StrategyTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<StrategyTradeStockSharpModel>(StoreKey);
+        TResponseModel<StrategyTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<StrategyTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
         RestoreStrategy = restoreStrategy.Response;
 
         if (RestoreStrategy is not null)
         {
             _lowLimit = RestoreStrategy.LowLimit;
-            _hightLimitl = RestoreStrategy.HightLimit;
+            _hightLimit = RestoreStrategy.HightLimit;
             _isSmall = RestoreStrategy.IsSmall;
             _basePrice = RestoreStrategy.BasePrice;
             _valueOperation = RestoreStrategy.ValueOperation;
@@ -227,7 +221,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
                 IsAlter = _isAlter,
                 IsSmall = _isSmall,
                 LowLimit = _lowLimit,
-                HightLimit = _hightLimitl,
+                HightLimit = _hightLimit,
 
                 Board = Instrument.Board,
                 CfiCode = Instrument.CfiCode,
@@ -255,7 +249,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         else
             RestoreStrategy.Reload(StrategyTrade, Instrument);
 
-        TResponseModel<int> storeRes = await StorageRepo.SaveParameterAsync(RestoreStrategy, StoreKey, true, false);
+        TResponseModel<int> storeRes = await StorageRepo.SaveParameterAsync(RestoreStrategy, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id), true, false);
         if (!storeRes.Success())
             SnackBarRepo.ShowMessagesResponse(storeRes.Messages);
     }

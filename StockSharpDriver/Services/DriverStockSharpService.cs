@@ -942,7 +942,7 @@ public class DriverStockSharpService(
             Payload = new() { OnlineOnly = true, }
         };
 
-        TPaginationResponseModel<FixMessageAdapterModelDB> adRes = await manageRepo.AdaptersSelectAsync(adReq);
+        TPaginationResponseModel<FixMessageAdapterModelDB> adRes = await manageRepo.AdaptersSelectAsync(adReq, cancellationToken);
         if (adRes.Response is null || adRes.Response.Count == 0)
             return ResponseBaseModel.CreateError("adapters - is empty");
 
