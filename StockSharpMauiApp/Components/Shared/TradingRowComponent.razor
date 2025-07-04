@@ -16,10 +16,10 @@
     else
     {
         <th class="@_opClass" scope="row" title="@Instrument.Name">
-            <input disabled="@(!Available)" type="text" readonly class="form-control-plaintext form-control-sm" value="@Instrument.Code">
+            <span disabled="@(!Available)" class="link-light" style="cursor:pointer;">@Instrument.Code</span>
             @if (ShowNamesInstruments)
             {
-                <span>@Instrument.Name</span>
+                <u class="ms-1">`@Instrument.Name`</u>
             }
             @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
             {

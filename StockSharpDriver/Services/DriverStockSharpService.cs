@@ -81,7 +81,7 @@ public class DriverStockSharpService(
 
     readonly List<Order> AllOrders = [];
 
-    Dictionary<string, Order>
+    readonly Dictionary<string, Order>
         _ordersForQuoteBuyReregister = [],
         _ordersForQuoteSellReregister = [];
 
