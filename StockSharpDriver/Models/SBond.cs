@@ -1,26 +1,22 @@
-﻿using Ecng.Common;
-using SharedLib;
-using StockSharp.BusinessEntities;
+﻿using StockSharp.BusinessEntities;
+using System.Globalization;
 using System.Data;
+using Ecng.Common;
 
 namespace StockSharpDriver;
 
-/// <summary>
-/// Класс для работы с облигациями
-/// </summary>
 public class SBond
 {
-    private BndTypeEnum _sBondType; //  Type -  Govt, Corp, etc..
     private decimal _modelPrice; // theoretical price from the curve
     private Security _underlyingSecurity; // security from which bond is derived
-    private string _issuer;
-    private string _name;
+
     private DateTime _maturity;
     private DateTime _issuedate;
-    private string _ISIN;
     private string _micexCode;
 
+
     public List<CashFlow> CashFlows;
+
 
     public decimal ModelPrice
     {
@@ -54,27 +50,91 @@ public class SBond
 
     public SBond()
     {
-        _sBondType = BndTypeEnum.Govt;
-        _modelPrice = 0;
-        _underlyingSecurity = new Security();
-        _issuer = "";
+        UnderlyingSecurity = new Security();
         CashFlows = new List<CashFlow>();
-        _ISIN = "";
-        _micexCode = "";
+        MicexCode = "";
     }
 
     public SBond(Security sec) : this()
     {
-        _underlyingSecurity = sec;
-        _micexCode = sec.Code;
+        UnderlyingSecurity = sec;
+        MicexCode = sec.Code;
     }
 
-    public void CreateRegularOFZ(string name, string isin, DateTime issuedate, DateTime maturity, decimal rate)
+    // Downloads bond information form file, where each string reperesents property or coupon or notional
+    // tabs and gaps are ignored, coupon and notional are set by start day and end day and then value in RUB for 1000 RUB
+    public void LoadInfoFromFile(string filename)
     {
-        _name = name;
-        _ISIN = isin;
-        _issuedate = issuedate;
-        _maturity = maturity;
+        CashFlow? CF = null;
+        //set up culture separator "."
+        CultureInfo? cultInfo = CultureInfo.InvariantCulture.Clone() as CultureInfo;
+        cultInfo.NumberFormat.NumberDecimalSeparator = ".";
+
+        try
+        {    //read file
+            string[] lineArray = File.ReadAllLines(filename).ToArray();
+            int N = lineArray.Length;
+
+            for (int i = 0; i < N; i++)
+            {
+                string[] items = lineArray[i].Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                switch (items[0].ToLower())
+                {
+                    case "name": //property reading
+                        //_name = items[1];
+                        break;
+                    case "issuer":
+                        //_issuer = items[1];
+                        break;
+                    case "issuedate":
+                        IssueDate = Convert.ToDateTime(items[1]);
+                        break;
+                    case "maturity":
+                        Maturity = Convert.ToDateTime(items[1]);
+                        break;
+                    case "isin":
+                        //_ISIN = items[1];
+                        break;
+                    case "code":
+                        MicexCode = items[1];
+                        break;
+                    case "coupon":            //coupon reading
+                        CF = CashFlows.FirstOrDefault(s => s.EndDate.Equals(Convert.ToDateTime(items[2])));
+                        if (CF.IsNull())
+                        {
+                            CashFlows.Add(new CashFlow(Convert.ToDateTime(items[1]), Convert.ToDateTime(items[2]), Convert.ToDecimal(items[3], cultInfo), 0, Convert.ToDecimal(items[4], cultInfo)));
+                        }
+                        else
+                        {
+                            CF.Coupon += Convert.ToDecimal(items[3], cultInfo);
+                            CF.CouponRate += Convert.ToDecimal(items[4], cultInfo);
+                        }
+                        break;
+                    case "notional":   //notional reading
+                        CF = CashFlows.FirstOrDefault(s => s.EndDate.Equals(Convert.ToDateTime(items[2])));
+                        if (CF.IsNull())
+                            CashFlows.Add(new CashFlow(Convert.ToDateTime(items[1]), Convert.ToDateTime(items[2]), 0, Convert.ToDecimal(items[3], cultInfo), 0));
+                        else
+                        {
+                            CF.Notional += Convert.ToDecimal(items[3], cultInfo);
+                        }
+                        break;
+                }
+            }
+            ;
+
+            CashFlows.Sort();  //sort cash flows by last coupon date
+        }
+        catch (Exception e)
+        {
+            //MessageBox.Show("Unable to load info from file");
+        }
+    }
+
+    public void CreateRegularOFZ(DateTime issuedate, DateTime maturity, decimal rate)
+    {
+        IssueDate = issuedate;
+        Maturity = maturity;
 
         DateTime dt = issuedate;
 
@@ -107,6 +167,7 @@ public class SBond
                                       .Sum(), 2);
     }
 
+    //Calculte price for given Yield
     public decimal GetPriceFromYield(DateTime date, decimal yield, bool Clean)
     {
         if ((date < IssueDate) || (date >= Maturity))
@@ -115,6 +176,7 @@ public class SBond
             return -1;
 
         decimal remainingNotional = GetRemainingNotional(date);
+
         double DirtyPrice = CashFlows.SkipWhile(s => (s.EndDate <= date))
                                   .Select(s =>
 
@@ -131,13 +193,15 @@ public class SBond
     //Calculation of first derivate by yield
     public decimal GetFisrtDerivByYield(DateTime date, decimal yield, decimal remainingNotional)
     {
-        return -(decimal)CashFlows.SkipWhile(s => s.EndDate <= date)
-                              .Sum(s =>
+        return -(decimal)CashFlows.SkipWhile(s => (s.EndDate <= date))
+                              .Select(s =>
                               {
                                   decimal t = (s.EndDate - date).Days / 365m;
 
-                                  return (double)((s.CouponRate * remainingNotional * (s.EndDate - s.StDate).Days / 365m + s.Notional) * t) / Math.Pow((double)(1 + yield), (double)(t + 1));
-                              }) / remainingNotional;
+                                  return (double)((s.CouponRate * remainingNotional * (s.EndDate - s.StDate).Days / 365m + s.Notional) * t)
+                                         / Math.Pow((double)(1 + yield), (double)(t + 1));
+                              }
+                              ).Sum() / remainingNotional;
 
     }
 
@@ -162,7 +226,9 @@ public class SBond
 
         do
         {
-            nextyield = yield - (GetPriceFromYield(date, yield, true) - price) / GetFisrtDerivByYield(date, yield, remainingNotional);
+            nextyield = yield -
+                        (GetPriceFromYield(date, yield, true) - price) /
+                        GetFisrtDerivByYield(date, yield, remainingNotional);
             error = nextyield - yield;
             yield = nextyield;
             nIter++;
@@ -175,6 +241,7 @@ public class SBond
     //Calculate foerward price of the bond
     public decimal GetForwardPrice(decimal price, decimal rate, DateTime date, DateTime fwddate)
     {
+
         if ((date > fwddate) || (date < IssueDate) || (date >= Maturity) || (fwddate < IssueDate) || (fwddate >= Maturity))
             return -1;
 
@@ -185,6 +252,8 @@ public class SBond
 
         decimal remainingNotional = GetRemainingNotional(date);
 
-        return ((price * remainingNotional + GetAccruedInterest(date)) * (1 + rate * (fwddate - date).Days / 365) - interimCF - GetAccruedInterest(fwddate)) / remainingNotional;
+        return ((price * remainingNotional + GetAccruedInterest(date)) * (1 + rate * (fwddate - date).Days / 365) -
+                interimCF - GetAccruedInterest(fwddate)) / remainingNotional;
+
     }
 }
