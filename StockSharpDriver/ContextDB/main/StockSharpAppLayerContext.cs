@@ -45,37 +45,11 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<FixMessageAdapterModelDB>()
-        .HasKey(b => b.Id);
-
-        modelBuilder.Entity<FixMessageAdapterModelDB>()
-        .HasIndex(b => b.LastUpdatedAtUTC);
-
-        modelBuilder.Entity<FixMessageAdapterModelDB>()
-        .HasIndex(b => b.Name);
-
-        modelBuilder.Entity<FixMessageAdapterModelDB>()
-        .HasIndex(b => b.IsOnline);
-
-        modelBuilder.Entity<FixMessageAdapterModelDB>()
-        .HasIndex(b => b.AdapterTypeName);
-
-        modelBuilder.Entity<PortfolioTradeModelDB>()
-       .HasKey(b => b.Id);
-
-        modelBuilder.Entity<ExchangeStockSharpModelDB>()
-       .HasKey(b => b.Id);
-
-        modelBuilder.Entity<InstrumentStockSharpModelDB>()
-       .HasKey(b => b.Id);
-
-        modelBuilder.Entity<OrderStockSharpModelDB>()
-       .HasKey(b => b.IdPK);
-
-        modelBuilder.Entity<InstrumentMarkersModelDB>()
-       .HasKey(b => b.Id);
+        modelBuilder.Entity<FixMessageAdapterModelDB>().HasIndex(x => x.LastUpdatedAtUTC);
+        modelBuilder.Entity<FixMessageAdapterModelDB>().HasIndex(x => x.Name);
+        modelBuilder.Entity<FixMessageAdapterModelDB>().HasIndex(x => x.IsOnline);
+        modelBuilder.Entity<FixMessageAdapterModelDB>().HasIndex(x => x.AdapterTypeName);
     }
-
 
     /// <inheritdoc/>
     public DbSet<FixMessageAdapterModelDB> Adapters { get; set; }
@@ -94,6 +68,9 @@ public abstract partial class StockSharpAppLayerContext : DbContext
 
     /// <inheritdoc/>
     public DbSet<InstrumentMarkersModelDB> InstrumentsMarkers { get; set; }
+
+    /// <inheritdoc/>
+    public DbSet<CashFlowModelDB> CashFlows { get; set; }
 
     /// <inheritdoc/>
     public DbSet<OrderStockSharpModelDB> Orders { get; set; }

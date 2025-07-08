@@ -44,6 +44,31 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Boards");
                 });
 
+            modelBuilder.Entity("SharedLib.CashFlowModelDB", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CashFlowType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InstrumentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PaymentValue")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId");
+
+                    b.ToTable("CashFlows");
+                });
+
             modelBuilder.Entity("SharedLib.ExchangeStockSharpModelDB", b =>
                 {
                     b.Property<int>("Id")
@@ -522,6 +547,17 @@ namespace StockSharpDriver.Migrations
                         .HasForeignKey("ExchangeId");
 
                     b.Navigation("Exchange");
+                });
+
+            modelBuilder.Entity("SharedLib.CashFlowModelDB", b =>
+                {
+                    b.HasOne("SharedLib.InstrumentStockSharpModelDB", "Instrument")
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
                 });
 
             modelBuilder.Entity("SharedLib.InstrumentMarkersModelDB", b =>

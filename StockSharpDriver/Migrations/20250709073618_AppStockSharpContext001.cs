@@ -161,6 +161,28 @@ namespace StockSharpDriver.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CashFlows",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    InstrumentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PaymentValue = table.Column<decimal>(type: "TEXT", nullable: false),
+                    CashFlowType = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CashFlows", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CashFlows_Instruments_InstrumentId",
+                        column: x => x.InstrumentId,
+                        principalTable: "Instruments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "InstrumentsMarkers",
                 columns: table => new
                 {
@@ -277,6 +299,11 @@ namespace StockSharpDriver.Migrations
                 name: "IX_Boards_ExchangeId",
                 table: "Boards",
                 column: "ExchangeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CashFlows_InstrumentId",
+                table: "CashFlows",
+                column: "InstrumentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Exchanges_Name",
@@ -398,6 +425,9 @@ namespace StockSharpDriver.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Adapters");
+
+            migrationBuilder.DropTable(
+                name: "CashFlows");
 
             migrationBuilder.DropTable(
                 name: "InstrumentsMarkers");

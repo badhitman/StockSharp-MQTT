@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250701051548_AppStockSharpContext001")]
+    [Migration("20250709073618_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,6 +44,31 @@ namespace StockSharpDriver.Migrations
                     b.HasIndex("ExchangeId");
 
                     b.ToTable("Boards");
+                });
+
+            modelBuilder.Entity("SharedLib.CashFlowModelDB", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CashFlowType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InstrumentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PaymentValue")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId");
+
+                    b.ToTable("CashFlows");
                 });
 
             modelBuilder.Entity("SharedLib.ExchangeStockSharpModelDB", b =>
@@ -524,6 +549,17 @@ namespace StockSharpDriver.Migrations
                         .HasForeignKey("ExchangeId");
 
                     b.Navigation("Exchange");
+                });
+
+            modelBuilder.Entity("SharedLib.CashFlowModelDB", b =>
+                {
+                    b.HasOne("SharedLib.InstrumentStockSharpModelDB", "Instrument")
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
                 });
 
             modelBuilder.Entity("SharedLib.InstrumentMarkersModelDB", b =>

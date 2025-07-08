@@ -10,7 +10,7 @@ namespace StockSharpDriver;
 /// </summary>
 public class SBond
 {
-    private BndTypeEnum _sBondType; //  Type -  Govt, Corp, etc..
+    private BondTypesEnum _sBondType; //  Type -  Govt, Corp, etc..
     private decimal _modelPrice; // theoretical price from the curve
     private Security _underlyingSecurity; // security from which bond is derived
     private string _issuer;
@@ -54,7 +54,7 @@ public class SBond
 
     public SBond()
     {
-        _sBondType = BndTypeEnum.Govt;
+        _sBondType = BondTypesEnum.Govt;
         _modelPrice = 0;
         _underlyingSecurity = new Security();
         _issuer = "";
