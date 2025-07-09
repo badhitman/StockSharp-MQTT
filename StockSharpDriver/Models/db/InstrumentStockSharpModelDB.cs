@@ -26,6 +26,8 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
     /// <inheritdoc/>
     public new List<InstrumentMarkersModelDB> Markers { get; set; }
 
+    /// <inheritdoc/>
+    public List<CashFlowModelDB> CashFlows { get; set; }
 
     /// <inheritdoc/>
     public void SetUpdate(InstrumentTradeStockSharpModel req)

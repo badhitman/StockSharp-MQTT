@@ -154,7 +154,7 @@ public class Program
                     .AddHostedService<MqttServerWorker>()
                     .AddHostedService<ConnectionStockSharpWorker>()
                 ;
-                
+
                 #region MQ Transmission (remote methods call)
                 services
                     .AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName))
@@ -173,6 +173,39 @@ public class Program
         //IDbContextFactory<NLogsContext> logsDbFactory
         IDbContextFactory<NLogsContext> _factNlogs = host.Services.GetRequiredService<IDbContextFactory<NLogsContext>>();
         NLogsContext _ctxNlogs = _factNlogs.CreateDbContext();
+
+#if DEMO_SEED_DB
+        IDbContextFactory<StockSharpAppContext> _factContext = host.Services.GetRequiredService<IDbContextFactory<StockSharpAppContext>>();
+        StockSharpAppContext _ctxDriver = _factContext.CreateDbContext();
+        if (!_ctxDriver.Exchanges.Any() && !_ctxDriver.Boards.Any() && !_ctxDriver.Instruments.Any())
+        {
+            _ctxDriver.Instruments.Add(new()
+            {
+                CreatedAtUTC = DateTime.UtcNow,
+                LastUpdatedAtUTC = DateTime.UtcNow,
+                Board = new()
+                {
+                    Code = "board-DEMO_SEED_DB",
+                    Exchange = new()
+                    {
+                        Name = "Exchange DEMO_SEED_DB",
+                        CountryCode = (int?)CountryCodesEnum.RU,
+                    },
+                    CreatedAtUTC = DateTime.UtcNow,
+                    LastUpdatedAtUTC = DateTime.UtcNow,
+                },
+                Code = "code-DEMO_SEED_DB",
+                Currency = (int)CurrenciesTypesEnum.RUB,
+                IdRemote = "code-DEMO_SEED_DB@board-DEMO_SEED_DB",
+                IsFavorite = true,
+                IssueDate = DateTime.UtcNow,
+                Name = "instrument DEMO_SEED_DB",
+                TypeInstrument = (int)InstrumentsStockSharpTypesEnum.Bond,
+                SettlementType = (int)SettlementTypesEnum.Delivery,
+            });
+            _ctxDriver.SaveChanges();
+        }
+#endif
 
         logger.Info($"Program has started (logs count: {_ctxNlogs.Logs.Count()}).");
         host.Run();

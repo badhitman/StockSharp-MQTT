@@ -119,7 +119,10 @@ namespace StockSharpDriver.Migrations
                     Shortable = table.Column<bool>(type: "INTEGER", nullable: true),
                     IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IssueDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Maturity = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    RateCoup = table.Column<decimal>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

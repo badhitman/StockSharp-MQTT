@@ -108,7 +108,7 @@ public static class BindsStockSharpModelsExtensions
     public static ExchangeStockSharpModel Bind(this ExchangeStockSharpModel main, Exchange inc)
     {
         main.Name = inc.Name;
-        main.CountryCode = inc.CountryCode is null ? null : (CountryCodesEnum)Enum.Parse(typeof(CountryCodesEnum), Enum.GetName(inc.CountryCode.Value));
+        main.CountryCode = inc.CountryCode is null ? null : (int)(CountryCodesEnum)Enum.Parse(typeof(CountryCodesEnum), Enum.GetName(inc.CountryCode.Value));
         return main;
     }
 

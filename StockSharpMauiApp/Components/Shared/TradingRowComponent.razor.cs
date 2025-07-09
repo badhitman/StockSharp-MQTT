@@ -6,14 +6,18 @@ using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using BlazorLib;
 using SharedLib;
+using MudBlazor;
 
 namespace StockSharpMauiApp.Components.Shared;
 
 /// <summary>
-/// TradingRowComponent
+/// TradingRowComponent @inject IDialogService DialogService
 /// </summary>
 public partial class TradingRowComponent : StockSharpAboutComponent
 {
+    [Inject]
+    IDialogService DialogRepo { get; set; } = default!;
+
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
@@ -167,6 +171,13 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         }
     }
 
+
+    Task<IDialogReference> OpenDialogAsync()
+    {
+        DialogOptions options = new() { CloseOnEscapeKey = true, BackdropClick = true, FullScreen = true, FullWidth = true,  };
+        DialogParameters<CashFlowEditDialogComponent> parameters = new() { { x => x.Instrument, Instrument } };
+        return DialogRepo.ShowAsync<CashFlowEditDialogComponent>("Instrument edit", parameters, options);
+    }
 
 
     public void UpdateConnectionNotificationHandle(AboutConnectResponseModel req)

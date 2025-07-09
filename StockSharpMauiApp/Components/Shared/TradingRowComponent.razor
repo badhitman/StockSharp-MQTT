@@ -4,7 +4,7 @@
 @inherits StockSharpAboutComponent
 
 @{
-    string _opClass = !Available ? "opacity-25" : "";
+    string _opClass = Available ? "" : "opacity-25";
 }
 <tr>
     @if (IsBusyProgress)
@@ -16,7 +16,7 @@
     else
     {
         <th class="@_opClass" scope="row" title="@Instrument.Name">
-            <code disabled="@(!Available)" class="link-light" style="cursor:pointer;">@Instrument.Code</code>
+            <code class="link-light" style="cursor:pointer;" @onclick="OpenDialogAsync">@Instrument.Code</code>
             @if (ShowNamesInstruments)
             {
                 <u class="ms-1">`@Instrument.Name`</u>

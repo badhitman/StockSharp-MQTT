@@ -54,7 +54,7 @@ public class SBond
     // tabs and gaps are ignored, coupon and notional are set by start day and end day and then value in RUB for 1000 RUB
     public void LoadInfoFromFile(string filename)
     {
-        CashFlow? CF = null;
+        CashFlow CF = null;
         //set up culture separator "."
         CultureInfo cultInfo = (CultureInfo)CultureInfo.InvariantCulture.Clone();
         cultInfo.NumberFormat.NumberDecimalSeparator = ".";

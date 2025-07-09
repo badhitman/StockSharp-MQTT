@@ -266,7 +266,13 @@ namespace StockSharpDriver.Migrations
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("IssueDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("LastUpdatedAtUTC")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Maturity")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Multiplier")
@@ -285,6 +291,9 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PrimaryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("RateCoup")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset?>("SettlementDate")
@@ -552,7 +561,7 @@ namespace StockSharpDriver.Migrations
             modelBuilder.Entity("SharedLib.CashFlowModelDB", b =>
                 {
                     b.HasOne("SharedLib.InstrumentStockSharpModelDB", "Instrument")
-                        .WithMany()
+                        .WithMany("CashFlows")
                         .HasForeignKey("InstrumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -622,6 +631,8 @@ namespace StockSharpDriver.Migrations
 
             modelBuilder.Entity("SharedLib.InstrumentStockSharpModelDB", b =>
                 {
+                    b.Navigation("CashFlows");
+
                     b.Navigation("Markers");
                 });
 
