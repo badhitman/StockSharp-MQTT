@@ -196,11 +196,12 @@ public class Program
                 Name = "instrument DEMO_SEED_DB",
                 TypeInstrument = (int)InstrumentsStockSharpTypesEnum.Bond,
                 SettlementType = (int)SettlementTypesEnum.Delivery,
-                BondTypeInstrumentManual = (int)BondsTypesInstrumentsManualEnum.Regular,
+                BondTypeInstrumentManual = (int)BondsTypesInstrumentsManualEnum.Floater,
                 CouponRate = 1,
                 LastFairPrice = 9,
                 MaturityDate = DateTime.UtcNow,
                 TypeInstrumentManual = (int)TypesInstrumentsManualEnum.Futures,
+                 
                 ISIN = "RU000A101QE0",
                 CashFlows = [],
             };

@@ -44,6 +44,16 @@ public static class BindsStockSharpModelsExtensionsViews
         main.Decimals = inc.Decimals;
         main.Code = inc.Code;
         main.IsFavorite = inc.IsFavorite;
+
+        main.ISIN = inc.ISIN;
+        main.BondTypeInstrumentManual = inc.BondTypeInstrumentManual;
+        main.Comment = inc.Comment;
+        main.CouponRate = inc.CouponRate;
+        main.IssueDate = inc.IssueDate;
+        main.LastFairPrice = inc.LastFairPrice;
+        main.MaturityDate = inc.MaturityDate;
+        main.TypeInstrumentManual = inc.TypeInstrumentManual;
+
         return main;
     }
 
