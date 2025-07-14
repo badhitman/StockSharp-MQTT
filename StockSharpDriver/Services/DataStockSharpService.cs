@@ -15,6 +15,17 @@ namespace StockSharpDriver;
 public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IDataStockSharpService
 {
     /// <inheritdoc/>
+    public async Task<ResponseBaseModel> UpdateInstrumentAsync(InstrumentTradeStockSharpViewModel req, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        InstrumentStockSharpModelDB instrumentDb = await context.Instruments.FirstAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
+        instrumentDb.SetUpdate(req, true);
+        context.Update(instrumentDb);
+        await context.SaveChangesAsync(cancellationToken);
+        return ResponseBaseModel.CreateSuccess("Ok. Instrument updated");
+    }
+
+    /// <inheritdoc/>
     public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> GetInstrumentsAsync(int[] ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
@@ -102,54 +113,6 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
-    {
-        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        IQueryable<BoardStockSharpModelDB> q = ids is null || ids.Length == 0
-            ? context.Boards.AsQueryable()
-            : context.Boards.Where(x => ids.Contains(x.Id));
-
-        List<BoardStockSharpModelDB> data = await q
-            .Include(x => x.Exchange)
-            .ToListAsync(cancellationToken: cancellationToken);
-
-        return new()
-        {
-            Response = [.. data]
-        };
-    }
-
-    /// <inheritdoc/>
-    public async Task<TResponseModel<List<ExchangeStockSharpModel>>> GetExchangesAsync(int[] ids = null, CancellationToken cancellationToken = default)
-    {
-        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        IQueryable<ExchangeStockSharpModelDB> q = ids is null || ids.Length == 0
-            ? context.Exchanges.AsQueryable()
-            : context.Exchanges.Where(x => ids.Contains(x.Id));
-        List<ExchangeStockSharpModelDB> data = await q.Include(x => x.Boards).ToListAsync(cancellationToken: cancellationToken);
-
-        return new()
-        {
-            Response = [.. data]
-        };
-    }
-
-    /// <inheritdoc/>
-    public async Task<TResponseModel<List<OrderStockSharpModel>>> GetOrdersAsync(int[] ids = null, CancellationToken cancellationToken = default)
-    {
-        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        IQueryable<OrderStockSharpModelDB> q = ids is null || ids.Length == 0
-            ? context.Orders.AsQueryable()
-            : context.Orders.Where(x => ids.Contains(x.IdPK));
-        List<OrderStockSharpModelDB> data = await q.Include(x => x.Instrument).Include(x => x.Portfolio).ToListAsync(cancellationToken: cancellationToken);
-
-        return new()
-        {
-            Response = [.. data]
-        };
-    }
-
-    /// <inheritdoc/>
     public async Task<TPaginationResponseModel<InstrumentTradeStockSharpViewModel>> InstrumentsSelectAsync(InstrumentsRequestModel req, CancellationToken cancellationToken = default)
     {
         if (req.PageSize < 10)
@@ -218,6 +181,54 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         await context.SaveChangesAsync(cancellationToken: cancellationToken);
 
         return ResponseBaseModel.CreateSuccess("Запрос выполнен");
+    }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        IQueryable<BoardStockSharpModelDB> q = ids is null || ids.Length == 0
+            ? context.Boards.AsQueryable()
+            : context.Boards.Where(x => ids.Contains(x.Id));
+
+        List<BoardStockSharpModelDB> data = await q
+            .Include(x => x.Exchange)
+            .ToListAsync(cancellationToken: cancellationToken);
+
+        return new()
+        {
+            Response = [.. data]
+        };
+    }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<ExchangeStockSharpModel>>> GetExchangesAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        IQueryable<ExchangeStockSharpModelDB> q = ids is null || ids.Length == 0
+            ? context.Exchanges.AsQueryable()
+            : context.Exchanges.Where(x => ids.Contains(x.Id));
+        List<ExchangeStockSharpModelDB> data = await q.Include(x => x.Boards).ToListAsync(cancellationToken: cancellationToken);
+
+        return new()
+        {
+            Response = [.. data]
+        };
+    }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<OrderStockSharpModel>>> GetOrdersAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        IQueryable<OrderStockSharpModelDB> q = ids is null || ids.Length == 0
+            ? context.Orders.AsQueryable()
+            : context.Orders.Where(x => ids.Contains(x.IdPK));
+        List<OrderStockSharpModelDB> data = await q.Include(x => x.Instrument).Include(x => x.Portfolio).ToListAsync(cancellationToken: cancellationToken);
+
+        return new()
+        {
+            Response = [.. data]
+        };
     }
 
     /// <inheritdoc/>

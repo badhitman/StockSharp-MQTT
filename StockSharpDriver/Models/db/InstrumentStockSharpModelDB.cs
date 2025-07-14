@@ -30,9 +30,9 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
     public List<CashFlowModelDB> CashFlows { get; set; }
 
     /// <inheritdoc/>
-    public void SetUpdate(InstrumentTradeStockSharpModel req)
+    public void SetUpdate(InstrumentTradeStockSharpModel req, bool nameUpdate = false)
     {
-        if (string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(req.Name))
+        if (nameUpdate || (string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(req.Name)))
         {
             Name = req.Name;
             NameNormalizedUpper = req.Name is null ? "" : req.Name.ToUpper();
@@ -60,5 +60,17 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
         Code = req.Code;
         Class = req.Class;
         CfiCode = req.CfiCode;
+
+        if (req is InstrumentTradeStockSharpViewModel other)
+        {
+            BondTypeInstrumentManual = other.BondTypeInstrumentManual;
+            TypeInstrumentManual = other.TypeInstrumentManual;
+            ISIN = other.ISIN;
+            IssueDate = other.IssueDate;
+            MaturityDate = other.MaturityDate;
+            CouponRate = other.CouponRate;
+            LastFairPrice = other.LastFairPrice;
+            Comment = other.Comment;
+        }
     }
 }
