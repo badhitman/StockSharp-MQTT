@@ -38,6 +38,7 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
             NameNormalizedUpper = req.Name is null ? "" : req.Name.ToUpper();
         }
 
+        IdRemote = req.IdRemote;
         IdRemoteNormalizedUpper = req.IdRemote.ToUpper();
 
         LastUpdatedAtUTC = DateTime.UtcNow;
@@ -53,7 +54,6 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
         ShortName = req.ShortName;
         Shortable = req.Shortable;
         SettlementType = req.SettlementType;
-        IdRemote = req.IdRemote;
         Multiplier = req.Multiplier;
         FaceValue = req.FaceValue;
         Decimals = req.Decimals;

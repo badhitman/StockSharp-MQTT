@@ -103,13 +103,7 @@ public class Program
                     //opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 #endif
                 })
-                .AddDbContextFactory<NLogsContext>(opt =>
-                {
-#if DEBUG
-                    opt.EnableSensitiveDataLogging(true);
-                    //opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
-#endif
-                });
+                .AddDbContextFactory<NLogsContext>();
 
                 // Register Bot configuration
                 services.Configure<BotConfiguration>(bx.Configuration.GetSection(BotConfiguration.Configuration));
@@ -179,7 +173,7 @@ public class Program
         StockSharpAppContext _ctxDriver = _factContext.CreateDbContext();
         if (!_ctxDriver.Exchanges.Any() && !_ctxDriver.Boards.Any() && !_ctxDriver.Instruments.Any())
         {
-            _ctxDriver.Instruments.Add(new()
+            InstrumentStockSharpModelDB _insSeed = new()
             {
                 CreatedAtUTC = DateTime.UtcNow,
                 LastUpdatedAtUTC = DateTime.UtcNow,
@@ -202,7 +196,22 @@ public class Program
                 Name = "instrument DEMO_SEED_DB",
                 TypeInstrument = (int)InstrumentsStockSharpTypesEnum.Bond,
                 SettlementType = (int)SettlementTypesEnum.Delivery,
+                BondTypeInstrumentManual = (int)BondsTypesInstrumentsManualEnum.Regular,
+                CouponRate = 1,
+                LastFairPrice = 9,
+                MaturityDate = DateTime.UtcNow,
+                TypeInstrumentManual = (int)TypesInstrumentsManualEnum.Futures,
+                ISIN = "RU000A101QE0",
+                CashFlows = [],
+            };
+            _insSeed.CashFlows.Add(new()
+            {
+                Instrument = _insSeed,
+                CashFlowType = (int)CashFlowTypesEnum.Notional,
+                PaymentDate = DateTime.UtcNow,
+                PaymentValue = 5
             });
+            _ctxDriver.Instruments.Add(_insSeed);
             _ctxDriver.SaveChanges();
         }
 #endif
