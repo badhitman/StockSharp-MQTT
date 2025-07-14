@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250710074912_AppStockSharpContext001")]
+    [Migration("20250714061653_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -235,6 +235,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<int>("BoardId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("BondTypeInstrumentManual")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CfiCode")
                         .HasColumnType("TEXT");
 
@@ -242,6 +245,12 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("CouponRate")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAtUTC")
@@ -259,6 +268,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<decimal?>("FaceValue")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ISIN")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("IdRemote")
                         .HasColumnType("TEXT");
 
@@ -271,10 +283,13 @@ namespace StockSharpDriver.Migrations
                     b.Property<DateTime>("IssueDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("LastFairPrice")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("LastUpdatedAtUTC")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Maturity")
+                    b.Property<DateTime>("MaturityDate")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Multiplier")
@@ -295,9 +310,6 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("PrimaryId")
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("RateCoup")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTimeOffset?>("SettlementDate")
                         .HasColumnType("TEXT");
 
@@ -311,6 +323,9 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("TypeInstrument")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TypeInstrumentManual")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UnderlyingSecurityId")

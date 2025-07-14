@@ -120,9 +120,14 @@ namespace StockSharpDriver.Migrations
                     IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    BondTypeInstrumentManual = table.Column<int>(type: "INTEGER", nullable: false),
+                    TypeInstrumentManual = table.Column<int>(type: "INTEGER", nullable: false),
+                    ISIN = table.Column<string>(type: "TEXT", nullable: true),
                     IssueDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Maturity = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    RateCoup = table.Column<decimal>(type: "TEXT", nullable: false)
+                    MaturityDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CouponRate = table.Column<decimal>(type: "TEXT", nullable: false),
+                    LastFairPrice = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Comment = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
