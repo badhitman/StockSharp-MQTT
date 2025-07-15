@@ -15,13 +15,41 @@ namespace StockSharpDriver;
 public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IDataStockSharpService
 {
     /// <inheritdoc/>
+    public async Task<ResponseBaseModel> CashFlowUpdateAsync(CashFlowViewModel req, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+
+        if (req.Id == 0)
+        {
+            await context.CashFlows.AddAsync(new()
+            {
+                Id = req.Id,
+                CashFlowType = req.CashFlowType,
+                InstrumentId = req.InstrumentId,
+                PaymentDate = req.PaymentDate,
+                PaymentValue = req.PaymentValue,
+            }, cancellationToken);
+        }
+
+        CashFlowModelDB cashFlowDb = await context.CashFlows.FirstAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
+        cashFlowDb.SetUpdate(req);
+        context.CashFlows.Update(cashFlowDb);
+        await context.SaveChangesAsync(cancellationToken);
+        return ResponseBaseModel.CreateSuccess("Ok");
+    }
+
+    /// <inheritdoc/>
     public async Task<TResponseModel<List<CashFlowViewModel>>> CashFlowList(int instrumentId, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        List<CashFlowModelDB> res = await context.CashFlows.Where(x => x.InstrumentId == instrumentId).ToListAsync(cancellationToken: cancellationToken);
+        List<CashFlowModelDB> res = await context.CashFlows
+            .Where(x => x.InstrumentId == instrumentId)
+            .OrderBy(x => x.PaymentDate)
+            .ToListAsync(cancellationToken: cancellationToken);
+
         return new()
         {
-            Response = [.. res.Select(x=> new CashFlowViewModel()
+            Response = [.. res.Select(x => new CashFlowViewModel()
             {
                 PaymentValue = x.PaymentValue,
                 CashFlowType = x.CashFlowType,

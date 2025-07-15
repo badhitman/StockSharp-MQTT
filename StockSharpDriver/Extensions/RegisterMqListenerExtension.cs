@@ -42,7 +42,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<LimitsStrategiesUpdateStockSharpDriverReceive, LimitsStrategiesUpdateRequestModel, ResponseBaseModel>()
             .RegisterMqListener<DisconnectStockSharpDriverReceive, object, ResponseBaseModel>()
             .RegisterMqListener<TerminateStockSharpDriverReceive, object, ResponseBaseModel>()
-            .RegisterMqListener<ConnectStockSharpDriverReceive, ConnectRequestModel, ResponseBaseModel>()//InitialLoadStockSharpDriverReceive
+            .RegisterMqListener<ConnectStockSharpDriverReceive, ConnectRequestModel, ResponseBaseModel>()
             .RegisterMqListener<InitialLoadStockSharpDriverReceive, InitialLoadRequestModel, ResponseBaseModel>()
             .RegisterMqListener<UpdateOrCreateAdapterStockSharpDriverReceive, FixMessageAdapterModelDB, TResponseModel<FixMessageAdapterModelDB>>()
             .RegisterMqListener<AdaptersSelectStockSharpDriverReceive, TPaginationRequestStandardModel<AdaptersRequestModel>, TPaginationResponseModel<FixMessageAdapterModelDB>>()
@@ -52,6 +52,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<GetPortfoliosStockSharpDriverReceive, int[], TResponseModel<List<PortfolioStockSharpViewModel>>>()
             .RegisterMqListener<GetBoardsStockSharpDriverReceive, int[], TResponseModel<List<BoardStockSharpViewModel>>>()
             .RegisterMqListener<CashFlowListStockSharpReceive, int, TResponseModel<List<CashFlowViewModel>>>()
+            .RegisterMqListener<CashFlowUpdateStockSharpReceive, CashFlowViewModel, ResponseBaseModel>()
             .RegisterMqListener<SetMarkersForInstrumentStockSharpDriverReceive, SetMarkersForInstrumentRequestModel, ResponseBaseModel>()
             .RegisterMqListener<GetExchangesStockSharpDriverReceive, int[], TResponseModel<List<ExchangeStockSharpModel>>>()
             .RegisterMqListener<GetInstrumentsStockSharpDriverReceive, int[], TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()

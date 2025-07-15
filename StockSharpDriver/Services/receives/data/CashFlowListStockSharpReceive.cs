@@ -13,7 +13,7 @@ public class CashFlowListStockSharpReceive(IDataStockSharpService ssRepo)
     : IMQTTReceive<int, TResponseModel<List<CashFlowViewModel>>>
 {
     /// <inheritdoc/>
-    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.GetBoardsStockSharpReceive;
+    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.CashFlowListStockSharpReceive;
 
     /// <inheritdoc/>
     public async Task<TResponseModel<List<CashFlowViewModel>>> ResponseHandleActionAsync(int instrumentId, CancellationToken token = default)
