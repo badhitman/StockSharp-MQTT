@@ -41,24 +41,15 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
                 PaymentDate = req.PaymentDate,
                 PaymentValue = req.PaymentValue,
             }, cancellationToken);
-        }
-        else
-        {
-            CashFlowModelDB cashFlowDb = await context.CashFlows.FirstAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
-            cashFlowDb.SetUpdate(req);
-            context.CashFlows.Update(cashFlowDb);
-        }
-
-        try
-        {
             await context.SaveChangesAsync(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            return ResponseBaseModel.CreateError(ex);
+            return ResponseBaseModel.CreateInfo("Ok. CashFlow created");
         }
 
-        return ResponseBaseModel.CreateSuccess("Ok");
+        CashFlowModelDB cashFlowDb = await context.CashFlows.FirstAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
+        cashFlowDb.SetUpdate(req);
+        context.CashFlows.Update(cashFlowDb);
+        await context.SaveChangesAsync(cancellationToken);
+        return ResponseBaseModel.CreateSuccess("Ok. CashFlow updated");
     }
 
     /// <inheritdoc/>
