@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////
 
 using Microsoft.EntityFrameworkCore;
-using StockSharp.Algo;
 using SharedLib;
 using DbcLib;
 
@@ -14,6 +13,19 @@ namespace StockSharpDriver;
 /// </summary>
 public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IDataStockSharpService
 {
+    #region CashFlow
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> CashFlowDelete(int cashFlowId, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        context.CashFlows.RemoveRange(context.CashFlows.Where(x => x.Id == cashFlowId));
+
+        if (await context.SaveChangesAsync(cancellationToken) == 0)
+            return ResponseBaseModel.CreateWarning($"CashFlow #{cashFlowId} not found");
+
+        return ResponseBaseModel.CreateSuccess($"Ok. CashFlow #{cashFlowId} deleted");
+    }
+
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> CashFlowUpdateAsync(CashFlowViewModel req, CancellationToken cancellationToken = default)
     {
@@ -30,11 +42,22 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
                 PaymentValue = req.PaymentValue,
             }, cancellationToken);
         }
+        else
+        {
+            CashFlowModelDB cashFlowDb = await context.CashFlows.FirstAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
+            cashFlowDb.SetUpdate(req);
+            context.CashFlows.Update(cashFlowDb);
+        }
 
-        CashFlowModelDB cashFlowDb = await context.CashFlows.FirstAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
-        cashFlowDb.SetUpdate(req);
-        context.CashFlows.Update(cashFlowDb);
-        await context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return ResponseBaseModel.CreateError(ex);
+        }
+
         return ResponseBaseModel.CreateSuccess("Ok");
     }
 
@@ -55,10 +78,13 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
                 CashFlowType = x.CashFlowType,
                 PaymentDate = x.PaymentDate,
                 Id = x.Id,
+                InstrumentId = x.InstrumentId,
             })],
         };
     }
+    #endregion
 
+    #region Instrument
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> UpdateInstrumentAsync(InstrumentTradeStockSharpViewModel req, CancellationToken cancellationToken = default)
     {
@@ -214,10 +240,10 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> InstrumentFavoriteToggleAsync(InstrumentTradeStockSharpViewModel req, CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> InstrumentFavoriteToggleAsync(int instrumentId, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        InstrumentStockSharpModelDB instrumentDb = await context.Instruments.FirstOrDefaultAsync(x => x.IdRemote == req.IdRemote, cancellationToken: cancellationToken);
+        InstrumentStockSharpModelDB instrumentDb = await context.Instruments.FirstOrDefaultAsync(x => x.Id == instrumentId, cancellationToken: cancellationToken);
         if (instrumentDb is null)
             return ResponseBaseModel.CreateError("Инструмент не найден");
 
@@ -227,6 +253,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
 
         return ResponseBaseModel.CreateSuccess("Запрос выполнен");
     }
+    #endregion
 
     /// <inheritdoc/>
     public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
