@@ -15,6 +15,23 @@ namespace StockSharpDriver;
 public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IDataStockSharpService
 {
     /// <inheritdoc/>
+    public async Task<TResponseModel<List<CashFlowViewModel>>> CashFlowList(int instrumentId, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        List<CashFlowModelDB> res = await context.CashFlows.Where(x => x.InstrumentId == instrumentId).ToListAsync(cancellationToken: cancellationToken);
+        return new()
+        {
+            Response = [.. res.Select(x=> new CashFlowViewModel()
+            {
+                PaymentValue = x.PaymentValue,
+                CashFlowType = x.CashFlowType,
+                PaymentDate = x.PaymentDate,
+                Id = x.Id,
+            })],
+        };
+    }
+
+    /// <inheritdoc/>
     public async Task<ResponseBaseModel> UpdateInstrumentAsync(InstrumentTradeStockSharpViewModel req, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
