@@ -13,7 +13,7 @@ public class CashFlowDeleteStockSharpReceive(IDataStockSharpService ssRepo)
     : IMQTTReceive<int, ResponseBaseModel>
 {
     /// <inheritdoc/>
-    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.CashFlowUpdateStockSharpReceive;
+    public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.CashFlowDeleteStockSharpReceive;
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> ResponseHandleActionAsync(int req, CancellationToken token = default)
