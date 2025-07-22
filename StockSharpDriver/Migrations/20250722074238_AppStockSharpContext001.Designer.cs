@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250714064426_AppStockSharpContext001")]
+    [Migration("20250722074238_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -566,6 +566,25 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Portfolios");
                 });
 
+            modelBuilder.Entity("SharedLib.RubricInstrumentStockSharpModelDB", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InstrumentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RubricId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId");
+
+                    b.ToTable("RubricsInstruments");
+                });
+
             modelBuilder.Entity("SharedLib.BoardStockSharpModelDB", b =>
                 {
                     b.HasOne("SharedLib.ExchangeStockSharpModelDB", "Exchange")
@@ -634,6 +653,17 @@ namespace StockSharpDriver.Migrations
                         .HasForeignKey("BoardId");
 
                     b.Navigation("Board");
+                });
+
+            modelBuilder.Entity("SharedLib.RubricInstrumentStockSharpModelDB", b =>
+                {
+                    b.HasOne("SharedLib.InstrumentStockSharpModelDB", "Instrument")
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
                 });
 
             modelBuilder.Entity("SharedLib.BoardStockSharpModelDB", b =>

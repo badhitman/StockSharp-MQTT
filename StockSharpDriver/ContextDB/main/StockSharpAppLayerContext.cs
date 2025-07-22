@@ -67,6 +67,9 @@ public abstract partial class StockSharpAppLayerContext : DbContext
     public DbSet<InstrumentStockSharpModelDB> Instruments { get; set; }
 
     /// <inheritdoc/>
+    public DbSet<RubricInstrumentStockSharpModelDB> RubricsInstruments { get; set; }
+
+    /// <inheritdoc/>
     public DbSet<InstrumentMarkersModelDB> InstrumentsMarkers { get; set; }
 
     /// <inheritdoc/>

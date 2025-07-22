@@ -83,6 +83,9 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
 
                     b.HasIndex("ParentId");
 
+                    b.HasIndex("NormalizedNameUpper", "ContextName")
+                        .IsUnique();
+
                     b.HasIndex("SortIndex", "ParentId", "ContextName")
                         .IsUnique();
 

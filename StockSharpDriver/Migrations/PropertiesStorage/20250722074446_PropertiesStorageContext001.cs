@@ -160,6 +160,12 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
                 column: "NormalizedNameUpper");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Rubrics_NormalizedNameUpper_ContextName",
+                table: "Rubrics",
+                columns: new[] { "NormalizedNameUpper", "ContextName" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Rubrics_ParentId",
                 table: "Rubrics",
                 column: "ParentId");

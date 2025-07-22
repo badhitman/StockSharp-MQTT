@@ -211,6 +211,26 @@ namespace StockSharpDriver.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RubricsInstruments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    InstrumentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    RubricId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RubricsInstruments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RubricsInstruments_Instruments_InstrumentId",
+                        column: x => x.InstrumentId,
+                        principalTable: "Instruments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Orders",
                 columns: table => new
                 {
@@ -427,6 +447,11 @@ namespace StockSharpDriver.Migrations
                 name: "IX_Portfolios_LastUpdatedAtUTC",
                 table: "Portfolios",
                 column: "LastUpdatedAtUTC");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RubricsInstruments_InstrumentId",
+                table: "RubricsInstruments",
+                column: "InstrumentId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -444,10 +469,13 @@ namespace StockSharpDriver.Migrations
                 name: "Orders");
 
             migrationBuilder.DropTable(
-                name: "Instruments");
+                name: "RubricsInstruments");
 
             migrationBuilder.DropTable(
                 name: "Portfolios");
+
+            migrationBuilder.DropTable(
+                name: "Instruments");
 
             migrationBuilder.DropTable(
                 name: "Boards");

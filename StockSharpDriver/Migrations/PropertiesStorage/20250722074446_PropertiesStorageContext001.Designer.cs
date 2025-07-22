@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations.PropertiesStorage
 {
     [DbContext(typeof(PropertiesStorageContext))]
-    [Migration("20250603072457_PropertiesStorageContext001")]
+    [Migration("20250722074446_PropertiesStorageContext001")]
     partial class PropertiesStorageContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -84,6 +84,9 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
                     b.HasIndex("NormalizedNameUpper");
 
                     b.HasIndex("ParentId");
+
+                    b.HasIndex("NormalizedNameUpper", "ContextName")
+                        .IsUnique();
 
                     b.HasIndex("SortIndex", "ParentId", "ContextName")
                         .IsUnique();
