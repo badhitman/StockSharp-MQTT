@@ -46,14 +46,14 @@ public static class MauiProgram
             .AddScoped<IRubricsTransmission, RubricsTransmission>()
             .AddScoped<ITelegramBotStandardTransmission, TelegramBotStandardTransmission>()
             .AddScoped<IDataStockSharpService, DataStockSharpTransmission>()
-            .AddScoped<IDriverStockSharpService, StockSharpDriverTransmission>()
+            .AddScoped<IDriverStockSharpService, DriverStockSharpTransmission>()
             .AddScoped<IManageStockSharpService, ManageStockSharpTransmission>()
             .AddScoped<ILogsService, LogsServiceTransmission>()
             .AddScoped<IParametersStorageTransmission, ParametersStorageTransmission>()
             ;
 
         builder.Services
-                   .AddSingleton<IEventsStockSharpService, StockSharpEventsServiceTransmission>()
+                   .AddSingleton<IEventsStockSharp, EventsStockSharpTransmission>()
                ;
         //
         builder.Services

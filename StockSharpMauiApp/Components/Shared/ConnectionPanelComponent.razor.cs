@@ -21,7 +21,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     IDataStockSharpService DataRepo { get; set; } = default!;
 
     [Inject]
-    IEventsStockSharpService EventsNotifyRepo { get; set; } = default!;
+    IEventsStockSharp EventsNotifyRepo { get; set; } = default!;
 
     [Inject]
     IEventNotifyReceive<PortfolioStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;

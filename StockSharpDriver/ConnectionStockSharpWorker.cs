@@ -13,7 +13,7 @@ namespace StockSharpDriver;
 public class ConnectionStockSharpWorker(
     IFlushStockSharpService dataRepo,
     ILogger<ConnectionStockSharpWorker> _logger,
-    IEventsStockSharpService eventTrans,
+    IEventsStockSharp eventTrans,
     ConnectionLink conLink) : BackgroundService
 {
     private void DisconnectLink() => UnregisterEvents();

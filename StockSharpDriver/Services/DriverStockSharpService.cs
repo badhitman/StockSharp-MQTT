@@ -25,7 +25,7 @@ public class DriverStockSharpService(
     IManageStockSharpService manageRepo,
     IDataStockSharpService DataRepo,
     IParametersStorage storageRepo,
-    IEventsStockSharpService eventTrans,
+    IEventsStockSharp eventTrans,
     IMemoryCache memoryCache,
     ConnectionLink conLink) : IDriverStockSharpService
 {

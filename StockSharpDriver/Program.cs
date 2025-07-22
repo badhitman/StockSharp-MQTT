@@ -156,7 +156,7 @@ public class Program
                     ;
                 //
                 services
-                    .AddSingleton<IEventsStockSharpService, StockSharpEventsServiceTransmission>()
+                    .AddSingleton<IEventsStockSharp, EventsStockSharpTransmission>()
                 ;
 
                 services.StockSharpRegisterMqListeners();
