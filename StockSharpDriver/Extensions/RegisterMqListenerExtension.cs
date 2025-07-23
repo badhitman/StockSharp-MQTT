@@ -54,6 +54,9 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<CashFlowListStockSharpReceive, int, TResponseModel<List<CashFlowViewModel>>>()
             .RegisterMqListener<CashFlowUpdateStockSharpReceive, CashFlowViewModel, ResponseBaseModel>()
             .RegisterMqListener<CashFlowDeleteStockSharpReceive, int, ResponseBaseModel>()
+            .RegisterMqListener<GetInstrumentsForRubricStockSharpReceive, int, TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()
+            .RegisterMqListener<GetRubricsForInstrumentStockSharpReceive, int, TResponseModel<List<UniversalBaseModel>>>()
+            .RegisterMqListener<InstrumentRubricUpdateStockSharpReceive, InstrumentRubricUpdateModel, ResponseBaseModel>()
             .RegisterMqListener<SetMarkersForInstrumentStockSharpDriverReceive, SetMarkersForInstrumentRequestModel, ResponseBaseModel>()
             .RegisterMqListener<GetExchangesStockSharpDriverReceive, int[], TResponseModel<List<ExchangeStockSharpModel>>>()
             .RegisterMqListener<GetInstrumentsStockSharpDriverReceive, int[], TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()
@@ -65,7 +68,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<ShiftCurveStockSharpDriverReceive, ShiftCurveRequestModel, ResponseBaseModel>()
             .RegisterMqListener<StrategyStopStockSharpDriverReceive, StrategyStopRequestModel, ResponseBaseModel>()
             .RegisterMqListener<OrderRegisterRequestStockSharpDriverReceive, OrderRegisterRequestModel, OrderRegisterRequestResponseModel>()
-            .RegisterMqListener<InstrumentFavoriteToggleReceive, int, ResponseBaseModel>()//
+            .RegisterMqListener<InstrumentFavoriteToggleReceive, int, ResponseBaseModel>()
             .RegisterMqListener<InstrumentUpdateReceive, InstrumentTradeStockSharpViewModel, ResponseBaseModel>()
             .RegisterMqListener<InstrumentsSelectStockSharpDriverReceive, InstrumentsRequestModel, TPaginationResponseModel<InstrumentTradeStockSharpViewModel>>()
             .RegisterMqListener<OrdersSelectStockSharpDriverReceive, TPaginationRequestStandardModel<OrdersSelectStockSharpRequestModel>, TPaginationResponseModel<OrderStockSharpViewModel>>()
