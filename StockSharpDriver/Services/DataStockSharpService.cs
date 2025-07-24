@@ -252,7 +252,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
 
-        if (req.RubricsIds is null || req.RubricsIds.Length == 0)
+        if (req.RubricsIds is null || req.RubricsIds.Length != 1)
         {
             context.RemoveRange(context.RubricsInstruments.Where(x => x.InstrumentId == req.InstrumentId));
             return ResponseBaseModel.CreateInfo($"Ok. changes: {await context.SaveChangesAsync(cancellationToken)}");
@@ -299,6 +299,16 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             if (await context.RubricsInstruments.AnyAsync(x => x.RubricId == req.RubricId && x.InstrumentId == req.InstrumentId, cancellationToken: cancellationToken))
                 return ResponseBaseModel.CreateInfo($"Инструмент уже находится в рубрике");
 
+            RubricInstrumentStockSharpModelDB _otherDb = await context.RubricsInstruments
+                .FirstOrDefaultAsync(x => x.RubricId != req.RubricId && x.InstrumentId == req.InstrumentId, cancellationToken: cancellationToken);
+
+            if (_otherDb is not null)
+            {
+                PropertiesStorageContext storeCtx = await cloudParametersDbFactory.CreateDbContextAsync(cancellationToken);
+                RubricModelDB rubricDb = await storeCtx.Rubrics.FirstOrDefaultAsync(x => x.Id == _otherDb.RubricId, cancellationToken: cancellationToken);
+                return ResponseBaseModel.CreateError($"Instrument abuse: #{rubricDb.Id} {rubricDb.Name}");
+            }
+
             try
             {
                 await context.RubricsInstruments.AddAsync(new()
@@ -306,6 +316,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
                     InstrumentId = req.InstrumentId,
                     RubricId = req.RubricId,
                 }, cancellationToken);
+                context.RemoveRange(context.RubricsInstruments.Where(x => x.RubricId != req.RubricId && x.InstrumentId == req.InstrumentId));
                 await context.SaveChangesAsync(cancellationToken);
                 return ResponseBaseModel.CreateSuccess($"Инструмент добавлен в рубрику");
             }
