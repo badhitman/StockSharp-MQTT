@@ -11,6 +11,46 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class BindsStockSharpModelsExtensionsDB
 {
+    public static InstrumentTradeStockSharpViewModel Build(this InstrumentTradeStockSharpViewModel main, InstrumentStockSharpModelDB inc)
+    {
+        main.Multiplier = inc.Multiplier;
+        main.Currency = inc.Currency;
+        main.Board = inc.Board;
+        main.BondTypeInstrumentManual = inc.BondTypeInstrumentManual;
+        main.CfiCode = inc.CfiCode;
+        main.UnderlyingSecurityType = inc.UnderlyingSecurityType;
+        main.UnderlyingSecurityId = inc.UnderlyingSecurityId;
+        main.TypeInstrumentManual = inc.TypeInstrumentManual;
+        main.TypeInstrument = inc.TypeInstrument;
+        main.Currency = inc.Currency;
+        main.ShortName = inc.ShortName;
+        main.Comment = inc.Comment;
+        main.Name = inc.Name;
+        main.Shortable = inc.Shortable;
+        main.SettlementType = inc.SettlementType;
+        main.SettlementDate = inc.SettlementDate;
+        main.PrimaryId = inc.PrimaryId;
+        main.OptionType = inc.OptionType;
+        main.OptionStyle = inc.OptionStyle;
+        main.LastFairPrice = inc.LastFairPrice;
+        main.LastUpdatedAtUTC = inc.LastUpdatedAtUTC;
+        main.ISIN = inc.ISIN;
+        main.MaturityDate = inc.MaturityDate;
+        main.IssueDate = inc.IssueDate;
+        main.IsFavorite = inc.IsFavorite;
+        main.IdRemote = inc.IdRemote;
+        main.Id = inc.Id;
+        main.FaceValue = inc.FaceValue;
+        main.ExpiryDate = inc.ExpiryDate;
+        main.Decimals = inc.Decimals;
+        main.CreatedAtUTC = inc.CreatedAtUTC;
+        main.CouponRate = inc.CouponRate;
+        main.Code = inc.Code;
+        main.Class = inc.Class;
+
+        return main;
+    }
+
     /// <inheritdoc/>
     public static InstrumentStockSharpModelDB Bind(this InstrumentStockSharpModelDB main, InstrumentTradeStockSharpModel inc)
     {

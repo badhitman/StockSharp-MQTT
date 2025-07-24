@@ -2,16 +2,17 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using DbcLib;
 using Microsoft.EntityFrameworkCore;
 using SharedLib;
-using DbcLib;
+using System.Diagnostics.Metrics;
 
 namespace StockSharpDriver;
 
 /// <summary>
 /// StockSharpDataService
 /// </summary>
-public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IDataStockSharpService
+public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, IDbContextFactory<PropertiesStorageContext> cloudParametersDbFactory) : IDataStockSharpService
 {
     #region CashFlow
     /// <inheritdoc/>
@@ -247,6 +248,89 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     #endregion
 
     /// <inheritdoc/>
+    public async Task<ResponseBaseModel> InstrumentRubricUpdateAsync(InstrumentRubricUpdateModel req, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+
+        if (req.Set)
+        {
+            if (await context.RubricsInstruments.AnyAsync(x => x.RubricId == req.RubricId && x.InstrumentId == req.InstrumentId, cancellationToken: cancellationToken))
+                return ResponseBaseModel.CreateInfo($"Связь уже существует");
+
+            try
+            {
+                await context.RubricsInstruments.AddAsync(new()
+                {
+                    InstrumentId = req.InstrumentId,
+                    RubricId = req.RubricId,
+                }, cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
+                return ResponseBaseModel.CreateSuccess($"Добавление успешно выполнено");
+            }
+            catch (Exception ex)
+            {
+                return ResponseBaseModel.CreateError(ex);
+            }
+        }
+        //else
+        //{
+        context.RemoveRange(context.RubricsInstruments.Where(x => x.RubricId == req.RubricId && x.InstrumentId == req.InstrumentId));
+        if (await context.SaveChangesAsync(cancellationToken) == 0)
+            return ResponseBaseModel.CreateInfo($"Удаление связи не требуется (отсутствует)");
+
+        return ResponseBaseModel.CreateSuccess($"Удаление успешно выполнено");
+        //}
+    }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<UniversalBaseModel>>> GetRubricsForInstrumentAsync(int idInstrument, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext contextMain = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+
+        int[] resRubricsDbIds = await contextMain.RubricsInstruments
+            .Where(x => x.InstrumentId == idInstrument)
+            .Select(x => x.RubricId)
+            .Distinct()
+            .ToArrayAsync(cancellationToken: cancellationToken);
+
+        PropertiesStorageContext contextProps = await cloudParametersDbFactory.CreateDbContextAsync(cancellationToken);
+        return new()
+        {
+            Response = await contextProps.Rubrics
+            .Where(x => resRubricsDbIds.Contains(x.Id))
+            .Select(x => new UniversalBaseModel()
+            {
+                Id = x.Id,
+                CreatedAtUTC = x.CreatedAtUTC,
+                Description = x.Description,
+                IsDisabled = x.IsDisabled,
+                LastUpdatedAtUTC = x.LastUpdatedAtUTC,
+                Name = x.Name,
+                ParentId = x.ParentId,
+                ProjectId = x.ProjectId,
+                SortIndex = x.SortIndex,
+            })
+            .ToListAsync(cancellationToken: cancellationToken)
+        };
+    }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> GetInstrumentsForRubricAsync(int idRubric, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+
+        List<InstrumentStockSharpModelDB> resInstrumentsDb = await context.Instruments
+            .Where(x => context.RubricsInstruments.Any(y => y.RubricId == idRubric && x.Id == y.InstrumentId))
+            .Include(x => x.Board)
+            .ToListAsync(cancellationToken: cancellationToken);
+
+        return new()
+        {
+            Response = [.. resInstrumentsDb.Select(x => new InstrumentTradeStockSharpViewModel().Build(x))]
+        };
+    }
+
+    /// <inheritdoc/>
     public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
@@ -314,23 +398,5 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     {
         //StockSharp.Algo.Connector Connector = new();
         return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(DriverStockSharpService)}"));
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> InstrumentRubricUpdateAsync(InstrumentRubricUpdateModel req, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc/>
-    public async Task<TResponseModel<List<UniversalBaseModel>>> GetRubricsForInstrumentAsync(int idInstrument, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc/>
-    public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> GetInstrumentsForRubricAsync(int idRubric, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
     }
 }
