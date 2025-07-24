@@ -255,7 +255,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (req.Set)
         {
             if (await context.RubricsInstruments.AnyAsync(x => x.RubricId == req.RubricId && x.InstrumentId == req.InstrumentId, cancellationToken: cancellationToken))
-                return ResponseBaseModel.CreateInfo($"Связь уже существует");
+                return ResponseBaseModel.CreateInfo($"Инструмент уже находится в рубрике");
 
             try
             {
@@ -265,7 +265,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
                     RubricId = req.RubricId,
                 }, cancellationToken);
                 await context.SaveChangesAsync(cancellationToken);
-                return ResponseBaseModel.CreateSuccess($"Добавление успешно выполнено");
+                return ResponseBaseModel.CreateSuccess($"Инструмент добавлен в рубрику");
             }
             catch (Exception ex)
             {
