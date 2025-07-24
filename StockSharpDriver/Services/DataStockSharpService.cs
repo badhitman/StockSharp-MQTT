@@ -278,7 +278,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (await context.SaveChangesAsync(cancellationToken) == 0)
             return ResponseBaseModel.CreateInfo($"Удаление связи не требуется (отсутствует)");
 
-        return ResponseBaseModel.CreateSuccess($"Удаление успешно выполнено");
+        return ResponseBaseModel.CreateInfo($"Инструмент успешно исключён");
         //}
     }
 
