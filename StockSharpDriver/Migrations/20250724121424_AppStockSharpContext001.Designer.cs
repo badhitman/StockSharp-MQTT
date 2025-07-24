@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250722074238_AppStockSharpContext001")]
+    [Migration("20250724121424_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -581,6 +581,8 @@ namespace StockSharpDriver.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("InstrumentId");
+
+                    b.HasIndex("RubricId");
 
                     b.ToTable("RubricsInstruments");
                 });

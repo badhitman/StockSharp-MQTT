@@ -2,10 +2,9 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using DbcLib;
 using Microsoft.EntityFrameworkCore;
 using SharedLib;
-using System.Diagnostics.Metrics;
+using DbcLib;
 
 namespace StockSharpDriver;
 
@@ -247,6 +246,49 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
     #endregion
 
+    #region rubrics/instruments
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> RubricsInstrumentUpdateAsync(RubricsInstrumentUpdateModel req, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+
+        if (req.RubricsIds is null || req.RubricsIds.Length == 0)
+        {
+            context.RemoveRange(context.RubricsInstruments.Where(x => x.InstrumentId == req.InstrumentId));
+            return ResponseBaseModel.CreateInfo($"Ok. changes: {await context.SaveChangesAsync(cancellationToken)}");
+        }
+
+        int[] rubricsIdsDb = await context.RubricsInstruments
+            .Where(x => x.InstrumentId == req.InstrumentId)
+            .Select(x => x.RubricId)
+            .ToArrayAsync(cancellationToken: cancellationToken);
+
+        ResponseBaseModel _final = new();
+
+        int[] _rubricsIds = [.. rubricsIdsDb.Where(x => !req.RubricsIds.Contains(x))];
+        if (_rubricsIds.Length != 0)
+        {
+            context.RemoveRange(context.RubricsInstruments.Where(x => x.InstrumentId == req.InstrumentId && _rubricsIds.Contains(x.RubricId)));
+            _final.AddInfo($"Удалено связей: {await context.SaveChangesAsync(cancellationToken)}");
+        }
+
+        _rubricsIds = [.. req.RubricsIds.Where(x => !rubricsIdsDb.Contains(x))];
+        if (_rubricsIds.Length != 0)
+        {
+            try
+            {
+                await context.AddRangeAsync(_rubricsIds.Select(x => new RubricInstrumentStockSharpModelDB() { RubricId = x, InstrumentId = req.InstrumentId }), cancellationToken);
+                _final.AddInfo($"Добавлено связей: {await context.SaveChangesAsync(cancellationToken)}");
+            }
+            catch (Exception ex)
+            {
+                _final.Messages.InjectException(ex);
+            }
+        }
+
+        return _final;
+    }
+
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> InstrumentRubricUpdateAsync(InstrumentRubricUpdateModel req, CancellationToken cancellationToken = default)
     {
@@ -329,6 +371,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             Response = [.. resInstrumentsDb.Select(x => new InstrumentTradeStockSharpViewModel().Build(x))]
         };
     }
+    #endregion
 
     /// <inheritdoc/>
     public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)

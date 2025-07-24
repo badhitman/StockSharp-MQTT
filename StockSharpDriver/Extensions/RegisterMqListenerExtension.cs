@@ -57,6 +57,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<GetInstrumentsForRubricStockSharpReceive, int, TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()
             .RegisterMqListener<GetRubricsForInstrumentStockSharpReceive, int, TResponseModel<List<UniversalBaseModel>>>()
             .RegisterMqListener<InstrumentRubricUpdateStockSharpReceive, InstrumentRubricUpdateModel, ResponseBaseModel>()
+            .RegisterMqListener<RubricsInstrumentUpdateStockSharpReceive, RubricsInstrumentUpdateModel, ResponseBaseModel>()
             .RegisterMqListener<SetMarkersForInstrumentStockSharpDriverReceive, SetMarkersForInstrumentRequestModel, ResponseBaseModel>()
             .RegisterMqListener<GetExchangesStockSharpDriverReceive, int[], TResponseModel<List<ExchangeStockSharpModel>>>()
             .RegisterMqListener<GetInstrumentsStockSharpDriverReceive, int[], TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()

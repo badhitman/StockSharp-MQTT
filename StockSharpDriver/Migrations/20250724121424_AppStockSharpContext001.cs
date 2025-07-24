@@ -452,6 +452,11 @@ namespace StockSharpDriver.Migrations
                 name: "IX_RubricsInstruments_InstrumentId",
                 table: "RubricsInstruments",
                 column: "InstrumentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RubricsInstruments_RubricId",
+                table: "RubricsInstruments",
+                column: "RubricId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

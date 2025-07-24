@@ -580,6 +580,8 @@ namespace StockSharpDriver.Migrations
 
                     b.HasIndex("InstrumentId");
 
+                    b.HasIndex("RubricId");
+
                     b.ToTable("RubricsInstruments");
                 });
 

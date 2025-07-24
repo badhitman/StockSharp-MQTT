@@ -7,7 +7,7 @@ using SharedLib;
 namespace Transmission.Receives.StockSharpDriver;
 
 /// <summary>
-/// CashFlowDeleteStockSharpReceive
+/// InstrumentRubricUpdateStockSharpReceive
 /// </summary>
 public class InstrumentRubricUpdateStockSharpReceive(IDataStockSharpService ssRepo)
     : IMQTTReceive<InstrumentRubricUpdateModel, ResponseBaseModel>
