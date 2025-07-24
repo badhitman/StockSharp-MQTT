@@ -8,7 +8,7 @@ using DbcLib;
 
 namespace StockSharpDriver;
 
-public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IManageStockSharpService
+public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, IDbContextFactory<PropertiesStorageContext> cloudParametersDbFactory) : IManageStockSharpService
 {
     /// <inheritdoc/>
     public async Task<TResponseModel<FixMessageAdapterModelDB>> UpdateOrCreateAdapterAsync(FixMessageAdapterModelDB req, CancellationToken cancellationToken = default)
@@ -130,5 +130,14 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             TotalRowsCount = res.TotalRowsCount,
             Response = [.. res.Response.Select(x => (OrderStockSharpViewModel)x)]
         };
+    }
+
+    public Task<AboutDatabasesResponseModel> AboutDatabases(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new AboutDatabasesResponseModel()
+        {
+            DriverDatabase = $"{StockSharpAppLayerContext.DbPath}",
+            PropertiesDatabase = $"{PropertiesStorageLayerContext.DbPath}"
+        });
     }
 }

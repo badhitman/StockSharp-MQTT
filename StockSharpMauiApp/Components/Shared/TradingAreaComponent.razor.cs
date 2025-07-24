@@ -109,7 +109,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
                     {
                         PageNum = 0,
                         PageSize = int.MaxValue,
-                        FavoriteFilter = true,
+                        //FavoriteFilter = true,
                     };
                     TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
                     lock (instruments)

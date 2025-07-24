@@ -336,7 +336,7 @@ public class DriverStockSharpService(
         {
             PageNum = 0,
             PageSize = int.MaxValue,
-            FavoriteFilter = true,
+            //FavoriteFilter = true,
         }, cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
@@ -479,7 +479,7 @@ public class DriverStockSharpService(
             {
                 PageNum = 0,
                 PageSize = int.MaxValue,
-                FavoriteFilter = true,
+                //FavoriteFilter = true,
             }, cancellationToken);
 
             if (resInstruments.Response is null || resInstruments.Response.Count == 0)
@@ -611,7 +611,7 @@ public class DriverStockSharpService(
         {
             PageNum = 0,
             PageSize = int.MaxValue,
-            FavoriteFilter = true,
+            //FavoriteFilter = true,
         }).Result;
         string _msg;
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
@@ -896,7 +896,7 @@ public class DriverStockSharpService(
         {
             PageNum = 0,
             PageSize = int.MaxValue,
-            FavoriteFilter = true,
+            //FavoriteFilter = true,
         }, cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
