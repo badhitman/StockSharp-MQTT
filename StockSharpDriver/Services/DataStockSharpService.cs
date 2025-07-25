@@ -2,9 +2,9 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using DbcLib;
 using Microsoft.EntityFrameworkCore;
 using SharedLib;
-using DbcLib;
 
 namespace StockSharpDriver;
 
@@ -180,10 +180,12 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (req.PageSize < 10)
             req.PageSize = 10;
 
+        int[] statesFilter = req.StatesFilter is null ? null : [.. req.StatesFilter.Select(x => (int)x)];
+
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<InstrumentStockSharpModelDB> q = context
             .Instruments
-            .Where(x => req.StatesFilter == null || req.StatesFilter.Length == 0 || req.StatesFilter.Contains(x.StateInstrument))
+            .Where(x => statesFilter == null || req.StatesFilter.Length == 0 || statesFilter.Contains(x.StateInstrument))
             .AsQueryable();
 
         if (req.BoardsFilter is not null && req.BoardsFilter.Length != 0)
@@ -235,19 +237,20 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         InstrumentStockSharpModelDB instrumentDb = await context.Instruments.FirstOrDefaultAsync(x => x.Id == instrumentId, cancellationToken: cancellationToken);
+        
         if (instrumentDb is null)
             return ResponseBaseModel.CreateError("Инструмент не найден");
 
         switch (instrumentDb.StateInstrument)
         {
-            case ObjectStatesEnum.Default:
-                instrumentDb.StateInstrument = ObjectStatesEnum.IsFavorite;
+            case (int)ObjectStatesEnum.Default:
+                instrumentDb.StateInstrument = (int)ObjectStatesEnum.IsFavorite;
                 break;
-            case ObjectStatesEnum.IsFavorite:
-                instrumentDb.StateInstrument = ObjectStatesEnum.IsDisabled;
+            case (int)ObjectStatesEnum.IsFavorite:
+                instrumentDb.StateInstrument = (int)ObjectStatesEnum.IsDisabled;
                 break;
-            case ObjectStatesEnum.IsDisabled:
-                instrumentDb.StateInstrument = ObjectStatesEnum.Default;
+            case (int)ObjectStatesEnum.IsDisabled:
+                instrumentDb.StateInstrument = (int)ObjectStatesEnum.Default;
                 break;
         }
 

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250724121424_AppStockSharpContext001")]
+    [Migration("20250725120000_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -277,9 +277,6 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("IdRemoteNormalizedUpper")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsFavorite")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("IssueDate")
                         .HasColumnType("TEXT");
 
@@ -322,6 +319,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<bool?>("Shortable")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("StateInstrument")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TypeInstrument")
                         .HasColumnType("INTEGER");
 
@@ -346,11 +346,11 @@ namespace StockSharpDriver.Migrations
 
                     b.HasIndex("IdRemote");
 
-                    b.HasIndex("IsFavorite");
-
                     b.HasIndex("LastUpdatedAtUTC");
 
                     b.HasIndex("PrimaryId");
+
+                    b.HasIndex("StateInstrument");
 
                     b.HasIndex("UnderlyingSecurityId");
 

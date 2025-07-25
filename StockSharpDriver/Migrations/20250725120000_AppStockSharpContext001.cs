@@ -117,7 +117,7 @@ namespace StockSharpDriver.Migrations
                     UnderlyingSecurityId = table.Column<string>(type: "TEXT", nullable: true),
                     OptionType = table.Column<int>(type: "INTEGER", nullable: false),
                     Shortable = table.Column<bool>(type: "INTEGER", nullable: true),
-                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
+                    StateInstrument = table.Column<int>(type: "INTEGER", nullable: false),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     BondTypeInstrumentManual = table.Column<int>(type: "INTEGER", nullable: false),
@@ -364,11 +364,6 @@ namespace StockSharpDriver.Migrations
                 column: "IdRemote");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Instruments_IsFavorite",
-                table: "Instruments",
-                column: "IsFavorite");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Instruments_LastUpdatedAtUTC",
                 table: "Instruments",
                 column: "LastUpdatedAtUTC");
@@ -377,6 +372,11 @@ namespace StockSharpDriver.Migrations
                 name: "IX_Instruments_PrimaryId",
                 table: "Instruments",
                 column: "PrimaryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Instruments_StateInstrument",
+                table: "Instruments",
+                column: "StateInstrument");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Instruments_UnderlyingSecurityId",
