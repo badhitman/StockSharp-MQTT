@@ -32,7 +32,7 @@
                         (int)MarkersInstrumentStockSharpEnum.IsMarketMaker => "warning",
                         _ => "danger",
                     };
-                    <span class="badge text-bg-@colorClass me-1">@((MarkersInstrumentStockSharpEnum)_ie.MarkerDescriptor).DescriptionInfo()</span>
+                    <span class="badge text-bg-@colorClass me-1">@(((MarkersInstrumentStockSharpEnum)_ie.MarkerDescriptor).DescriptionInfo())</span>
                 }
             }
         </th>
