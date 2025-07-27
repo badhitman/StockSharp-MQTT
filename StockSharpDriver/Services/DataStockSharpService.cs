@@ -179,13 +179,13 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     {
         if (req.PageSize < 10)
             req.PageSize = 10;
-
-        int[] markersFilter = req.MarkersFilter is null ? null : [.. req.MarkersFilter.Select(x => (int)x)];
+        bool _notSet = req.MarkersFilter?.Contains(null) == true;
+        int[] markersFilter = req.MarkersFilter is null ? null : [.. req.MarkersFilter.Where(x => x is not null).Select(x => (int)x)];
 
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<InstrumentStockSharpModelDB> q = context
             .Instruments
-            .Where(x => markersFilter == null || markersFilter.Length == 0 || context.InstrumentsMarkers.Any(y => markersFilter.Any(z => z == y.MarkerDescriptor)))
+            .Where(x => markersFilter == null || markersFilter.Length == 0 || (!_notSet || !context.InstrumentsMarkers.Any(y => y.InstrumentId == x.Id)) || context.InstrumentsMarkers.Any(y => y.InstrumentId == x.Id && markersFilter.Any(z => z == y.MarkerDescriptor)))
             .AsQueryable();
 
         if (req.BoardsFilter is not null && req.BoardsFilter.Length != 0)
