@@ -9,7 +9,7 @@ namespace SharedLib;
 /// <summary>
 /// InstrumentTradeModelDB
 /// </summary>
-[Index(nameof(StateInstrument)), Index(nameof(IdRemote)), Index(nameof(Code)), Index(nameof(Class)), Index(nameof(CfiCode)), Index(nameof(UnderlyingSecurityId)), Index(nameof(PrimaryId)), Index(nameof(LastUpdatedAtUTC))]
+[Index(nameof(State)), Index(nameof(IdRemote)), Index(nameof(Code)), Index(nameof(Class)), Index(nameof(CfiCode)), Index(nameof(UnderlyingSecurityId)), Index(nameof(PrimaryId)), Index(nameof(LastUpdatedAtUTC))]
 public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, IBaseStockSharpModel
 {
     /// <inheritdoc/>

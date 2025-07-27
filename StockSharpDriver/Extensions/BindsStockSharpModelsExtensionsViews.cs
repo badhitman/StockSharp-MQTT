@@ -43,7 +43,7 @@ public static class BindsStockSharpModelsExtensionsViews
         main.ExpiryDate = inc.ExpiryDate;
         main.Decimals = inc.Decimals;
         main.Code = inc.Code;
-        main.StateInstrument = inc.StateInstrument;
+        main.State = inc.State;
 
         main.ISIN = inc.ISIN;
         main.BondTypeInstrumentManual = inc.BondTypeInstrumentManual;

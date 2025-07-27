@@ -185,7 +185,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<InstrumentStockSharpModelDB> q = context
             .Instruments
-            .Where(x => statesFilter == null || req.StatesFilter.Length == 0 || statesFilter.Contains(x.StateInstrument))
+            .Where(x => statesFilter == null || req.StatesFilter.Length == 0 || statesFilter.Contains(x.State))
             .AsQueryable();
 
         if (req.BoardsFilter is not null && req.BoardsFilter.Length != 0)
@@ -241,16 +241,16 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (instrumentDb is null)
             return ResponseBaseModel.CreateError("Инструмент не найден");
 
-        switch (instrumentDb.StateInstrument)
+        switch (instrumentDb.State)
         {
             case (int)ObjectStatesEnum.Default:
-                instrumentDb.StateInstrument = (int)ObjectStatesEnum.IsFavorite;
+                instrumentDb.State = (int)ObjectStatesEnum.IsFavorite;
                 break;
             case (int)ObjectStatesEnum.IsFavorite:
-                instrumentDb.StateInstrument = (int)ObjectStatesEnum.IsDisabled;
+                instrumentDb.State = (int)ObjectStatesEnum.IsDisabled;
                 break;
             case (int)ObjectStatesEnum.IsDisabled:
-                instrumentDb.StateInstrument = (int)ObjectStatesEnum.Default;
+                instrumentDb.State = (int)ObjectStatesEnum.Default;
                 break;
         }
 

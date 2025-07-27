@@ -191,7 +191,7 @@ public class Program
                 Code = "code-DEMO_SEED_DB",
                 Currency = (int)CurrenciesTypesEnum.RUB,
                 IdRemote = "code-DEMO_SEED_DB@board-DEMO_SEED_DB",
-                StateInstrument = (int)ObjectStatesEnum.Default,
+                State = (int)ObjectStatesEnum.Default,
                 IssueDate = DateTime.UtcNow,
                 Name = "instrument DEMO_SEED_DB",
                 TypeInstrument = (int)InstrumentsStockSharpTypesEnum.Bond,
