@@ -117,7 +117,6 @@ namespace StockSharpDriver.Migrations
                     UnderlyingSecurityId = table.Column<string>(type: "TEXT", nullable: true),
                     OptionType = table.Column<int>(type: "INTEGER", nullable: false),
                     Shortable = table.Column<bool>(type: "INTEGER", nullable: true),
-                    StateInstrument = table.Column<int>(type: "INTEGER", nullable: false),
                     LastUpdatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAtUTC = table.Column<DateTime>(type: "TEXT", nullable: false),
                     BondTypeInstrumentManual = table.Column<int>(type: "INTEGER", nullable: false),
@@ -359,9 +358,19 @@ namespace StockSharpDriver.Migrations
                 column: "Code");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Instruments_CreatedAtUTC",
+                table: "Instruments",
+                column: "CreatedAtUTC");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Instruments_IdRemote",
                 table: "Instruments",
                 column: "IdRemote");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Instruments_IdRemoteNormalizedUpper",
+                table: "Instruments",
+                column: "IdRemoteNormalizedUpper");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Instruments_LastUpdatedAtUTC",
@@ -369,14 +378,14 @@ namespace StockSharpDriver.Migrations
                 column: "LastUpdatedAtUTC");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Instruments_NameNormalizedUpper",
+                table: "Instruments",
+                column: "NameNormalizedUpper");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Instruments_PrimaryId",
                 table: "Instruments",
                 column: "PrimaryId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Instruments_StateInstrument",
-                table: "Instruments",
-                column: "StateInstrument");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Instruments_UnderlyingSecurityId",

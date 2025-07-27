@@ -37,7 +37,6 @@ public static class BindsStockSharpModelsExtensionsDB
         main.ISIN = inc.ISIN;
         main.MaturityDate = inc.MaturityDate;
         main.IssueDate = inc.IssueDate;
-        main.State = inc.State;
         main.IdRemote = inc.IdRemote;
         main.Id = inc.Id;
         main.FaceValue = inc.FaceValue;

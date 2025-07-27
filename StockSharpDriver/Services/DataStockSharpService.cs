@@ -150,7 +150,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
 
         InstrumentMarkersModelDB[] markersDb = await q.ToArrayAsync(cancellationToken: cancellationToken);
         int _resCount = 0;
-        InstrumentMarkersModelDB[] _markers = [.. markersDb.Where(x => !req.SetMarkers.Contains(x.MarkerDescriptor))];
+        InstrumentMarkersModelDB[] _markers = [.. markersDb.Where(x => !req.SetMarkers.Select(x => (int)x).Contains(x.MarkerDescriptor))];
         if (_markers.Length != 0)
         {
             context.InstrumentsMarkers.RemoveRange(_markers);
@@ -158,11 +158,11 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         }
 
         _markers = [..req.SetMarkers
-            .Where(x => !markersDb.Any(y => y.MarkerDescriptor == x))
+            .Where(x => !markersDb.Any(y => y.MarkerDescriptor == (int)x))
             .Select(x => new InstrumentMarkersModelDB()
             {
                 InstrumentId = req.InstrumentId,
-                MarkerDescriptor = x,
+                MarkerDescriptor = (int)x,
             })];
 
         if (_markers.Length != 0)
@@ -180,12 +180,12 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (req.PageSize < 10)
             req.PageSize = 10;
 
-        int[] statesFilter = req.StatesFilter is null ? null : [.. req.StatesFilter.Select(x => (int)x)];
+        int[] markersFilter = req.MarkersFilter is null ? null : [.. req.MarkersFilter.Select(x => (int)x)];
 
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<InstrumentStockSharpModelDB> q = context
             .Instruments
-            .Where(x => statesFilter == null || req.StatesFilter.Length == 0 || statesFilter.Contains(x.State))
+            .Where(x => markersFilter == null || markersFilter.Length == 0 || context.InstrumentsMarkers.Any(y => markersFilter.Any(z => z == y.MarkerDescriptor)))
             .AsQueryable();
 
         if (req.BoardsFilter is not null && req.BoardsFilter.Length != 0)
@@ -230,34 +230,6 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         };
 
         return res;
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> InstrumentFavoriteToggleAsync(int instrumentId, CancellationToken cancellationToken = default)
-    {
-        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        InstrumentStockSharpModelDB instrumentDb = await context.Instruments.FirstOrDefaultAsync(x => x.Id == instrumentId, cancellationToken: cancellationToken);
-        
-        if (instrumentDb is null)
-            return ResponseBaseModel.CreateError("Инструмент не найден");
-
-        switch (instrumentDb.State)
-        {
-            case (int)ObjectStatesEnum.Default:
-                instrumentDb.State = (int)ObjectStatesEnum.IsFavorite;
-                break;
-            case (int)ObjectStatesEnum.IsFavorite:
-                instrumentDb.State = (int)ObjectStatesEnum.IsDisabled;
-                break;
-            case (int)ObjectStatesEnum.IsDisabled:
-                instrumentDb.State = (int)ObjectStatesEnum.Default;
-                break;
-        }
-
-        context.Update(instrumentDb);
-        await context.SaveChangesAsync(cancellationToken: cancellationToken);
-
-        return ResponseBaseModel.CreateSuccess("Запрос выполнен");
     }
     #endregion
 

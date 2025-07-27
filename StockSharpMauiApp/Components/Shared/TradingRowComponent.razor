@@ -27,12 +27,12 @@
                 {
                     string colorClass = _ie.MarkerDescriptor switch
                     {
-                        MarkersInstrumentStockSharpEnum.Illiquid => "primary",
-                        MarkersInstrumentStockSharpEnum.IsNew => "info",
-                        MarkersInstrumentStockSharpEnum.IsMarketMaker => "warning",
+                        (int)MarkersInstrumentStockSharpEnum.Illiquid => "primary",
+                        (int)MarkersInstrumentStockSharpEnum.IsNew => "info",
+                        (int)MarkersInstrumentStockSharpEnum.IsMarketMaker => "warning",
                         _ => "danger",
                     };
-                    <span class="badge text-bg-@colorClass me-1">@_ie.MarkerDescriptor.DescriptionInfo()</span>
+                    <span class="badge text-bg-@colorClass me-1">@((MarkersInstrumentStockSharpEnum)_ie.MarkerDescriptor).DescriptionInfo()</span>
                 }
             }
         </th>

@@ -416,7 +416,7 @@ public class DriverStockSharpService(
             if (currentStrategy.IsSmall)
                 SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
 
-            if (tryFindInstrument[0].Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+            if (tryFindInstrument[0].Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
                 SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         }
         if (!response.Success())
@@ -534,14 +534,14 @@ public class DriverStockSharpService(
                     if (IsSmall)
                         SBondSmallPositionsList.Add(new SecurityPosition(currentSecurity, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
 
-                    if (!instrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                    if (!instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
                         SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
                 }
                 else
                 {
                     SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
 
-                    if (!instrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                    if (!instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
                         SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
                 }
 
@@ -659,7 +659,7 @@ public class DriverStockSharpService(
             eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
-        bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsMarketMaker);
+        bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker);
         if (!SbPos.IsNull() && !sec.IsNull())
         {
             if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && !depth.Bids.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))

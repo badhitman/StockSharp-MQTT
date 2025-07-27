@@ -317,9 +317,6 @@ namespace StockSharpDriver.Migrations
                     b.Property<bool?>("Shortable")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("StateInstrument")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("TypeInstrument")
                         .HasColumnType("INTEGER");
 
@@ -342,13 +339,17 @@ namespace StockSharpDriver.Migrations
 
                     b.HasIndex("Code");
 
+                    b.HasIndex("CreatedAtUTC");
+
                     b.HasIndex("IdRemote");
+
+                    b.HasIndex("IdRemoteNormalizedUpper");
 
                     b.HasIndex("LastUpdatedAtUTC");
 
-                    b.HasIndex("PrimaryId");
+                    b.HasIndex("NameNormalizedUpper");
 
-                    b.HasIndex("StateInstrument");
+                    b.HasIndex("PrimaryId");
 
                     b.HasIndex("UnderlyingSecurityId");
 
