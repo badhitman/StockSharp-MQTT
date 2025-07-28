@@ -27,6 +27,10 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     public required InstrumentTradeStockSharpViewModel Instrument { get; set; }
 
     /// <inheritdoc/>
+    [Parameter, EditorRequired]
+    public required int Num { get; set; }
+
+    /// <inheritdoc/>
     [Parameter]
     public bool ShowNamesInstruments { get; set; }
 

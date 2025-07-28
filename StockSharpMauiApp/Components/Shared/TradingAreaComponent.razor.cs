@@ -62,6 +62,9 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         }
     }
 
+    IEnumerable<int>? _selectedBoards;
+    MarkersInstrumentStockSharpEnum?[]? MarkersFilter;
+
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
 
     List<TradingRowComponent> RowsComponents { get; set; } = [];
@@ -80,8 +83,6 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         await base.OnInitializedAsync();
         await SetBusyAsync();
 
-        TResponseModel<MarkersInstrumentStockSharpEnum?[]?> _readMarkersFilter = await StorageRepo.ReadParameterAsync<MarkersInstrumentStockSharpEnum?[]?>(GlobalStaticCloudStorageMetadata.MarkersDashboard);
-        MarkersInstrumentStockSharpEnum?[]? _markersSelected = _readMarkersFilter.Response;
 
         await Task.WhenAll([
                 Task.Run(async () =>
@@ -109,27 +110,38 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
                 }),
                 Task.Run(async () =>
                 {
-                    InstrumentsRequestModel req = new()
-                    {
-                        PageNum = 0,
-                        PageSize = int.MaxValue,
-                    };
-
-                    if(_markersSelected is not null)
-                    {
-                        req.MarkersFilter = _markersSelected;
-                    }
-
-                    TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
-                    lock (instruments)
-                    {
-                        instruments.Clear();
-                        if (res.Response is not null)
-                            instruments.AddRange(res.Response);
-                    }
+                   TResponseModel<MarkersInstrumentStockSharpEnum?[]?> readMarkersFilter = await StorageRepo.ReadParameterAsync<MarkersInstrumentStockSharpEnum?[]?>(GlobalStaticCloudStorageMetadata.MarkersDashboard);
+                   MarkersFilter = readMarkersFilter.Response;
+                }),
+                   Task.Run(async () => {
+                   TResponseModel<int[]> _readBoardsFilter = await StorageRepo.ReadParameterAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard);
+                   _selectedBoards = _readBoardsFilter.Response;
                 })
             ]);
 
+        InstrumentsRequestModel req = new()
+        {
+            PageNum = 0,
+            PageSize = int.MaxValue,
+        };
+
+        if (MarkersFilter is not null)
+        {
+            req.MarkersFilter = MarkersFilter;
+        }
+
+        if (_selectedBoards is not null)
+        {
+            req.BoardsFilter = [.. _selectedBoards];
+        }
+
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
+        lock (instruments)
+        {
+            instruments.Clear();
+            if (res.Response is not null)
+                instruments.AddRange(res.Response);
+        }
         await SetBusyAsync(false);
     }
 

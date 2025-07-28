@@ -9,13 +9,16 @@
 <tr>
     @if (IsBusyProgress)
     {
-        <th colspan="11">
+        <th colspan="12">
             <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-3" />
         </th>
     }
     else
     {
-        <th class="@_opClass" scope="row" title="@Instrument.Name">
+        <th scope="row" title="@Instrument.Id">
+            @Num
+        </th>
+        <th class="@_opClass" title="@Instrument.Name">
             <code>@Instrument.Code</code>
             @if (ShowNamesInstruments)
             {

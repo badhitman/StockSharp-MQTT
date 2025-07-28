@@ -1028,7 +1028,7 @@ public class DriverStockSharpService(
                     {
                         SecurityId = new SecurityId
                         {
-                            SecurityCode = _sc.Trim(),
+                            SecurityCode = _sc.Trim()                             
                         },
                         TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
                     });
