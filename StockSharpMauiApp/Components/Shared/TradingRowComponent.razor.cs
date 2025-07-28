@@ -180,7 +180,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
         await SetBusyAsync();
 
         TResponseModel<StrategyTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<StrategyTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
@@ -202,8 +201,8 @@ public partial class TradingRowComponent : StockSharpAboutComponent
             _workingVolume = RestoreStrategy.WorkingVolume;
         }
 
-        await SetBusyAsync(false);
         Parent.AddRowComponent(this);
+        await base.OnInitializedAsync();
     }
 
     async Task SaveStrategy()
