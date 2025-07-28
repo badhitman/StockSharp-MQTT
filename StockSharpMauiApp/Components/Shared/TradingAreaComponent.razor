@@ -65,7 +65,7 @@ else
                 @for (int i = 0; i < instruments.Count; i++)
                 {
                     InstrumentTradeStockSharpViewModel _inst = instruments[i];
-                    <TradingRowComponent Instrument="_inst" @key="@($"instr_{_inst.Id}")" Num="i" ShowNamesInstruments="ShowNamesInstruments" />
+                    <TradingRowComponent Instrument="_inst" @key="@($"instr_{_inst.Id}")" Num="(i + 1)" ShowNamesInstruments="ShowNamesInstruments" />
                 }
             </CascadingValue>
         </tbody>
