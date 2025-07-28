@@ -79,6 +79,10 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     {
         await base.OnInitializedAsync();
         await SetBusyAsync();
+
+        TResponseModel<MarkersInstrumentStockSharpEnum?[]?> _readMarkersFilter = await StorageRepo.ReadParameterAsync<MarkersInstrumentStockSharpEnum?[]?>(GlobalStaticCloudStorageMetadata.MarkersDashboard);
+        MarkersInstrumentStockSharpEnum?[]? _markersSelected = _readMarkersFilter.Response;
+
         await Task.WhenAll([
                 Task.Run(async () =>
                 {
@@ -109,8 +113,13 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
                     {
                         PageNum = 0,
                         PageSize = int.MaxValue,
-                        //FavoriteFilter = true,
                     };
+
+                    if(_markersSelected is not null)
+                    {
+                        req.MarkersFilter = _markersSelected;
+                    }
+
                     TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
                     lock (instruments)
                     {
