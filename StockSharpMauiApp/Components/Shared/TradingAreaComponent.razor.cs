@@ -83,7 +83,6 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         await base.OnInitializedAsync();
         await SetBusyAsync();
 
-
         await Task.WhenAll([
                 Task.Run(async () =>
                 {

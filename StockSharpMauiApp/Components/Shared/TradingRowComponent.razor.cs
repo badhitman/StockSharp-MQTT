@@ -6,7 +6,6 @@ using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using BlazorLib;
 using SharedLib;
-using MudBlazor;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -15,9 +14,6 @@ namespace StockSharpMauiApp.Components.Shared;
 /// </summary>
 public partial class TradingRowComponent : StockSharpAboutComponent
 {
-    [Inject]
-    IDialogService DialogRepo { get; set; } = default!;
-
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
@@ -130,7 +126,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         }
     }
 
-
     decimal _smallBidVolume;
     public decimal SmallBidVolume
     {
@@ -187,6 +182,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     {
         await base.OnInitializedAsync();
         await SetBusyAsync();
+
         TResponseModel<StrategyTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<StrategyTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
         RestoreStrategy = restoreStrategy.Response;
 
