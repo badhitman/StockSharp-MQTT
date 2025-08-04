@@ -41,33 +41,50 @@ else
         </div>
     </MudStack>
 
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th scope="col">№</th>
-                <th @onclick="() => ShowNamesInstruments = !ShowNamesInstruments" scope="col">Bond</th>
-                <th scope="col" style="width: 100px;">Price</th>
-                <th scope="col" style="width: 100px;">Volume</th>
-                <th scope="col">Actions</th>
-
-                <th title="Small Bid Volume" scope="col" style="width: 100px;">SBV</th>
-                <th title="Small Offer Volume" scope="col" style="width: 100px;">SOV</th>
-                <th title="Small Offset" scope="col" style="width: 100px;">SO</th>
-                <th title="Working Volume" scope="col" style="width: 100px;">WV</th>
-
-                <th scope="col" style="width: 100px;">Shift</th>
-                <th scope="col">Confines</th>
-                <th scope="col"></th>
-            </tr>
-        </thead>
-        <tbody>
+    <MudTable ServerData="ServerReload" Dense="true" Hover="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Trade strategy</MudText>
+            <MudSpacer />
+        </ToolBarContent>
+        <ColGroup>
+            <col />
+            <col style="width: 100px;" />
+            <col style="width: 100px;" />
+            <col />
+            <col style="width: 100px;" />
+            <col style="width: 100px;" />
+            <col style="width: 100px;" />
+            <col style="width: 100px;" />
+            <col style="width: 100px;" />
+            <col />
+            <col />
+        </ColGroup>
+        <HeaderContent>
+            <MudTh>Bond</MudTh>
+            <MudTh>Price</MudTh>
+            <MudTh>Volume</MudTh>
+            <MudTh>Actions</MudTh>
+            <MudTh>SBV</MudTh>
+            <MudTh>SOV</MudTh>
+            <MudTh>SO</MudTh>
+            <MudTh>WV</MudTh>
+            <MudTh>Shift</MudTh>
+            <MudTh>Confines</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
             <CascadingValue Value="this">
-                @for (int i = 0; i < instruments.Count; i++)
-                {
-                    InstrumentTradeStockSharpViewModel _inst = instruments[i];
-                    <TradingRowComponent Instrument="_inst" @key="@($"instr_{_inst.Id}")" Num="(i + 1)" ShowNamesInstruments="ShowNamesInstruments" />
-                }
+                <TradingRowComponent Instrument="context" />
             </CascadingValue>
-        </tbody>
-    </table>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No matching records found</MudText>
+        </NoRecordsContent>
+        <LoadingContent>
+            <MudText>Loading...</MudText>
+        </LoadingContent>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
 }

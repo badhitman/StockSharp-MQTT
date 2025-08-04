@@ -4,6 +4,7 @@
 
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
@@ -26,8 +27,6 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
-
-    bool ShowNamesInstruments { get; set; }
 
     decimal _quoteVolume;
     decimal QuoteVolume
@@ -68,6 +67,17 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
 
     List<TradingRowComponent> RowsComponents { get; set; } = [];
+
+
+
+    /// <summary>
+    /// Here we simulate getting the paged, filtered and ordered data from the server
+    /// </summary>
+    private Task<TableData<InstrumentTradeStockSharpViewModel>> ServerReload(TableState state, CancellationToken token)
+    {
+        RowsComponents.Clear();
+        return Task.FromResult(new TableData<InstrumentTradeStockSharpViewModel>() { TotalItems = instruments.Count, Items = instruments.Skip(state.PageSize * state.Page).Take(state.PageSize) });
+    }
 
     public void AddRowComponent(TradingRowComponent sender)
     {
