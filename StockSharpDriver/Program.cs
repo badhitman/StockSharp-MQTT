@@ -200,16 +200,18 @@ public class Program
                 LastFairPrice = 9,
                 MaturityDate = DateTime.UtcNow,
                 TypeInstrumentManual = (int)TypesInstrumentsManualEnum.Futures,
-                 
+
                 ISIN = "RU000A101QE0",
                 CashFlows = [],
             };
             _insSeed.CashFlows.Add(new()
             {
                 Instrument = _insSeed,
-                CashFlowType = (int)CashFlowTypesEnum.Notional,
-                PaymentDate = DateTime.UtcNow,
-                PaymentValue = 5
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow,
+                CouponRate = 3,
+                Coupon = 1,
+                Notional = 5
             });
             _ctxDriver.Instruments.Add(_insSeed);
             _ctxDriver.SaveChanges();

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250727135227_AppStockSharpContext001")]
+    [Migration("20250804124239_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,16 +52,22 @@ namespace StockSharpDriver.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("CashFlowType")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("Coupon")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("CouponRate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("InstrumentId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("PaymentDate")
+                    b.Property<decimal>("Notional")
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("PaymentValue")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

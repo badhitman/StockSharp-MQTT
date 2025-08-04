@@ -36,10 +36,12 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             await context.CashFlows.AddAsync(new()
             {
                 Id = req.Id,
-                CashFlowType = req.CashFlowType,
                 InstrumentId = req.InstrumentId,
-                PaymentDate = req.PaymentDate,
-                PaymentValue = req.PaymentValue,
+                Notional = req.Notional,
+                Coupon = req.Coupon,
+                CouponRate = req.CouponRate,
+                EndDate = req.EndDate,
+                StartDate = req.StartDate,
             }, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return ResponseBaseModel.CreateInfo("Ok. CashFlow created");
@@ -58,18 +60,20 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         List<CashFlowModelDB> res = await context.CashFlows
             .Where(x => x.InstrumentId == instrumentId)
-            .OrderBy(x => x.PaymentDate)
+            .OrderBy(x => x.StartDate)
             .ToListAsync(cancellationToken: cancellationToken);
 
         return new()
         {
             Response = [.. res.Select(x => new CashFlowViewModel()
             {
-                PaymentValue = x.PaymentValue,
-                CashFlowType = x.CashFlowType,
-                PaymentDate = x.PaymentDate,
                 Id = x.Id,
                 InstrumentId = x.InstrumentId,
+                StartDate = x.StartDate,
+                EndDate = x.EndDate,
+                CouponRate = x.CouponRate,
+                Coupon = x.Coupon,
+                Notional = x.Notional,
             })],
         };
     }

@@ -50,16 +50,22 @@ namespace StockSharpDriver.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("CashFlowType")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("Coupon")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("CouponRate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("InstrumentId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("PaymentDate")
+                    b.Property<decimal>("Notional")
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("PaymentValue")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
