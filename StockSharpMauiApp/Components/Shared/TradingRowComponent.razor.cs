@@ -10,7 +10,7 @@ using SharedLib;
 namespace StockSharpMauiApp.Components.Shared;
 
 /// <summary>
-/// TradingRowComponent @inject IDialogService DialogService
+/// TradingRowComponent
 /// </summary>
 public partial class TradingRowComponent : StockSharpAboutComponent
 {
