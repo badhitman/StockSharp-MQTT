@@ -3,7 +3,6 @@ using System.Data.SQLite;
 using StockSharp.Algo;
 using System.Data;
 using Ecng.Common;
-using SharedLib;
 
 namespace StockSharpDriver;
 
@@ -15,7 +14,7 @@ public class Curve(DateTime date)
     private int _length = 0;
     private DateTime _curveDate = date;
 
-    public List<SBond> BondList { get; private set; } = [];
+    public List<SBond> BondList { get; private set; } = new List<SBond>();
 
     public int Length
     {
@@ -30,7 +29,7 @@ public class Curve(DateTime date)
     }
 
     //Load Curve form database
-    public void GetCurveFromDb(string DbName, Connector trader, BoardStockSharpModel board)
+    public void GetCurveFromDb(string DbName, Connector trader, SharedLib.BoardStockSharpModel board)
     {
         string secName;
         decimal secPrice;
@@ -44,41 +43,43 @@ public class Curve(DateTime date)
         }
         catch (SQLiteException ex)
         {
-            BondList = null;
+            BondList.Clear();
             Length = 0;
             Console.WriteLine(ex.Message);
         }
 
         if (conn.State == ConnectionState.Open)
         {
-            SQLiteCommand cmd = new("SELECT * FROM BondPrices ORDER BY rowid DESC")
-            {
-                Connection = conn
-            };
+            SQLiteCommand cmd = new("SELECT * FROM BondPrices ORDER BY rowid DESC", conn);
             SQLiteDataReader reader = cmd.ExecuteReader();
             reader.Read();
 
-
             tableSize = reader.FieldCount;
-            var dt = reader.GetDateTime(reader.GetOrdinal("DTime"));
+            DateTime dt = reader.GetDateTime(reader.GetOrdinal("DTime"));
             dt = MyHelper.GetNextWorkingDay(dt, 1, DbName);
+
+            bool checkBoard(ExchangeBoard reqEx)
+            {
+                return reqEx.Code == board.Code && reqEx.Exchange.Name == board.Exchange.Name;
+            }
 
             if (CurveDate.Day != dt.Day)
             {
+                throw new NotImplementedException();
+                //MessageBox.Show("Wrong Date! Pls update the curve!");
                 BondList.Clear();
                 Length = 0;
-                throw new Exception("Wrong Date! Pls update the curve!");
             }
             else
             {
                 for (int i = 0; i <= tableSize - 1; i++)
                 {
                     secName = reader.GetName(i);
-                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && new BoardStockSharpModel().Bind(s.Board).Equals(board));
-                    if ((!security.IsNull()) && (secName != "SU26217RMFS8"))
+                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && checkBoard(s.Board));
+                    if ((!security.IsNull())) //  && (secName != "SU26217RMFS8")
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(i));
-                        this.AddNode(new SBond(security), secPrice);
+                        AddNode(new SBond(security), secPrice);
                     }
                 }
 
@@ -89,14 +90,14 @@ public class Curve(DateTime date)
                 while (j <= tableSize - 1)
                 {
                     secName = reader.GetName(j);
-                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && new BoardStockSharpModel().Bind(s.Board).Equals(board));
-                    if ((!security.IsNull()) && (secName != "SU26217RMFS8"))
+                    security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && checkBoard(s.Board));
+                    if ((!security.IsNull())) // && (secName != "SU26217RMFS8")
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(j));
 
                         if (Math.Abs(GetNode(security).ModelPrice - secPrice) >= 0.2m)
                         {
-                            throw new Exception("Big price difference");
+                            throw new NotImplementedException();
                             //if (MessageBox.Show(secName + " Do you want to continue?", "Big price difference in", MessageBoxButton.YesNo) == MessageBoxResult.No)
                             //{
                             //    BondList.Clear();
@@ -118,7 +119,7 @@ public class Curve(DateTime date)
 
     public void AddNode(SBond bondSec, decimal price)
     {
-        var tmpBond = BondList.Find(s => s.UnderlyingSecurity == bondSec.UnderlyingSecurity);
+        SBond tmpBond = BondList.Find(s => s.UnderlyingSecurity == bondSec.UnderlyingSecurity);
 
         if (tmpBond != null)
             tmpBond.ModelPrice = price;

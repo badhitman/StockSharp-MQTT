@@ -5,10 +5,10 @@ using System.Globalization;
 
 namespace StockSharpDriver;
 
-public class SBond
+public class SBond(Security sec)
 {
     private DateTime _maturity;
-    public List<CashFlow> CashFlows = new();
+    public List<CashFlow> CashFlows = [];
 
     decimal _modelPrice; // theoretical price from the curve
     public decimal ModelPrice
@@ -17,7 +17,7 @@ public class SBond
         set { _modelPrice = value; }
     }
 
-    Security _underlyingSecurity = new(); // security from which bond is derived
+    Security _underlyingSecurity = sec; // security from which bond is derived
     public Security UnderlyingSecurity
     {
         get { return _underlyingSecurity; }
@@ -37,17 +37,11 @@ public class SBond
         set { _maturity = value; }
     }
 
-    private string _micexCode = "";
+    private string _micexCode = sec.Code;
     public string MicexCode
     {
         get { return _micexCode; }
         set { _micexCode = value; }
-    }
-
-    public SBond(Security sec)
-    {
-        _underlyingSecurity = sec;
-        _micexCode = sec.Code;
     }
 
     // Downloads bond information form file, where each string reperesents property or coupon or notional

@@ -31,10 +31,7 @@ public static class MyHelper
 
         if (conn.State == ConnectionState.Open)
         {
-            SQLiteCommand cmd = new("SELECT * FROM TradeCalendar ORDER BY TradeDate ASC")
-            {
-                Connection = conn
-            };
+            SQLiteCommand cmd = new("SELECT * FROM TradeCalendar ORDER BY TradeDate ASC", conn);
             SQLiteDataReader reader = cmd.ExecuteReader();
             reader.Read();
 
@@ -70,7 +67,6 @@ public static class MyHelper
         }
 
         conn.Dispose();
-
         return dt;
     }
 
@@ -102,6 +98,53 @@ public static class MyHelper
         if ((highLimit > 0) && (bAsk == null))
             return sec.ShrinkPrice(modelPrice + highLimit);
 
-        return 100;
+        if (highLimit < 0)
+        {
+            if ((bAsk.Value.Price < (modelPrice + highLimit)) || (depth.Bids.Sum(item => item.Volume) <= skipVolume))
+                return sec.ShrinkPrice(modelPrice + highLimit);
+
+            decimal sum = 0;
+            int k = -1;
+            while (sum < skipVolume)
+            {
+                k++;
+                sum += depth.Bids[k].Volume;
+            }
+
+            if (depth.Bids[k].Price < modelPrice + highLimit)
+                return sec.ShrinkPrice(modelPrice + highLimit);
+
+            if (depth.Bids[k].Price > modelPrice + lowLimit)
+                return sec.ShrinkPrice(modelPrice + lowLimit);
+
+            if (depth.Bids[k].Price == modelPrice + lowLimit)
+                return sec.ShrinkPrice(modelPrice + lowLimit + (decimal)sec.PriceStep);
+
+            return sec.ShrinkPrice(depth.Bids[k].Price + (decimal)sec.PriceStep);
+        }
+        else
+        {
+            if ((bAsk.Value.Price > modelPrice + highLimit) || (depth.Asks.Sum(item => item.Volume) <= skipVolume))
+                return sec.ShrinkPrice(modelPrice + highLimit);
+
+            decimal sum = 0;
+            int k = -1;
+            while (sum < skipVolume)
+            {
+                k++;
+                sum += depth.Asks[k].Volume;
+            }
+
+            if (depth.Asks[k].Price > modelPrice + highLimit)
+                return sec.ShrinkPrice(modelPrice + highLimit);
+
+            if (depth.Asks[k].Price < modelPrice + lowLimit)
+                return sec.ShrinkPrice(modelPrice + lowLimit);
+
+            if (depth.Asks[k].Price == modelPrice + lowLimit)
+                return sec.ShrinkPrice(modelPrice + lowLimit - (decimal)sec.PriceStep);
+
+            return sec.ShrinkPrice(depth.Asks[k].Price - (decimal)sec.PriceStep);
+        }
     }
 }
