@@ -111,13 +111,13 @@ public class DriverStockSharpService(
     {
         List<Security> res = [];
 
-        if (StrategyTrades.Count == 0)
-            return res;
-
         lock (AllSecurities)
         {
             lock (StrategyTrades)
             {
+                if (StrategyTrades.Count == 0)
+                    return res;
+
                 foreach (Security security in AllSecurities)
                 {
                     if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
@@ -145,13 +145,13 @@ public class DriverStockSharpService(
         if (OfzCurve.Length == 0)
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
 
-        //quoteStrategyVolume = (decimal)QuoteVolume.Value;
-        //quoteSizeStrategyVolume = (decimal)QuoteSizeVolume.Value;
-        //skipVolume = (decimal)SkipSizeVolume.Value;
+        quoteStrategyVolume = req.QuoteVolume;
+        quoteSizeStrategyVolume = req.QuoteSizeVolume;
+        skipVolume = req.SkipSizeVolume;
 
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
 
-        //CurrentSecurities.ForEach(security =>
+        //SecuritiesBonds().ForEach(security =>
         //{
         //    string bndName = security.Code.Substring(2, 5);
 
@@ -293,7 +293,7 @@ public class DriverStockSharpService(
         //SMinus.IsEnabled = true;
         //Reset_All.IsEnabled = true;
 
-        //CurrentSecurities.ForEach(security =>
+        //SecuritiesBonds().ForEach(security =>
         //{
         //    string bndName = security.Code.Substring(2, 5);
         //    Button btnRst = (Button)LogicalTreeHelper.FindLogicalNode(MyProgram, "Reset_" + bndName);
@@ -454,6 +454,7 @@ public class DriverStockSharpService(
 
     public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
     {
+        List<Security> currentSecurities = SecuritiesBonds();
         if (req.InstrumentId < 1)
         {
             quoteSizeStrategyVolume = req.Size;
@@ -471,7 +472,6 @@ public class DriverStockSharpService(
             lock (SBondSmallPositionsList)
                 SBondSmallPositionsList.Clear();
 
-            List<Security> currentSecurities = SecuritiesBonds();
             if (!currentSecurities.Any())
                 return ResponseBaseModel.CreateError("BondList - not any");
 
@@ -553,7 +553,6 @@ public class DriverStockSharpService(
         {
             TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await DataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
 
-
             //    SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
             //    if (!SbPos.IsNull())
             //        SBondPositionsList.Remove(SbPos);
@@ -566,7 +565,7 @@ public class DriverStockSharpService(
             //    if (!SbSmallPos.IsNull())
             //        SBondSmallPositionsList.Remove(SbSmallPos);
 
-            //    Security currentSecurity = CurrentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
+            //    Security currentSecurity = currentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
 
             //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bondName);
 
@@ -611,7 +610,6 @@ public class DriverStockSharpService(
         {
             PageNum = 0,
             PageSize = int.MaxValue,
-            //FavoriteFilter = true,
         }).Result;
         string _msg;
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
@@ -1028,7 +1026,7 @@ public class DriverStockSharpService(
                     {
                         SecurityId = new SecurityId
                         {
-                            SecurityCode = _sc.Trim()                             
+                            SecurityCode = _sc.Trim()
                         },
                         TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
                     });
@@ -1332,7 +1330,7 @@ public class DriverStockSharpService(
     {
         //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
     }
-    
+
     void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
     {
         _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
