@@ -31,6 +31,12 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
         if (instrumentDb.IssueDate == default)
             return ResponseBaseModel.CreateError($"`{nameof(instrumentDb.IssueDate)}` not set");
 
+        if (instrumentDb.MaturityDate == default)
+            return ResponseBaseModel.CreateError($"`{nameof(instrumentDb.MaturityDate)}` not set");
+
+        if (instrumentDb.CouponRate <= 0)
+            return ResponseBaseModel.CreateError($"`{nameof(instrumentDb.CouponRate)}` not set");
+
         DateTime dt = instrumentDb.IssueDate;
         List<CashFlowModelDB> CashFlows = [];
         while (dt < instrumentDb.MaturityDate)
