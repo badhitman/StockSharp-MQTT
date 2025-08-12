@@ -14,7 +14,44 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     public async Task<ResponseBaseModel> GenerateRegularCashFlowsAsync(CashFlowStockSharpRequestModel req, CancellationToken cancellationToken = default)
     {
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        throw new NotImplementedException();
+        InstrumentStockSharpModelDB instrumentDb = await ctx.Instruments
+            .Include(x => x.CashFlows)
+            .Include(x => x.Markers)
+            .FirstAsync(x => x.Id == req.InstrumentId, cancellationToken: cancellationToken);
+
+        DateTime dt = instrumentDb.IssueDate;
+        List<CashFlowModelDB> CashFlows = [];
+        while (dt < instrumentDb.MaturityDate)
+        {
+            CashFlows.Add(new CashFlowModelDB()
+            {
+                StartDate = dt,
+                EndDate = dt + TimeSpan.FromDays(req.FromDays),
+                Coupon = Math.Round(1000 * instrumentDb.CouponRate * req.FromDays / 365, 2)
+            });
+            dt += TimeSpan.FromDays(req.FromDays);
+        }
+
+        CashFlows.RemoveAll(x => instrumentDb.CashFlows
+            .Where(y => x.Coupon == x.Coupon)
+            .Where(y => x.Notional == x.Notional)
+            .Where(y => x.StartDate == x.StartDate)
+            .Where(y => x.EndDate == x.EndDate)
+            .Where(y => x.CouponRate == x.CouponRate)
+        .Any());
+
+        if (CashFlows.Count != 0)
+        {
+            await ctx.AddRangeAsync(CashFlows, cancellationToken);
+            await ctx.SaveChangesAsync(cancellationToken);
+            instrumentDb.CashFlows = await ctx.CashFlows
+                .Where(x => x.InstrumentId == req.InstrumentId)
+                .ToListAsync(cancellationToken: cancellationToken);
+        }
+
+        instrumentDb.CashFlows.First(s => s.EndDate.Equals(instrumentDb.MaturityDate)).Notional = req.NotionalFirst;
+
+        return ResponseBaseModel.CreateSuccess("Ok");
     }
 
     /// <inheritdoc/>
