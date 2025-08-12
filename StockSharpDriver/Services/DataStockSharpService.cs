@@ -437,11 +437,4 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             Response = [.. data]
         };
     }
-
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> PingAsync(CancellationToken cancellationToken = default)
-    {
-        //StockSharp.Algo.Connector Connector = new();
-        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(DriverStockSharpService)}"));
-    }
 }

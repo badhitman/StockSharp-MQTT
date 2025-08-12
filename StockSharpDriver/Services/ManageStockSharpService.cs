@@ -77,14 +77,14 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> DeleteAdapterAsync(FixMessageAdapterModelDB req, CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> DeleteAdapterAsync(int adapterId, CancellationToken cancellationToken = default)
     {
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
 
-        ctx.RemoveRange(ctx.Adapters.Where(x => x.Id == req.Id));
+        ctx.RemoveRange(ctx.Adapters.Where(x => x.Id == adapterId));
         return await ctx.SaveChangesAsync(cancellationToken) == 0
-            ? ResponseBaseModel.CreateWarning($"Адаптер #{req.Id} отсутствует (не найден)")
-            : ResponseBaseModel.CreateSuccess($"Адаптер #{req.Id} удалён");
+            ? ResponseBaseModel.CreateWarning($"Адаптер #{adapterId} отсутствует (не найден)")
+            : ResponseBaseModel.CreateSuccess($"Адаптер #{adapterId} удалён");
     }
 
     /// <inheritdoc/>

@@ -65,6 +65,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<decimal>("Notional")
                         .HasColumnType("TEXT");
 
+                    b.Property<uint>("Sorting")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 

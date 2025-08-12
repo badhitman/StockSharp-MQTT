@@ -1437,12 +1437,6 @@ public class DriverStockSharpService(
         highLimit = 0.25m;
     }
 
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> PingAsync(CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(DriverStockSharpService)}"));
-    }
-
     public Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
     {
         UnregisterEvents();

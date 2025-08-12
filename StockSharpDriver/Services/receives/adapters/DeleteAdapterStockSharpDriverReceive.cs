@@ -10,15 +10,15 @@ namespace Transmission.Receives.StockSharpDriver;
 /// DeleteAdapterStockSharpDriverReceive
 /// </summary>
 public class DeleteAdapterStockSharpDriverReceive(IManageStockSharpService ssRepo)
-    : IMQTTReceive<FixMessageAdapterModelDB, ResponseBaseModel>
+    : IMQTTReceive<int, ResponseBaseModel>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.DeleteAdapterStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResponseHandleActionAsync(FixMessageAdapterModelDB req, CancellationToken token = default)
+    public async Task<ResponseBaseModel> ResponseHandleActionAsync(int req, CancellationToken token = default)
     {
-        if (req is null)
+        if (req < 1)
             throw new ArgumentNullException(nameof(req));
 
         return await ssRepo.DeleteAdapterAsync(req, token);
