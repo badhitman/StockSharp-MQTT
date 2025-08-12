@@ -8,8 +8,15 @@ using DbcLib;
 
 namespace StockSharpDriver;
 
-public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, IDbContextFactory<PropertiesStorageContext> cloudParametersDbFactory) : IManageStockSharpService
+public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IManageStockSharpService
 {
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> GenerateRegularCashFlowsAsync(CashFlowStockSharpRequestModel req, CancellationToken cancellationToken = default)
+    {
+        StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        throw new NotImplementedException();
+    }
+
     /// <inheritdoc/>
     public async Task<TResponseModel<FixMessageAdapterModelDB>> UpdateOrCreateAdapterAsync(FixMessageAdapterModelDB req, CancellationToken cancellationToken = default)
     {
@@ -132,6 +139,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
         };
     }
 
+    /// <inheritdoc/>
     public Task<AboutDatabasesResponseModel> AboutDatabases(CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new AboutDatabasesResponseModel()
