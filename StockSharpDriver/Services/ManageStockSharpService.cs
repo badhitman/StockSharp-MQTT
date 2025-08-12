@@ -14,10 +14,19 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     public async Task<ResponseBaseModel> GenerateRegularCashFlowsAsync(CashFlowStockSharpRequestModel req, CancellationToken cancellationToken = default)
     {
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        InstrumentStockSharpModelDB instrumentDb = await ctx.Instruments
-            .Include(x => x.CashFlows)
-            .Include(x => x.Markers)
-            .FirstAsync(x => x.Id == req.InstrumentId, cancellationToken: cancellationToken);
+        InstrumentStockSharpModelDB instrumentDb;
+
+        try
+        {
+            instrumentDb = await ctx.Instruments
+                .Include(x => x.CashFlows)
+                .Include(x => x.Markers)
+                .FirstAsync(x => x.Id == req.InstrumentId, cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return ResponseBaseModel.CreateError(ex);
+        }
 
         DateTime dt = instrumentDb.IssueDate;
         List<CashFlowModelDB> CashFlows = [];

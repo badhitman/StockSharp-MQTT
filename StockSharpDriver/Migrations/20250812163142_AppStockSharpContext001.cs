@@ -178,8 +178,7 @@ namespace StockSharpDriver.Migrations
                     EndDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CouponRate = table.Column<decimal>(type: "TEXT", nullable: false),
                     Coupon = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Notional = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Sorting = table.Column<uint>(type: "INTEGER", nullable: false)
+                    Notional = table.Column<decimal>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
