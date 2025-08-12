@@ -63,9 +63,9 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
                 .Where(x => x.InstrumentId == req.InstrumentId)
                 .ToListAsync(cancellationToken: cancellationToken);
         }
-
-        instrumentDb.CashFlows.First(s => s.EndDate.Equals(instrumentDb.MaturityDate)).Notional = req.NotionalFirst;
-        ctx.Update(instrumentDb);
+        CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.EndDate.Equals(instrumentDb.MaturityDate));
+        _cff.Notional = req.NotionalFirst;
+        ctx.Update(_cff);
         await ctx.SaveChangesAsync(cancellationToken);
 
         return ResponseBaseModel.CreateSuccess("Ok");
