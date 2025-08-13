@@ -5,6 +5,7 @@
 using Microsoft.EntityFrameworkCore;
 using SharedLib;
 using DbcLib;
+using Newtonsoft.Json;
 
 namespace StockSharpDriver;
 
@@ -77,7 +78,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
         }
         if (instrumentDb.CashFlows.Count != 0)
         {
-            CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.EndDate.Equals(instrumentDb.MaturityDate));
+            CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.Instrument.MaturityDate.Equals(req.MaturityDate));
             _cff.Notional = req.NotionalFirst;
             ctx.Update(_cff);
             if (await ctx.SaveChangesAsync(cancellationToken) != 0)
