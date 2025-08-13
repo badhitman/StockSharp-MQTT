@@ -13,6 +13,12 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> GenerateRegularCashFlowsAsync(CashFlowStockSharpRequestModel req, CancellationToken cancellationToken = default)
     {
+        if (req.IssueDate is null)
+            return ResponseBaseModel.CreateError($"request -> `{nameof(req.IssueDate)}` not set");
+
+        if (req.MaturityDate is null)
+            return ResponseBaseModel.CreateError($"request -> `{nameof(req.MaturityDate)}` not set");
+
         StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         InstrumentStockSharpModelDB instrumentDb;
 
@@ -29,17 +35,17 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
         }
 
         if (instrumentDb.IssueDate == default)
-            return ResponseBaseModel.CreateError($"`{nameof(instrumentDb.IssueDate)}` not set");
+            return ResponseBaseModel.CreateError($"db -> `{nameof(instrumentDb.IssueDate)}` not set");
 
         if (instrumentDb.MaturityDate == default)
-            return ResponseBaseModel.CreateError($"`{nameof(instrumentDb.MaturityDate)}` not set");
+            return ResponseBaseModel.CreateError($"db -> `{nameof(instrumentDb.MaturityDate)}` not set");
 
         if (instrumentDb.CouponRate <= 0)
-            return ResponseBaseModel.CreateError($"`{nameof(instrumentDb.CouponRate)}` not set");
+            return ResponseBaseModel.CreateError($"db -> `{nameof(instrumentDb.CouponRate)}` not set");
 
-        DateTime dt = instrumentDb.IssueDate;
+        DateTime dt = req.IssueDate ?? instrumentDb.IssueDate;
         List<CashFlowModelDB> CashFlows = [];
-        while (dt < instrumentDb.MaturityDate)
+        while (dt < req.MaturityDate)
         {
             CashFlows.Add(new CashFlowModelDB()
             {
@@ -59,22 +65,31 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             .Where(y => x.EndDate == x.EndDate)
             .Where(y => x.CouponRate == x.CouponRate)
         .Any());
-
+        ResponseBaseModel res = new();
         if (CashFlows.Count != 0)
         {
             await ctx.AddRangeAsync(CashFlows, cancellationToken);
-            await ctx.SaveChangesAsync(cancellationToken);
+            res.AddInfo($"added CashFlow`s: {await ctx.SaveChangesAsync(cancellationToken)}");
 
             instrumentDb.CashFlows = await ctx.CashFlows
                 .Where(x => x.InstrumentId == req.InstrumentId)
                 .ToListAsync(cancellationToken: cancellationToken);
         }
-        CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.EndDate.Equals(instrumentDb.MaturityDate));
-        _cff.Notional = req.NotionalFirst;
-        ctx.Update(_cff);
-        await ctx.SaveChangesAsync(cancellationToken);
+        if (instrumentDb.CashFlows.Count != 0)
+        {
+            CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.EndDate.Equals(instrumentDb.MaturityDate));
+            _cff.Notional = req.NotionalFirst;
+            ctx.Update(_cff);
+            if (await ctx.SaveChangesAsync(cancellationToken) != 0)
+            {
+                res.AddInfo($"update [Notional] (set: {req.NotionalFirst}) for CashFlow: #{_cff.Id} /{_cff.StartDate}-{_cff.EndDate}/");
+            }
+        }
 
-        return ResponseBaseModel.CreateSuccess("Ok");
+        if (res.Messages.Count == 0)
+            res.AddSuccess("Without update");
+
+        return res;
     }
 
     /// <inheritdoc/>
