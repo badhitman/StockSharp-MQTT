@@ -14,6 +14,8 @@ Adapters
 
 Instruments (aka Securities)
 ![instruments view](./StockSharpMauiApp/img/instruments-view.png)
+Manage
+![instruments view](./StockSharpMauiApp/img/instrument-manage.png)
 
 Rubrics (segments)
 ![rubrics view](./StockSharpMauiApp/img/rubrics-view.png)
