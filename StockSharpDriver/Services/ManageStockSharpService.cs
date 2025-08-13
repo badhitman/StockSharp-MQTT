@@ -12,6 +12,14 @@ namespace StockSharpDriver;
 public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IManageStockSharpService
 {
     /// <inheritdoc/>
+    public async Task<ResponseBaseModel> ClearCashFlowsAsync(int instrumentId, CancellationToken cancellationToken = default)
+    {
+        StockSharpAppContext ctx = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        ctx.RemoveRange(ctx.CashFlows.Where(x => x.InstrumentId == instrumentId));
+        return ResponseBaseModel.CreateSuccess($"Ok! Deleted CashFlow`s: {await ctx.SaveChangesAsync(cancellationToken)}");
+    }
+
+    /// <inheritdoc/>
     public async Task<ResponseBaseModel> GenerateRegularCashFlowsAsync(CashFlowStockSharpRequestModel req, CancellationToken cancellationToken = default)
     {
         if (req.IssueDate is null)

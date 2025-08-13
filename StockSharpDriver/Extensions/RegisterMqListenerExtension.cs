@@ -39,6 +39,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<MetadataLogsReceive, PeriodDatesTimesModel, TResponseModel<LogsMetadataResponseModel>>()
             .RegisterMqListener<LogsSelectReceive, TPaginationRequestStandardModel<LogsSelectRequestModel>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<AboutConnectStockSharpDriverReceive, object, AboutConnectResponseModel>()
+            .RegisterMqListener<ClearCashFlowsStockSharpDriverReceive, int, ResponseBaseModel>()
             .RegisterMqListener<AboutDatabasesStockSharpDriverReceive, object, AboutDatabasesResponseModel>()
             .RegisterMqListener<LimitsStrategiesUpdateStockSharpDriverReceive, LimitsStrategiesUpdateRequestModel, ResponseBaseModel>()
             .RegisterMqListener<DisconnectStockSharpDriverReceive, object, ResponseBaseModel>()
