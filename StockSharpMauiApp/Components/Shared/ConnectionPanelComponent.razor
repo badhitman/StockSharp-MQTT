@@ -69,7 +69,7 @@
                 <MudSpacer />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(!CanStarted)" />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(!CanStopped)" />
-                <MudIconButton OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" Variant="Variant.Outlined" />
+                <MudIconButton title="Initial load RedArrowData.db" OnClick="DownloadBaseAsync" Color="Color.Primary" Icon="@Icons.Material.Filled.FileDownload" Variant="Variant.Outlined" />
             }
         </MudStack>
         <form class="d-flex">

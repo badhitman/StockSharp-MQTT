@@ -84,7 +84,12 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     }
     async Task DownloadBaseAsync()
     {
+        InitialLoadRequestModel req = new()
+        {
+
+        };
         await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.InitialLoad(req);
         await SetBusyAsync(false);
         await GetStatusConnection();
     }
@@ -196,7 +201,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     private void ToastShowHandle(ToastShowClientModel toast)
     {
-        JS.InvokeVoidAsync($"Toast.{toast.TypeMessage}", toast.HeadTitle, toast.MessageText);
+        InvokeAsync(async () => await JS.InvokeVoidAsync($"Toast.{toast.TypeMessage}", toast.HeadTitle, toast.MessageText));
         SnackBarRepo.SaveToast(toast);
     }
 

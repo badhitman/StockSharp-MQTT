@@ -1,8 +1,9 @@
-﻿using StockSharp.BusinessEntities;
-using System.Data.SQLite;
+﻿using Ecng.Common;
+using SharedLib;
 using StockSharp.Algo;
+using StockSharp.BusinessEntities;
 using System.Data;
-using Ecng.Common;
+using System.Data.SQLite;
 
 namespace StockSharpDriver;
 
@@ -14,7 +15,7 @@ public class Curve(DateTime date)
     private int _length = 0;
     private DateTime _curveDate = date;
 
-    public List<SBond> BondList { get; private set; } = new List<SBond>();
+    public List<SBond> BondList { get; private set; } = [];
 
     public int Length
     {
@@ -28,8 +29,10 @@ public class Curve(DateTime date)
         set { _curveDate = value; }
     }
 
-    //Load Curve form database
-    public void GetCurveFromDb(string DbName, Connector trader, SharedLib.BoardStockSharpModel board)
+    /// <summary>
+    /// Load Curve form database
+    /// </summary>
+    public string GetCurveFromDb(string DbName, Connector trader, BoardStockSharpModel board, Dictionary<string, bool> bigPriceDifferences, ref IEventsStockSharp eventTrans)
     {
         string secName;
         decimal secPrice;
@@ -60,13 +63,12 @@ public class Curve(DateTime date)
 
             bool checkBoard(ExchangeBoard reqEx)
             {
-                return reqEx.Code == board.Code && reqEx.Exchange.Name == board.Exchange.Name;
+                return reqEx.Code == board.Code && reqEx.Exchange.Name == board.Exchange.Name && (int?)reqEx.Exchange.CountryCode == board.Exchange.CountryCode;
             }
 
             if (CurveDate.Day != dt.Day)
             {
-                throw new NotImplementedException();
-                //MessageBox.Show("Wrong Date! Pls update the curve!");
+                eventTrans.ToastClientShow(new() { HeadTitle = $"{nameof(GetCurveFromDb)}: [CurveDate.Day]!=[{dt.Day}]", TypeMessage = MessagesTypesEnum.Warning, MessageText = $"Wrong Date! Pls update the curve!" });
                 BondList.Clear();
                 Length = 0;
             }
@@ -76,7 +78,7 @@ public class Curve(DateTime date)
                 {
                     secName = reader.GetName(i);
                     security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && checkBoard(s.Board));
-                    if ((!security.IsNull())) //  && (secName != "SU26217RMFS8")
+                    if ((security is not null)) //  && (secName != "SU26217RMFS8")
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(i));
                         AddNode(new SBond(security), secPrice);
@@ -91,20 +93,30 @@ public class Curve(DateTime date)
                 {
                     secName = reader.GetName(j);
                     security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && checkBoard(s.Board));
-                    if ((!security.IsNull())) // && (secName != "SU26217RMFS8")
+                    if (security is not null)
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(j));
 
                         if (Math.Abs(GetNode(security).ModelPrice - secPrice) >= 0.2m)
                         {
-                            throw new NotImplementedException();
-                            //if (MessageBox.Show(secName + " Do you want to continue?", "Big price difference in", MessageBoxButton.YesNo) == MessageBoxResult.No)
-                            //{
-                            //    BondList.Clear();
-                            //    Length = 0;
-                            //    MessageBox.Show("Curve loading terminated!");
-                            //    break;
-                            //}
+                            if (!bigPriceDifferences.ContainsKey(secName))
+                                return secName;
+
+                            if (!bigPriceDifferences[secName])
+                            {
+                                BondList.Clear();
+                                Length = 0;
+
+                                ToastShowClientModel req = new()
+                                {
+                                    HeadTitle = "Curve loading terminated!",
+                                    TypeMessage = MessagesTypesEnum.Error,
+                                    MessageText = $"Big price difference for Instrument `{secName}` "
+                                };
+
+                                eventTrans.ToastClientShow(req);
+                                break;
+                            }
                         }
                     }
                     j++;
@@ -115,6 +127,7 @@ public class Curve(DateTime date)
             conn.Close();
         }
         conn.Dispose();
+        return null;
     }
 
     public void AddNode(SBond bondSec, decimal price)

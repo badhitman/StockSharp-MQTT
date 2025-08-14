@@ -74,6 +74,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             .Where(y => x.EndDate == x.EndDate)
             .Where(y => x.CouponRate == x.CouponRate)
         .Any());
+
         ResponseBaseModel res = new();
         if (CashFlows.Count != 0)
         {
@@ -84,6 +85,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
                 .Where(x => x.InstrumentId == req.InstrumentId)
                 .ToListAsync(cancellationToken: cancellationToken);
         }
+
         if (instrumentDb.CashFlows.Count != 0)
         {
             CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.Instrument.MaturityDate.Equals(req.MaturityDate));

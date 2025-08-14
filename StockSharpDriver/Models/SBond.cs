@@ -1,7 +1,6 @@
-﻿using Ecng.Common;
-using StockSharp.BusinessEntities;
+﻿using StockSharp.BusinessEntities;
 using System.Data;
-using System.Globalization;
+using Ecng.Common;
 
 namespace StockSharpDriver;
 
@@ -42,92 +41,6 @@ public class SBond(Security sec)
     {
         get { return _micexCode; }
         set { _micexCode = value; }
-    }
-
-    // Downloads bond information form file, where each string reperesents property or coupon or notional
-    // tabs and gaps are ignored, coupon and notional are set by start day and end day and then value in RUB for 1000 RUB
-    public void LoadInfoFromFile(string filename)
-    {
-        CashFlow CF = null;
-        //set up culture separator "."
-        CultureInfo cultInfo = (CultureInfo)CultureInfo.InvariantCulture.Clone();
-        cultInfo.NumberFormat.NumberDecimalSeparator = ".";
-
-        try
-        {    //read file
-            string[] lineArray = File.ReadAllLines(filename).ToArray();
-            int N = lineArray.Length;
-
-            for (int i = 0; i < N; i++)
-            {
-                string[] items = lineArray[i].Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                switch (items[0].ToLower())
-                {
-                    case "name": //property reading
-                        //_name = items[1];
-                        break;
-                    case "issuer":
-                        //_issuer = items[1];
-                        break;
-                    case "issuedate":
-                        IssueDate = Convert.ToDateTime(items[1]);
-                        break;
-                    case "maturity":
-                        Maturity = Convert.ToDateTime(items[1]);
-                        break;
-                    case "isin":
-                        //_ISIN = items[1];
-                        break;
-                    case "code":
-                        MicexCode = items[1];
-                        break;
-                    case "coupon":            //coupon reading
-                        CF = CashFlows.FirstOrDefault(s => s.EndDate.Equals(Convert.ToDateTime(items[2])));
-                        if (CF is null)
-                        {
-                            CashFlows.Add(new CashFlow(Convert.ToDateTime(items[1]), Convert.ToDateTime(items[2]), Convert.ToDecimal(items[3], cultInfo), 0, Convert.ToDecimal(items[4], cultInfo)));
-                        }
-                        else
-                        {
-                            CF.Coupon += Convert.ToDecimal(items[3], cultInfo);
-                            CF.CouponRate += Convert.ToDecimal(items[4], cultInfo);
-                        }
-                        break;
-                    case "notional":   //notional reading
-                        CF = CashFlows.FirstOrDefault(s => s.EndDate.Equals(Convert.ToDateTime(items[2])));
-                        if (CF is null)
-                            CashFlows.Add(new CashFlow(Convert.ToDateTime(items[1]), Convert.ToDateTime(items[2]), 0, Convert.ToDecimal(items[3], cultInfo), 0));
-                        else
-                        {
-                            CF.Notional += Convert.ToDecimal(items[3], cultInfo);
-                        }
-                        break;
-                }
-            }
-            ;
-
-            CashFlows.Sort();  //sort cash flows by last coupon date
-        }
-        catch (Exception e)
-        {
-            //MessageBox.Show($"Unable to load info from file: {e.Message}");
-        }
-    }
-
-    public void CreateRegularOFZ(DateTime issuedate, DateTime maturity, decimal rateCoup)
-    {
-        IssueDate = issuedate;
-        Maturity = maturity;
-
-        DateTime dt = issuedate;
-
-        while (dt < maturity)
-        {
-            CashFlows.Add(new CashFlow(dt, dt + TimeSpan.FromDays(182), Math.Round(1000 * rateCoup * 182 / 365, 2), 0, rateCoup));
-            dt += TimeSpan.FromDays(182);
-        }
-        CashFlows.First(s => s.EndDate.Equals(maturity)).Notional = 1000;
-        CashFlows.Sort();
     }
 
     //Returns remanining notional for specific date
