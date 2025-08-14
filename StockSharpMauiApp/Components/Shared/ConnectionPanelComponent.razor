@@ -62,10 +62,11 @@
         <MudStack Row="true">
             @if (portfolios is null || allBoards is null)
             {
-                <MudAlert Severity="Severity.Info">portfolios or boards - is null</MudAlert>
+                <MudAlert Severity="Severity.Info">portfolios or boards: is null</MudAlert>
             }
             else
             {
+                <strong>@SelectedBoard</strong>
                 <MudSpacer />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(!CanStarted)" />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(!CanStopped)" />
@@ -77,6 +78,47 @@
         </form>
     </div>
 </nav>
+
+<!-- initial questions download -->
+<MudDialog @bind-Visible="_visibleInitialQuestionsDownload" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.CellTower" Class="mr-3" /> Instrument #@InitialLoadCheck?.Response
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (string.IsNullOrWhiteSpace(InitialLoadCheck?.Response))
+        {
+            <figure class="text-center">
+                <blockquote class="blockquote">
+                    <p>Error InitialLoadCheck</p>
+                </blockquote>
+                <figcaption class="blockquote-footer">
+                    InitialLoadCheck?.Response <cite title="IsNullOrWhiteSpace()">IsNullOrWhiteSpace</cite>.
+                </figcaption>
+            </figure>
+        }
+        else
+        {
+            <p>Big price difference in #@InitialLoadCheck.Response</p>
+        }
+        @if (reqDownloadBase.BigPriceDifferences.Count != 0)
+        {
+            <hr />
+            @foreach (var _r in reqDownloadBase.BigPriceDifferences)
+            {
+                <span class="badge text-bg-success me-1">@_r</span>
+            }
+
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="AllowBigPriceDifferenceAsync" Class="px-10">Ok, allow?</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DisallowBigPriceDifference" Class="px-10">Abort</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- starter strategy panel -->
 <MudDialog @bind-Visible="_visibleStrategyBoard" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">

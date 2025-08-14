@@ -32,25 +32,33 @@ public class Curve(DateTime date)
     /// <summary>
     /// Load Curve form database
     /// </summary>
-    public string GetCurveFromDb(string DbName, Connector trader, BoardStockSharpModel board, Dictionary<string, bool> bigPriceDifferences, ref IEventsStockSharp eventTrans)
+    public string GetCurveFromDb(string DbName, Connector trader, BoardStockSharpModel board, List<string> bigPriceDifferences, ref IEventsStockSharp eventTrans)
     {
         string secName;
         decimal secPrice;
         Security security;
         int j, tableSize;
 
+        BondList.Clear();
+        Length = 0;
+
+        ToastShowClientModel reqToast;
         SQLiteConnection conn = new("Data Source=" + DbName + "; Version=3;");
         try
         {
             conn.Open();
         }
-        catch (SQLiteException ex)
+        catch (Exception ex)
         {
-            BondList.Clear();
-            Length = 0;
-            Console.WriteLine(ex.Message);
+            reqToast = new()
+            {
+                HeadTitle = $"SQLite connection exception ({nameof(GetCurveFromDb)}): {ex.GetType().Name}]",
+                TypeMessage = MessagesTypesEnum.Warning,
+                MessageText = ex.Message,
+            };
+            eventTrans.ToastClientShow(reqToast);
+            return ex.Message;
         }
-
         if (conn.State == ConnectionState.Open)
         {
             SQLiteCommand cmd = new("SELECT * FROM BondPrices ORDER BY rowid DESC", conn);
@@ -68,7 +76,13 @@ public class Curve(DateTime date)
 
             if (CurveDate.Day != dt.Day)
             {
-                eventTrans.ToastClientShow(new() { HeadTitle = $"{nameof(GetCurveFromDb)}: [CurveDate.Day]!=[{dt.Day}]", TypeMessage = MessagesTypesEnum.Warning, MessageText = $"Wrong Date! Pls update the curve!" });
+                reqToast = new() 
+                { 
+                    HeadTitle = $"{nameof(GetCurveFromDb)}: [CurveDate.Day]!=[{dt.Day}]", 
+                    TypeMessage = MessagesTypesEnum.Warning, 
+                    MessageText = $"Wrong Date! Pls update the curve!" 
+                };
+                eventTrans.ToastClientShow(reqToast);
                 BondList.Clear();
                 Length = 0;
             }
@@ -78,7 +92,7 @@ public class Curve(DateTime date)
                 {
                     secName = reader.GetName(i);
                     security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && checkBoard(s.Board));
-                    if ((security is not null)) //  && (secName != "SU26217RMFS8")
+                    if ((security is not null))
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(i));
                         AddNode(new SBond(security), secPrice);
@@ -88,7 +102,7 @@ public class Curve(DateTime date)
                 reader.Read();  //previous curve data
 
                 j = 0;
-                ToastShowClientModel reqToast;
+
                 while (j <= tableSize - 1)
                 {
                     secName = reader.GetName(j);
@@ -99,7 +113,7 @@ public class Curve(DateTime date)
 
                         if (Math.Abs(GetNode(security).ModelPrice - secPrice) >= 0.2m)
                         {
-                            if (!bigPriceDifferences.ContainsKey(secName))
+                            if (!bigPriceDifferences.Contains(secName))
                             {
                                 BondList.Clear();
                                 Length = 0;
@@ -119,22 +133,6 @@ public class Curve(DateTime date)
 
                                 conn.Dispose();
                                 return secName;
-                            }
-
-                            if (!bigPriceDifferences[secName])
-                            {
-                                BondList.Clear();
-                                Length = 0;
-
-                                reqToast = new()
-                                {
-                                    HeadTitle = "Curve loading terminated!",
-                                    TypeMessage = MessagesTypesEnum.Error,
-                                    MessageText = $"Big price difference for Instrument `{secName}` "
-                                };
-
-                                eventTrans.ToastClientShow(reqToast);
-                                break;
                             }
                         }
                     }

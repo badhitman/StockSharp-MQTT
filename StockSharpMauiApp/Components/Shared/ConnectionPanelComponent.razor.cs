@@ -33,8 +33,9 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     IEventNotifyReceive<ToastShowClientModel> ToastClientRepo { get; set; } = default!;
 
 
-    private bool _visibleStrategyBoard;
-    private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
+    bool _visibleInitialQuestionsDownload;
+    bool _visibleStrategyBoard;
+    readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
 
     string ConnectionStateStyles => AboutConnection is null
@@ -44,7 +45,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
             : " text-warning";
 
     UserTelegramBaseModel? aboutBot;
-
+    ResponseSimpleModel? InitialLoadCheck;
     readonly List<PortfolioStockSharpViewModel> portfolios = [];
 
     List<BoardStockSharpViewModel>? allBoards;
@@ -55,7 +56,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     bool CanConnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected;
     bool CanDisconnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected;
-
+    readonly InitialLoadRequestModel reqDownloadBase = new() { BigPriceDifferences = [] };
     PortfolioStockSharpModel? SelectedPortfolio { get; set; }
 
     async Task StartTradeAsync()
@@ -82,22 +83,31 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         _visibleStrategyBoard = false;
         await GetStatusConnection();
     }
+
+    void DisallowBigPriceDifference()
+    {
+        SnackBarRepo.Warn($"Disallow BigPriceDifference for instrument #{InitialLoadCheck?.Response}");
+        _visibleInitialQuestionsDownload = false;
+        reqDownloadBase.BigPriceDifferences.Clear();
+    }
+
+    async Task AllowBigPriceDifferenceAsync()
+    {
+        reqDownloadBase.BigPriceDifferences.Add(InitialLoadCheck?.Response ?? throw new Exception(nameof(AllowBigPriceDifferenceAsync)));
+        _visibleInitialQuestionsDownload = false;
+        await DownloadBaseAsync();
+    }
+
     async Task DownloadBaseAsync()
     {
-        InitialLoadRequestModel req = new()
-        {
-
-        };
         await SetBusyAsync();
-        ResponseSimpleModel res = await DriverRepo.InitialLoad(req);
-
-        if (!string.IsNullOrWhiteSpace(res.Response))
-        {
-
-        }
-
+        InitialLoadCheck = await DriverRepo.InitialLoad(reqDownloadBase);
         await SetBusyAsync(false);
-        await GetStatusConnection();
+
+        if (!string.IsNullOrWhiteSpace(InitialLoadCheck.Response))
+            _visibleInitialQuestionsDownload = true;
+        else
+            await GetStatusConnection();
     }
 
     async Task Connect()
