@@ -1,10 +1,10 @@
-﻿using StockSharp.BusinessEntities;
+﻿using SharedLib;
 
 namespace StockSharpDriver;
 
-public class SecurityPosition(Security sec, string stname, decimal lowlimit, decimal highlimit, decimal bidvolume, decimal offervolume, decimal offset)
+public class SecurityPosition(InstrumentTradeStockSharpModel sec, string stname, decimal lowlimit, decimal highlimit, decimal bidvolume, decimal offervolume, decimal offset)
 {
-    public Security Sec = sec;
+    public InstrumentTradeStockSharpModel Sec = sec;
     public string StrategyName = stname;
     public decimal Offset = offset;
     public decimal LowLimit = lowlimit;

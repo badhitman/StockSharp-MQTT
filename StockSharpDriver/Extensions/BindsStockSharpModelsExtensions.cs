@@ -82,6 +82,20 @@ public static class BindsStockSharpModelsExtensions
         main.Name = inc.Name;
         main.IdRemote = inc.Id;
 
+        main.Bloomberg = inc.ExternalId.Bloomberg;
+        main.Isin = inc.ExternalId.Isin;
+        main.Cusip = inc.ExternalId.Cusip;
+        main.InteractiveBrokers = inc.ExternalId.InteractiveBrokers;
+        main.Sedol = inc.ExternalId.Sedol;
+        main.Ric = inc.ExternalId.Ric;
+        main.Plaza = inc.ExternalId.Plaza;
+        main.IQFeed = inc.ExternalId.IQFeed;
+
+        main.MaxVolume = inc.MaxVolume;
+        main.MinVolume = inc.MinVolume;
+        main.VolumeStep = inc.VolumeStep;
+        main.PriceStep = inc.PriceStep;
+
         main.Currency = (int)(inc.Currency is null ? CurrenciesTypesEnum.None : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value)));
         main.UnderlyingSecurityType = (int)(inc.UnderlyingSecurityType is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.UnderlyingSecurityType.Value)));
         main.TypeInstrument = (int)(inc.Type is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.Type.Value)));

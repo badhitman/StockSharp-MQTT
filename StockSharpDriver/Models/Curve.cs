@@ -1,9 +1,9 @@
-﻿using Ecng.Common;
-using SharedLib;
-using StockSharp.Algo;
-using StockSharp.BusinessEntities;
-using System.Data;
+﻿using StockSharp.BusinessEntities;
 using System.Data.SQLite;
+using StockSharp.Algo;
+using System.Data;
+using Ecng.Common;
+using SharedLib;
 
 namespace StockSharpDriver;
 
@@ -12,22 +12,9 @@ namespace StockSharpDriver;
 /// </summary>
 public class Curve(DateTime date)
 {
-    private int _length = 0;
-    private DateTime _curveDate = date;
-
     public List<SBond> BondList { get; private set; } = [];
 
-    public int Length
-    {
-        get { return _length; }
-        private set { _length = value; }
-    }
-
-    public DateTime CurveDate
-    {
-        get { return _curveDate; }
-        set { _curveDate = value; }
-    }
+    public DateTime CurveDate { get; private init; } = date;
 
     /// <summary>
     /// Load Curve form database
@@ -40,7 +27,6 @@ public class Curve(DateTime date)
         int j, tableSize;
 
         BondList.Clear();
-        Length = 0;
 
         ToastShowClientModel reqToast;
         SQLiteConnection conn = new("Data Source=" + DbName + "; Version=3;");
@@ -76,15 +62,14 @@ public class Curve(DateTime date)
 
             if (CurveDate.Day != dt.Day)
             {
-                reqToast = new() 
-                { 
-                    HeadTitle = $"{nameof(GetCurveFromDb)}: [CurveDate.Day]!=[{dt.Day}]", 
-                    TypeMessage = MessagesTypesEnum.Warning, 
-                    MessageText = $"Wrong Date! Pls update the curve!" 
+                reqToast = new()
+                {
+                    HeadTitle = $"{nameof(GetCurveFromDb)}: [CurveDate.Day]!=[{dt.Day}]",
+                    TypeMessage = MessagesTypesEnum.Warning,
+                    MessageText = $"Wrong Date! Pls update the curve!"
                 };
                 eventTrans.ToastClientShow(reqToast);
                 BondList.Clear();
-                Length = 0;
             }
             else
             {
@@ -92,10 +77,10 @@ public class Curve(DateTime date)
                 {
                     secName = reader.GetName(i);
                     security = trader.Securities.FirstOrDefault(s => (s.Code == secName) && checkBoard(s.Board));
-                    if ((security is not null))
+                    if (security is not null)
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(i));
-                        AddNode(new SBond(security), secPrice);
+                        AddNode(new SBond(new InstrumentTradeStockSharpModel().Bind(security)), secPrice);
                     }
                 }
 
@@ -111,12 +96,11 @@ public class Curve(DateTime date)
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(j));
 
-                        if (Math.Abs(GetNode(security).ModelPrice - secPrice) >= 0.2m)
+                        if (Math.Abs(GetNode(new InstrumentTradeStockSharpModel().Bind(security)).ModelPrice - secPrice) >= 0.2m)
                         {
                             if (!bigPriceDifferences.Contains(secName))
                             {
                                 BondList.Clear();
-                                Length = 0;
 
                                 reqToast = new()
                                 {
@@ -158,13 +142,9 @@ public class Curve(DateTime date)
             tmpBond = bondSec;
             tmpBond.ModelPrice = price;
             BondList.Add(tmpBond);
-            _length++;
         }
     }
 
     //Returns node which corresponds to security
-    public SBond GetNode(Security sec)
-    {
-        return BondList.Find(s => s.UnderlyingSecurity.Code == sec.Code);
-    }
+    public SBond GetNode(InstrumentTradeStockSharpModel sec) => BondList.Find(s => s.UnderlyingSecurity.Code == sec.Code);
 }

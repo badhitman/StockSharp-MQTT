@@ -236,6 +236,9 @@ namespace StockSharpDriver.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Bloomberg")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("BoardId")
                         .HasColumnType("INTEGER");
 
@@ -263,6 +266,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<int>("Currency")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Cusip")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("Decimals")
                         .HasColumnType("INTEGER");
 
@@ -272,6 +278,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<decimal?>("FaceValue")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("IQFeed")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ISIN")
                         .HasColumnType("TEXT");
 
@@ -279,6 +288,12 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IdRemoteNormalizedUpper")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("InteractiveBrokers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Isin")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("IssueDate")
@@ -291,6 +306,12 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("MaturityDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("MaxVolume")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("MinVolume")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Multiplier")
@@ -308,7 +329,19 @@ namespace StockSharpDriver.Migrations
                     b.Property<int>("OptionType")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Plaza")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("PriceStep")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PrimaryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Ric")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sedol")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset?>("SettlementDate")
@@ -334,6 +367,9 @@ namespace StockSharpDriver.Migrations
 
                     b.Property<int>("UnderlyingSecurityType")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("VolumeStep")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

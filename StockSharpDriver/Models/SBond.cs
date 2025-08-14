@@ -1,49 +1,24 @@
-﻿using StockSharp.BusinessEntities;
-using System.Data;
+﻿using System.Data;
 using Ecng.Common;
+using SharedLib;
 
 namespace StockSharpDriver;
 
-public class SBond(Security sec)
+public class SBond(InstrumentTradeStockSharpModel sec)
 {
-    private DateTime _maturity;
     public List<CashFlow> CashFlows = [];
 
-    decimal _modelPrice; // theoretical price from the curve
-    public decimal ModelPrice
-    {
-        get { return _modelPrice; }
-        set { _modelPrice = value; }
-    }
+    public decimal ModelPrice { get; set; }
 
-    Security _underlyingSecurity = sec; // security from which bond is derived
-    public Security UnderlyingSecurity
-    {
-        get { return _underlyingSecurity; }
-        set { _underlyingSecurity = value; }
-    }
+    public InstrumentTradeStockSharpModel UnderlyingSecurity { get; set; } = sec;
 
-    DateTime _issueDate;
-    public DateTime IssueDate
-    {
-        get { return _issueDate; }
-        set { _issueDate = value; }
-    }
+    public DateTime IssueDate { get; set; }
 
-    public DateTime Maturity
-    {
-        get { return _maturity; }
-        set { _maturity = value; }
-    }
+    public DateTime Maturity { get; set; }
 
-    private string _micexCode = sec.Code;
-    public string MicexCode
-    {
-        get { return _micexCode; }
-        set { _micexCode = value; }
-    }
+    public string MicexCode { get; set; } = sec.Code;
 
-    //Returns remanining notional for specific date
+    //Returns remaining notional for specific date
     public decimal GetRemainingNotional(DateTime date)
     {
         if ((date < IssueDate) || (date >= Maturity))
@@ -51,7 +26,9 @@ public class SBond(Security sec)
         return CashFlows.Where(s => s.EndDate > date).Select(s => s.Notional).Sum();
     }
 
-    //Calculates Accrued Interest for bond for scpecific day. If day is out of range retuirns -1
+    /// <summary>
+    /// Calculates Accrued Interest for bond for specific day. If day is out of range returns -1
+    /// </summary>
     public decimal GetAccruedInterest(DateTime date)
     {
         if ((date < IssueDate) || (date >= Maturity))
@@ -62,7 +39,9 @@ public class SBond(Security sec)
                                       .Sum(s => s.CouponRate * GetRemainingNotional(date) * (date - s.StDate).Days / 365), 2);
     }
 
-    //Calculte price for given Yield
+    /// <summary>
+    /// Calculate price for given Yield
+    /// </summary>
     public decimal GetPriceFromYield(DateTime date, decimal yield, bool Clean)
     {
         if ((date < IssueDate) || (date >= Maturity))
@@ -85,7 +64,9 @@ public class SBond(Security sec)
         return (decimal)DirtyPrice / remainingNotional;
     }
 
-    //Calculation of first derivate by yield
+    /// <summary>
+    /// Calculation of first derivate by yield
+    /// </summary>
     public decimal GetFirstDerivByYield(DateTime date, decimal yield, decimal remainingNotional)
     {
         return -(decimal)CashFlows.SkipWhile(s => (s.EndDate <= date))
@@ -100,7 +81,9 @@ public class SBond(Security sec)
 
     }
 
-    //Yield calculation for bond
+    /// <summary>
+    /// Yield calculation for bond
+    /// </summary>
     public decimal GetYieldForPrice(DateTime date, decimal price)
     {
         if ((date < IssueDate) || (date >= Maturity) || (price < 0))
@@ -121,9 +104,7 @@ public class SBond(Security sec)
 
         do
         {
-            nextyield = yield -
-                        (GetPriceFromYield(date, yield, true) - price) /
-                        GetFirstDerivByYield(date, yield, remainingNotional);
+            nextyield = yield - (GetPriceFromYield(date, yield, true) - price) / GetFirstDerivByYield(date, yield, remainingNotional);
             error = nextyield - yield;
             yield = nextyield;
             nIter++;
@@ -133,21 +114,21 @@ public class SBond(Security sec)
         return nextyield;
     }
 
-    //Calculate foerward price of the bond
+    /// <summary>
+    /// Calculate forward price of the bond
+    /// </summary>
     public decimal GetForwardPrice(decimal price, decimal rate, DateTime date, DateTime fwddate)
     {
         if ((date > fwddate) || (date < IssueDate) || (date >= Maturity) || (fwddate < IssueDate) || (fwddate >= Maturity))
             return -1;
 
         decimal interimCF = CashFlows.SkipWhile(s => (s.EndDate <= date))
-                             .TakeWhile(s => (s.EndDate <= fwddate))
+                             .TakeWhile(s => s.EndDate <= fwddate)
                              .Select(s => (s.Coupon + s.Notional) * (1 + rate * (fwddate - s.EndDate).Days / 365))
                              .Sum();
 
         decimal remainingNotional = GetRemainingNotional(date);
 
-        return ((price * remainingNotional + GetAccruedInterest(date)) * (1 + rate * (fwddate - date).Days / 365) -
-                interimCF - GetAccruedInterest(fwddate)) / remainingNotional;
-
+        return ((price * remainingNotional + GetAccruedInterest(date)) * (1 + rate * (fwddate - date).Days / 365) - interimCF - GetAccruedInterest(fwddate)) / remainingNotional;
     }
 }

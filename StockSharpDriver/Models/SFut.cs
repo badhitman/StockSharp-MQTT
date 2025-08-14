@@ -1,13 +1,14 @@
 ﻿using Ecng.Collections;
+using SharedLib;
 using StockSharp.BusinessEntities;
 
 namespace StockSharpDriver;
 
-public class SFut(string name, Security sec, Dictionary<SBond, decimal> convfactors, decimal reporate, DateTime deliverydate)
+public class SFut(string name, InstrumentTradeStockSharpModel sec, Dictionary<SBond, decimal> convfactors, decimal reporate, DateTime deliverydate)
 {
     public decimal ModelPrice { get; set; }
 
-    public Security UnderlyingSecurity { get; set; } = sec;
+    public InstrumentTradeStockSharpModel UnderlyingSecurity { get; set; } = sec;
 
     public string Name { get; set; } = name;
 

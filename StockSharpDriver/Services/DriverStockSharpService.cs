@@ -107,6 +107,7 @@ public class DriverStockSharpService(
 
     readonly List<Security> AllSecurities = [];
     #endregion
+
     List<Security> SecuritiesBonds()
     {
         List<Security> res = [];
@@ -147,7 +148,7 @@ public class DriverStockSharpService(
         if (!string.IsNullOrWhiteSpace(res.Response))
             return res;
 
-        if (OfzCurve.Length == 0)
+        if (OfzCurve.BondList.Count == 0)
         {
             res.AddError("OfzCurve.Length == 0");
             return res;
@@ -420,14 +421,14 @@ public class DriverStockSharpService(
                 _logger.LogError(msg);
                 return;
             }
-
-            SBondPositionsList.Add(new SecurityPosition(security, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.Offset / 100));
+            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
+            SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.Offset / 100));
 
             if (currentStrategy.IsSmall)
-                SBondSmallPositionsList.Add(new SecurityPosition(security, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
+                SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
 
             if (tryFindInstrument[0].Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
-                SBondSizePositionsList.Add(new SecurityPosition(security, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         }
         if (!response.Success())
         {
@@ -448,7 +449,7 @@ public class DriverStockSharpService(
         }
         conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
 
-        if (OfzCurve is null || OfzCurve.Length == 0)
+        if (OfzCurve is null || OfzCurve.BondList.Count == 0)
         {
             //ClearStrategy();
             //return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
@@ -526,7 +527,7 @@ public class DriverStockSharpService(
                     _logger.LogError(msg);
                     return ResponseBaseModel.CreateError(msg);
                 }
-
+                InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
                 if (!currentStrategy.IsAlter)
                 {
                     decimal WorkVol = currentStrategy.WorkingVolume;
@@ -538,21 +539,21 @@ public class DriverStockSharpService(
                     decimal Offset = currentStrategy.Offset;
                     bool IsSmall = currentStrategy.IsSmall;
 
-                    SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", LowLimit / 100,
+                    SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", LowLimit / 100,
                      Highlimit / 100, WorkVol, WorkVol, Offset / 100));
 
                     if (IsSmall)
-                        SBondSmallPositionsList.Add(new SecurityPosition(currentSecurity, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
+                        SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
 
                     if (!instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
-                        SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                        SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
                 }
                 else
                 {
-                    SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+                    SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
 
                     if (!instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
-                        SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+                        SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
                 }
 
                 Subscription sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
@@ -646,6 +647,7 @@ public class DriverStockSharpService(
         decimal price;
 
         Security sec = conLink.Connector.Securities.FirstOrDefault(s => s.ToSecurityId() == depth.SecurityId);
+        InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(sec);
         SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Equals(sec));
 
         InstrumentTradeStockSharpViewModel currentInstrument = resInstruments.Response
@@ -676,7 +678,7 @@ public class DriverStockSharpService(
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
                     if (price > 0)
                     {
                         Order ord = new()
@@ -709,7 +711,7 @@ public class DriverStockSharpService(
                         }
                     }
 
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
 
                     if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.BidVolume)))
                     {
@@ -749,7 +751,7 @@ public class DriverStockSharpService(
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
                     if (price > 0)
                     {
                         Order ord = new()
@@ -783,7 +785,7 @@ public class DriverStockSharpService(
                         }
                     }
 
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
 
                     if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.OfferVolume)))
                     {
@@ -1081,13 +1083,13 @@ public class DriverStockSharpService(
         {
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)),
-            LastConnectedAt = _lc == DateTime.MinValue ? null : _lc,
+            LastConnectedAt = (_lc == DateTime.MinValue || _lc == default) ? null : _lc,
             StrategyStarted = Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0,
             LowLimit = lowLimit,
             HighLimit = highLimit,
             SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilter,
             ClientCode = ClientCodeStockSharp,
-            ProgramPath = ProgramDataPath
+            ProgramPath = ProgramDataPath,
         };
 
         return Task.FromResult(res);
@@ -1231,7 +1233,7 @@ public class DriverStockSharpService(
         decimal ofrVolume;
 
         Security sec = conLink.Connector.Securities.FirstOrDefault(s => s.ToSecurityId() == depth.SecurityId);
-
+        InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(sec);
         //..................................
         // For bonds
         //...................................
@@ -1256,12 +1258,12 @@ public class DriverStockSharpService(
         if (bBid.IsNull() || bAsk.IsNull())
             return;
 
-        if (bBid.Value.Price > OfzCurve.GetNode(sec).ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
+        if (bBid.Value.Price > OfzCurve.GetNode(_sec).ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
         {
             ofrVolume = 20000;
-            if (bBid.Value.Price > OfzCurve.GetNode(sec).ModelPrice + 2 * SbPos.HighLimit)
+            if (bBid.Value.Price > OfzCurve.GetNode(_sec).ModelPrice + 2 * SbPos.HighLimit)
                 ofrVolume = 30000;
-            if (bBid.Value.Price > OfzCurve.GetNode(sec).ModelPrice + 3 * SbPos.HighLimit)
+            if (bBid.Value.Price > OfzCurve.GetNode(_sec).ModelPrice + 3 * SbPos.HighLimit)
                 ofrVolume = 50000;
 
             if (bBid.Value.Volume < ofrVolume)
@@ -1290,7 +1292,7 @@ public class DriverStockSharpService(
             //    conLink.Connector.OrderBookReceived -= OrderBookReceivedConnector2;
             //    //
         }
-        else if (bAsk.Value.Price < OfzCurve.GetNode(sec).ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
+        else if (bAsk.Value.Price < OfzCurve.GetNode(_sec).ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
         {
             //    ofrVolume = 20000;
             //    if (bAsk.Value.Price < OfzCurve.GetNode(sec).ModelPrice - 2 * SbPos.HighLimit)
