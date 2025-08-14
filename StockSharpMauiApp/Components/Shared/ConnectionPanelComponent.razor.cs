@@ -89,7 +89,13 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
         };
         await SetBusyAsync();
-        ResponseBaseModel res = await DriverRepo.InitialLoad(req);
+        ResponseSimpleModel res = await DriverRepo.InitialLoad(req);
+
+        if (!string.IsNullOrWhiteSpace(res.Response))
+        {
+
+        }
+
         await SetBusyAsync(false);
         await GetStatusConnection();
     }

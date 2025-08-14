@@ -130,20 +130,28 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
+    public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
     {
         SBond SBnd;
         DateTime curDate;
         decimal BndPrice, bondDV;
-
+        ResponseSimpleModel res = new();
         if (!SecuritiesBonds().Any())
-            return ResponseBaseModel.CreateError($"!{nameof(SecuritiesBonds)}().Any()");
+        {
+            res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
+            return res;
+        }
 
         OfzCurve = new Curve(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
-        OfzCurve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
+        res.Response = OfzCurve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
+        if (!string.IsNullOrWhiteSpace(res.Response))
+            return res;
 
         if (OfzCurve.Length == 0)
-            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+        {
+            res.AddError("OfzCurve.Length == 0");
+            return res;
+        }
 
         //quoteStrategyVolume = req.QuoteVolume;
         //quoteSizeStrategyVolume = req.QuoteSizeVolume;
@@ -301,7 +309,9 @@ public class DriverStockSharpService(
         //    if (!btnRst.IsNull())
         //        btnRst.IsEnabled = true;
         //});
-        return ResponseBaseModel.CreateError(nameof(NotImplementedException));
+
+        res.AddError(nameof(NotImplementedException));
+        return res;
     }
 
     /// <inheritdoc/>

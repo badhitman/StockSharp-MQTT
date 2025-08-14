@@ -88,7 +88,7 @@ public class Curve(DateTime date)
                 reader.Read();  //previous curve data
 
                 j = 0;
-
+                ToastShowClientModel reqToast;
                 while (j <= tableSize - 1)
                 {
                     secName = reader.GetName(j);
@@ -100,21 +100,40 @@ public class Curve(DateTime date)
                         if (Math.Abs(GetNode(security).ModelPrice - secPrice) >= 0.2m)
                         {
                             if (!bigPriceDifferences.ContainsKey(secName))
+                            {
+                                BondList.Clear();
+                                Length = 0;
+
+                                reqToast = new()
+                                {
+                                    HeadTitle = "Curve loading request action!",
+                                    TypeMessage = MessagesTypesEnum.Warning,
+                                    MessageText = $"Sign big price difference please (instrument `{secName}`)"
+                                };
+
+                                eventTrans.ToastClientShow(reqToast);
+
+                                reader.Close();
+                                reader.DoDispose();
+                                conn.Close();
+
+                                conn.Dispose();
                                 return secName;
+                            }
 
                             if (!bigPriceDifferences[secName])
                             {
                                 BondList.Clear();
                                 Length = 0;
 
-                                ToastShowClientModel req = new()
+                                reqToast = new()
                                 {
                                     HeadTitle = "Curve loading terminated!",
                                     TypeMessage = MessagesTypesEnum.Error,
                                     MessageText = $"Big price difference for Instrument `{secName}` "
                                 };
 
-                                eventTrans.ToastClientShow(req);
+                                eventTrans.ToastClientShow(reqToast);
                                 break;
                             }
                         }
