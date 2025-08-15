@@ -22,6 +22,7 @@ public static class RegisterMqListenerExtension
     public static IServiceCollection StockSharpRegisterMqListeners(this IServiceCollection services)
     {
         return services
+            .RegisterMqListener<DeleteParameterReceive, StorageMetadataModel, ResponseBaseModel>()
             .RegisterMqListener<SaveParameterReceive, StorageCloudParameterPayloadModel, TResponseModel<int?>>()
             .RegisterMqListener<ReadParameterReceive, StorageMetadataModel, TResponseModel<StorageCloudParameterPayloadModel>>()
             .RegisterMqListener<ReadParametersReceive, StorageMetadataModel[], TResponseModel<List<StorageCloudParameterPayloadModel>>>()

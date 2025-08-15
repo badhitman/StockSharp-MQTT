@@ -44,6 +44,11 @@ public static class BindsStockSharpModelsExtensionsViews
         main.Decimals = inc.Decimals;
         main.Code = inc.Code;
 
+        main.PriceStep = inc.PriceStep;
+        main.VolumeStep = inc.VolumeStep;
+        main.MinVolume = inc.MinVolume;
+        main.MaxVolume = inc.MaxVolume;
+
         main.ISIN = inc.ISIN;
         main.BondTypeInstrumentManual = inc.BondTypeInstrumentManual;
         main.Comment = inc.Comment;
