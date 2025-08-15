@@ -61,6 +61,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         }
     }
 
+
     IEnumerable<int>? _selectedBoards;
     MarkersInstrumentStockSharpEnum?[]? MarkersFilter;
 

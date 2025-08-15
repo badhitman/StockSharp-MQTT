@@ -30,8 +30,22 @@ public class DriverStockSharpService(
     ConnectionLink conLink) : IDriverStockSharpService
 {
     #region prop`s
+    CurveModel Curve;
+
     List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
     Subscription SecurityCriteriaCodeFilterSubscription;
+
+    BoardStockSharpModel Board;
+    Portfolio SelectedPortfolio;
+
+    readonly List<MyTrade> myTrades = [];
+
+    readonly List<StrategyTradeStockSharpModel> StrategyTrades = [];
+    readonly List<FixMessageAdapterModelDB> Adapters = [];
+
+    readonly List<SBond> SBondList = [];
+
+    readonly List<Security> AllSecurities = [];
 
     readonly List<SecurityPosition>
         SBondPositionsList = [],
@@ -58,8 +72,6 @@ public class DriverStockSharpService(
                 _lastConnectedAt = value;
         }
     }
-
-    CurveModel OfzCurve;
 
     string ProgramDataPath;
     string ClientCodeStockSharp;
@@ -94,18 +106,6 @@ public class DriverStockSharpService(
     readonly decimal
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
-
-    BoardStockSharpModel Board;
-    Portfolio SelectedPortfolio;
-
-    readonly List<MyTrade> myTrades = [];
-
-    readonly List<StrategyTradeStockSharpModel> StrategyTrades = [];
-    readonly List<FixMessageAdapterModelDB> Adapters = [];
-
-    readonly List<SBond> SBondList = [];
-
-    readonly List<Security> AllSecurities = [];
     #endregion
 
     List<Security> SecuritiesBonds()
@@ -143,25 +143,27 @@ public class DriverStockSharpService(
             return res;
         }
 
-        OfzCurve = new CurveModel(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
-        res.Response = OfzCurve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
+        Curve = new CurveModel(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
+        res.Response = Curve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
         if (!string.IsNullOrWhiteSpace(res.Response))
             return res;
 
-        if (OfzCurve.BondList.Count == 0)
+        if (Curve.BondList.Count == 0)
         {
             res.AddError("OfzCurve.Length == 0");
             return res;
         }
 
-        //quoteStrategyVolume = req.QuoteVolume;
-        //quoteSizeStrategyVolume = req.QuoteSizeVolume;
-        //skipVolume = req.SkipSizeVolume;
+        await Task.WhenAll([
+            Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume, cancellationToken)),
+            Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume, cancellationToken)),
+            Task.Run(async () => skipVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.SkipSizeVolume, cancellationToken))
+        ]);
 
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
 
-        //SecuritiesBonds().ForEach(security =>
-        //{
+        SecuritiesBonds().ForEach(security =>
+        {
         //    string bndName = security.Code.Substring(2, 5);
 
         //    BndPrice = OfzCurve.GetNode(security).ModelPrice;
@@ -309,7 +311,7 @@ public class DriverStockSharpService(
 
         //    if (!btnRst.IsNull())
         //        btnRst.IsEnabled = true;
-        //});
+        });
 
         res.AddError(nameof(NotImplementedException));
         return res;
@@ -449,7 +451,7 @@ public class DriverStockSharpService(
         }
         conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
 
-        if (OfzCurve is null || OfzCurve.BondList.Count == 0)
+        if (Curve is null || Curve.BondList.Count == 0)
         {
             //ClearStrategy();
             //return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
@@ -678,7 +680,7 @@ public class DriverStockSharpService(
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
                     if (price > 0)
                     {
                         Order ord = new()
@@ -711,7 +713,7 @@ public class DriverStockSharpService(
                         }
                     }
 
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
 
                     if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.BidVolume)))
                     {
@@ -751,7 +753,7 @@ public class DriverStockSharpService(
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
                     if (price > 0)
                     {
                         Order ord = new()
@@ -785,7 +787,7 @@ public class DriverStockSharpService(
                         }
                     }
 
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, OfzCurve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
 
                     if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.OfferVolume)))
                     {
@@ -866,21 +868,21 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
     {
-        if (OfzCurve.IsNull())
+        if (Curve.IsNull())
             return Task.FromResult(ResponseBaseModel.CreateWarning("OfzCurve is null"));
 
         _logger.LogWarning($"Curve changed: {req.YieldChange}");
 
-        OfzCurve.BondList.ForEach(bnd =>
+        Curve.BondList.ForEach(bnd =>
         {
             SBond SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
 
             if (!SBnd.IsNull())
             {
-                decimal yield = SBnd.GetYieldForPrice(OfzCurve.CurveDate, bnd.ModelPrice / 100);
+                decimal yield = SBnd.GetYieldForPrice(Curve.CurveDate, bnd.ModelPrice / 100);
                 if (yield > 0) //Regular bonds
                 {
-                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(OfzCurve.CurveDate, yield + req.YieldChange / 10000, true), 2);
+                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(Curve.CurveDate, yield + req.YieldChange / 10000, true), 2);
                 }
             }
         });
@@ -1090,7 +1092,7 @@ public class DriverStockSharpService(
             SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilter,
             ClientCode = ClientCodeStockSharp,
             ProgramPath = ProgramDataPath,
-            Curve = OfzCurve,
+            Curve = Curve,
         };
 
         return Task.FromResult(res);
@@ -1259,12 +1261,12 @@ public class DriverStockSharpService(
         if (bBid.IsNull() || bAsk.IsNull())
             return;
 
-        if (bBid.Value.Price > OfzCurve.GetNode(_sec).ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
+        if (bBid.Value.Price > Curve.GetNode(_sec).ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
         {
             ofrVolume = 20000;
-            if (bBid.Value.Price > OfzCurve.GetNode(_sec).ModelPrice + 2 * SbPos.HighLimit)
+            if (bBid.Value.Price > Curve.GetNode(_sec).ModelPrice + 2 * SbPos.HighLimit)
                 ofrVolume = 30000;
-            if (bBid.Value.Price > OfzCurve.GetNode(_sec).ModelPrice + 3 * SbPos.HighLimit)
+            if (bBid.Value.Price > Curve.GetNode(_sec).ModelPrice + 3 * SbPos.HighLimit)
                 ofrVolume = 50000;
 
             if (bBid.Value.Volume < ofrVolume)
@@ -1293,7 +1295,7 @@ public class DriverStockSharpService(
             //    conLink.Connector.OrderBookReceived -= OrderBookReceivedConnector2;
             //    //
         }
-        else if (bAsk.Value.Price < OfzCurve.GetNode(_sec).ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
+        else if (bAsk.Value.Price < Curve.GetNode(_sec).ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
         {
             //    ofrVolume = 20000;
             //    if (bAsk.Value.Price < OfzCurve.GetNode(sec).ModelPrice - 2 * SbPos.HighLimit)
