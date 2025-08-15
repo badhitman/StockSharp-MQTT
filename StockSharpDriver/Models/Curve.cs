@@ -10,11 +10,12 @@ namespace StockSharpDriver;
 /// <summary>
 /// Класс для работы с кривой
 /// </summary>
-public class Curve(DateTime date)
+public class Curve : CurveBaseModel
 {
-    public List<SBond> BondList { get; private set; } = [];
-
-    public DateTime CurveDate { get; private init; } = date;
+    public Curve(DateTime date)
+    {
+        CurveDate = date;
+    }
 
     /// <summary>
     /// Load Curve form database

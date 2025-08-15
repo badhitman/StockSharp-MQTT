@@ -1090,6 +1090,7 @@ public class DriverStockSharpService(
             SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilter,
             ClientCode = ClientCodeStockSharp,
             ProgramPath = ProgramDataPath,
+            Curve = OfzCurve,
         };
 
         return Task.FromResult(res);
