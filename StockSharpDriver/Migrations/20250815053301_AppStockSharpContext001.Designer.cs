@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250815050829_AppStockSharpContext001")]
+    [Migration("20250815053301_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -238,9 +238,6 @@ namespace StockSharpDriver.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Bloomberg")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("BoardId")
                         .HasColumnType("INTEGER");
 
@@ -268,9 +265,6 @@ namespace StockSharpDriver.Migrations
                     b.Property<int>("Currency")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Cusip")
-                        .HasColumnType("TEXT");
-
                     b.Property<int?>("Decimals")
                         .HasColumnType("INTEGER");
 
@@ -278,9 +272,6 @@ namespace StockSharpDriver.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("FaceValue")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("IQFeed")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ISIN")
@@ -291,9 +282,6 @@ namespace StockSharpDriver.Migrations
 
                     b.Property<string>("IdRemoteNormalizedUpper")
                         .HasColumnType("TEXT");
-
-                    b.Property<int?>("InteractiveBrokers")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("IssueDate")
                         .HasColumnType("TEXT");
@@ -328,19 +316,10 @@ namespace StockSharpDriver.Migrations
                     b.Property<int>("OptionType")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Plaza")
-                        .HasColumnType("TEXT");
-
                     b.Property<decimal?>("PriceStep")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PrimaryId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Ric")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Sedol")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset?>("SettlementDate")

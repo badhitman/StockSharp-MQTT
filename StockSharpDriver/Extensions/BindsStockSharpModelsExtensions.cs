@@ -82,14 +82,7 @@ public static class BindsStockSharpModelsExtensions
         main.Name = inc.Name;
         main.IdRemote = inc.Id;
 
-        main.Bloomberg = inc.ExternalId.Bloomberg;
         main.ISIN = inc.ExternalId.Isin;
-        main.Cusip = inc.ExternalId.Cusip;
-        main.InteractiveBrokers = inc.ExternalId.InteractiveBrokers;
-        main.Sedol = inc.ExternalId.Sedol;
-        main.Ric = inc.ExternalId.Ric;
-        main.Plaza = inc.ExternalId.Plaza;
-        main.IQFeed = inc.ExternalId.IQFeed;
 
         main.MaxVolume = inc.MaxVolume;
         main.MinVolume = inc.MinVolume;
