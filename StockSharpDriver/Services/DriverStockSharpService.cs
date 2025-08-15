@@ -59,7 +59,7 @@ public class DriverStockSharpService(
         }
     }
 
-    Curve OfzCurve;
+    CurveModel OfzCurve;
 
     string ProgramDataPath;
     string ClientCodeStockSharp;
@@ -143,7 +143,7 @@ public class DriverStockSharpService(
             return res;
         }
 
-        OfzCurve = new Curve(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
+        OfzCurve = new CurveModel(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
         res.Response = OfzCurve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
         if (!string.IsNullOrWhiteSpace(res.Response))
             return res;
