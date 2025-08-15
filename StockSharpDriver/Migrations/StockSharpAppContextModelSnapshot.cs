@@ -293,9 +293,6 @@ namespace StockSharpDriver.Migrations
                     b.Property<int?>("InteractiveBrokers")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Isin")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("IssueDate")
                         .HasColumnType("TEXT");
 

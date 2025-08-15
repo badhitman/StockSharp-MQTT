@@ -83,7 +83,7 @@ public static class BindsStockSharpModelsExtensions
         main.IdRemote = inc.Id;
 
         main.Bloomberg = inc.ExternalId.Bloomberg;
-        main.Isin = inc.ExternalId.Isin;
+        main.ISIN = inc.ExternalId.Isin;
         main.Cusip = inc.ExternalId.Cusip;
         main.InteractiveBrokers = inc.ExternalId.InteractiveBrokers;
         main.Sedol = inc.ExternalId.Sedol;
