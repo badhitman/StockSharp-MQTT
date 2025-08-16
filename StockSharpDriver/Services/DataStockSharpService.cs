@@ -85,7 +85,8 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         InstrumentStockSharpModelDB instrumentDb = await context.Instruments.FirstAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
-        instrumentDb.SetUpdate(req, true, true);
+        instrumentDb.SetUpdate(req, true);
+
         context.Update(instrumentDb);
         await context.SaveChangesAsync(cancellationToken);
         return ResponseBaseModel.CreateSuccess("Ok. Instrument updated");

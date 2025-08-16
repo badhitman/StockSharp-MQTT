@@ -32,7 +32,7 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
     public List<CashFlowModelDB> CashFlows { get; set; }
 
     /// <inheritdoc/>
-    public void SetUpdate(InstrumentTradeStockSharpModel req, bool nameUpdate = false, bool isinUpdate = false)
+    public void SetUpdate(InstrumentTradeStockSharpViewModel req, bool nameUpdate = false)
     {
         if (nameUpdate || (string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(req.Name)))
         {
@@ -40,9 +40,7 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
             NameNormalizedUpper = req.Name is null ? "" : req.Name.ToUpper();
         }
 
-        if (isinUpdate || (string.IsNullOrWhiteSpace(ISIN) && !string.IsNullOrWhiteSpace(req.ISIN)))
-            ISIN = req.ISIN;
-
+        ISIN = req.ISIN;
         IdRemote = req.IdRemote;
         IdRemoteNormalizedUpper = req.IdRemote.ToUpper();
 

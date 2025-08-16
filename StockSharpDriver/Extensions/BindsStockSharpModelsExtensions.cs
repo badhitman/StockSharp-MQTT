@@ -82,8 +82,6 @@ public static class BindsStockSharpModelsExtensions
         main.Name = inc.Name;
         main.IdRemote = inc.Id;
 
-        main.ISIN = inc.ExternalId.Isin;
-
         main.MaxVolume = inc.MaxVolume;
         main.MinVolume = inc.MinVolume;
         main.VolumeStep = inc.VolumeStep;

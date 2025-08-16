@@ -137,6 +137,19 @@ public class DriverStockSharpService(
         DateTime curDate;
         decimal BndPrice, bondDV;
         ResponseSimpleModel res = new();
+
+        if (conLink.Connector.ConnectionState != Ecng.ComponentModel.ConnectionStates.Connected)
+        {
+            res.AddError($"Connection: {Enum.GetName(conLink.Connector.ConnectionState)}");
+            return res;
+        }
+
+        if (Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0)
+        {
+            res.AddError($"Strategy started! Stop strategy for initial load");
+            return res;
+        }
+
         if (!SecuritiesBonds().Any())
         {
             res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
@@ -164,153 +177,153 @@ public class DriverStockSharpService(
 
         SecuritiesBonds().ForEach(security =>
         {
-        //    string bndName = security.Code.Substring(2, 5);
+            //    string bndName = security.Code.Substring(2, 5);
 
-        //    BndPrice = OfzCurve.GetNode(security).ModelPrice;
-        //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
+            //    BndPrice = OfzCurve.GetNode(security).ModelPrice;
+            //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
 
-        //    if (!decUpD.IsNull())
-        //    {
-        //        decUpD.Value = BndPrice;
-        //    }
+            //    if (!decUpD.IsNull())
+            //    {
+            //        decUpD.Value = BndPrice;
+            //    }
 
-        //    LongUpDown SmallBidVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName);
+            //    LongUpDown SmallBidVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName);
 
-        //    if (!SmallBidVolUpD.IsNull())
-        //        SmallBidVolUpD.Value = (long)quoteSmallStrategyBidVolume;
+            //    if (!SmallBidVolUpD.IsNull())
+            //        SmallBidVolUpD.Value = (long)quoteSmallStrategyBidVolume;
 
-        //    LongUpDown SmallOfferVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName);
+            //    LongUpDown SmallOfferVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName);
 
-        //    if (!SmallOfferVolUpD.IsNull())
-        //        SmallOfferVolUpD.Value = (long)quoteSmallStrategyOfferVolume;
+            //    if (!SmallOfferVolUpD.IsNull())
+            //        SmallOfferVolUpD.Value = (long)quoteSmallStrategyOfferVolume;
 
-        //    LongUpDown WorkVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName);
+            //    LongUpDown WorkVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName);
 
-        //    if (!WorkVolUpD.IsNull())
-        //        WorkVolUpD.Value = (long)quoteStrategyVolume;
+            //    if (!WorkVolUpD.IsNull())
+            //        WorkVolUpD.Value = (long)quoteStrategyVolume;
 
-        //    IntegerUpDown SmallOffset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName);
+            //    IntegerUpDown SmallOffset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName);
 
-        //    if (!SmallOffset.IsNull())
-        //        SmallOffset.Value = 0;
+            //    if (!SmallOffset.IsNull())
+            //        SmallOffset.Value = 0;
 
-        //    IntegerUpDown Offset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName);
+            //    IntegerUpDown Offset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName);
 
-        //    if (!Offset.IsNull())
-        //        Offset.Value = 0;
+            //    if (!Offset.IsNull())
+            //        Offset.Value = 0;
 
-        //    IntegerUpDown Lowlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
-        //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
+            //    IntegerUpDown Lowlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
+            //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
 
-        //    SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
+            //    SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
 
-        //    if (!SBnd.IsNull())
-        //    {
-        //        decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
+            //    if (!SBnd.IsNull())
+            //    {
+            //        decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
 
-        //        if (yield > 0)  //Regular bonds
-        //        {
-        //            if (!Lowlimit.IsNull())
-        //            {
-        //                Lowlimit.Value =
-        //                    (int)
-        //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) *
-        //                         10000);
+            //        if (yield > 0)  //Regular bonds
+            //        {
+            //            if (!Lowlimit.IsNull())
+            //            {
+            //                Lowlimit.Value =
+            //                    (int)
+            //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) *
+            //                         10000);
 
-        //                if (Lowlimit.Value < 9)
-        //                    Lowlimit.Value = 9;
-        //                if (Lowlimit.Value > lowLimit * 100)
-        //                    Lowlimit.Value = (int)(lowLimit * 100);
-        //            }
+            //                if (Lowlimit.Value < 9)
+            //                    Lowlimit.Value = 9;
+            //                if (Lowlimit.Value > lowLimit * 100)
+            //                    Lowlimit.Value = (int)(lowLimit * 100);
+            //            }
 
-        //            if (!Highlimit.IsNull())
-        //            {
-        //                Highlimit.Value =
-        //                    (int)
-        //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) *
-        //                         10000);
+            //            if (!Highlimit.IsNull())
+            //            {
+            //                Highlimit.Value =
+            //                    (int)
+            //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) *
+            //                         10000);
 
-        //                if (Highlimit.Value < 11)
-        //                    Highlimit.Value = 11;
-        //                if (Highlimit.Value > highLimit * 100)
-        //                    Highlimit.Value = (int)(highLimit * 100);
-        //            }
+            //                if (Highlimit.Value < 11)
+            //                    Highlimit.Value = 11;
+            //                if (Highlimit.Value > highLimit * 100)
+            //                    Highlimit.Value = (int)(highLimit * 100);
+            //            }
 
-        //            if ((SBnd.Maturity - curDate).Days < 400)
-        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-        //            else if ((SBnd.Maturity - curDate).Days < 1100)
-        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-        //            else if ((SBnd.Maturity - curDate).Days < 1500)
-        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-        //            else
-        //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-        //        }
-        //        else
-        //        {
-        //            if (OfzCodesIlliquid.Contains(SBnd.UnderlyingSecurity.Code))
-        //            {
-        //                if ((SBnd.Maturity - curDate).Days < 300)
-        //                {
-        //                    WorkVolUpD.Value = 1000;
-        //                    Lowlimit.Value = (int)(lowLimit * 100);
-        //                    Highlimit.Value = (int)(highLimit * 100);
-        //                }
-        //                else
-        //                {
-        //                    WorkVolUpD.Value = 1000;
-        //                    Lowlimit.Value = (int)(lowLimit * 2 * 100);
-        //                    Highlimit.Value = (int)(highLimit * 2 * 100);
-        //                }
-        //            }
-        //            else
-        //            {
-        //                if ((SBnd.Maturity - curDate).Days < 500)
-        //                {
-        //                    WorkVolUpD.Value = 2000;
-        //                    Lowlimit.Value = (int)(lowLimit / 2 * 100);
-        //                    Highlimit.Value = (int)(highLimit / 2 * 100);
-        //                }
+            //            if ((SBnd.Maturity - curDate).Days < 400)
+            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+            //            else if ((SBnd.Maturity - curDate).Days < 1100)
+            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+            //            else if ((SBnd.Maturity - curDate).Days < 1500)
+            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+            //            else
+            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+            //        }
+            //        else
+            //        {
+            //            if (OfzCodesIlliquid.Contains(SBnd.UnderlyingSecurity.Code))
+            //            {
+            //                if ((SBnd.Maturity - curDate).Days < 300)
+            //                {
+            //                    WorkVolUpD.Value = 1000;
+            //                    Lowlimit.Value = (int)(lowLimit * 100);
+            //                    Highlimit.Value = (int)(highLimit * 100);
+            //                }
+            //                else
+            //                {
+            //                    WorkVolUpD.Value = 1000;
+            //                    Lowlimit.Value = (int)(lowLimit * 2 * 100);
+            //                    Highlimit.Value = (int)(highLimit * 2 * 100);
+            //                }
+            //            }
+            //            else
+            //            {
+            //                if ((SBnd.Maturity - curDate).Days < 500)
+            //                {
+            //                    WorkVolUpD.Value = 2000;
+            //                    Lowlimit.Value = (int)(lowLimit / 2 * 100);
+            //                    Highlimit.Value = (int)(highLimit / 2 * 100);
+            //                }
 
-        //                else if ((SBnd.Maturity - curDate).Days < 2000)
-        //                {
-        //                    WorkVolUpD.Value = 2000;
-        //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
-        //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
-        //                }
+            //                else if ((SBnd.Maturity - curDate).Days < 2000)
+            //                {
+            //                    WorkVolUpD.Value = 2000;
+            //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
+            //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
+            //                }
 
-        //                else
-        //                {
-        //                    WorkVolUpD.Value = 2000;
-        //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
-        //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
-        //                }
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        if (!Lowlimit.IsNull())
-        //            Lowlimit.Value = (int)(lowLimit * 100);
+            //                else
+            //                {
+            //                    WorkVolUpD.Value = 2000;
+            //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
+            //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
+            //                }
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        if (!Lowlimit.IsNull())
+            //            Lowlimit.Value = (int)(lowLimit * 100);
 
-        //        if (!Highlimit.IsNull())
-        //            Highlimit.Value = (int)(highLimit * 100);
-        //    }
-        //});
+            //        if (!Highlimit.IsNull())
+            //            Highlimit.Value = (int)(highLimit * 100);
+            //    }
+            //});
 
-        //btnStart.IsEnabled = true;
-        //X2.IsEnabled = true;
-        //Del2.IsEnabled = true;
-        //SPlus.IsEnabled = true;
-        //SMinus.IsEnabled = true;
-        //Reset_All.IsEnabled = true;
+            //btnStart.IsEnabled = true;
+            //X2.IsEnabled = true;
+            //Del2.IsEnabled = true;
+            //SPlus.IsEnabled = true;
+            //SMinus.IsEnabled = true;
+            //Reset_All.IsEnabled = true;
 
-        //SecuritiesBonds().ForEach(security =>
-        //{
-        //    string bndName = security.Code.Substring(2, 5);
-        //    Button btnRst = (Button)LogicalTreeHelper.FindLogicalNode(MyProgram, "Reset_" + bndName);
+            //SecuritiesBonds().ForEach(security =>
+            //{
+            //    string bndName = security.Code.Substring(2, 5);
+            //    Button btnRst = (Button)LogicalTreeHelper.FindLogicalNode(MyProgram, "Reset_" + bndName);
 
-        //    if (!btnRst.IsNull())
-        //        btnRst.IsEnabled = true;
+            //    if (!btnRst.IsNull())
+            //        btnRst.IsEnabled = true;
         });
 
         res.AddError(nameof(NotImplementedException));
