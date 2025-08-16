@@ -76,6 +76,7 @@ public class DriverStockSharpService(
     string ProgramDataPath;
     string ClientCodeStockSharp;
     string SecurityCriteriaCodeFilter;
+    string BoardCriteriaCodeFilter;
     readonly List<Subscription> DepthSubscriptions = [];
 
     decimal
@@ -108,11 +109,38 @@ public class DriverStockSharpService(
        highYieldLimit = 5m;
     #endregion
 
-    List<Security> SecuritiesBonds()
+    List<Security> SecuritiesBonds(bool ofStrategy)
     {
         List<Security> res = [];
 
         lock (AllSecurities)
+        {
+            lock (StrategyTrades)
+            {
+                if (ofStrategy && StrategyTrades.Count == 0)
+                    return res;
+
+                foreach (Security security in AllSecurities)
+                {
+                    if (ofStrategy)
+                    {
+                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
+                            res.Add(security);
+                    }
+                    else
+                    {
+                        if (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board)))
+                            res.Add(security);
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
+    /*
+     lock (AllSecurities)
         {
             lock (StrategyTrades)
             {
@@ -126,9 +154,7 @@ public class DriverStockSharpService(
                 }
             }
         }
-
-        return res;
-    }
+     */
 
     /// <inheritdoc/>
     public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
@@ -149,8 +175,8 @@ public class DriverStockSharpService(
             res.AddError($"Strategy started! Stop strategy for initial load");
             return res;
         }
-
-        if (!SecuritiesBonds().Any())
+        List<Security> currrBonds = SecuritiesBonds(false);
+        if (!currrBonds.Any())
         {
             res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
             return res;
@@ -175,7 +201,7 @@ public class DriverStockSharpService(
 
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
 
-        SecuritiesBonds().ForEach(security =>
+        currrBonds.ForEach(security =>
         {
             //    string bndName = security.Code.Substring(2, 5);
 
@@ -395,7 +421,7 @@ public class DriverStockSharpService(
                 return ResponseBaseModel.CreateError("Instruments - is empty");
         }
 
-        List<Security> bl = SecuritiesBonds();
+        List<Security> bl = SecuritiesBonds(true);
         if (!bl.Any())
             return ResponseBaseModel.CreateError("BondList - not any");
         ResponseBaseModel response = new();
@@ -404,17 +430,17 @@ public class DriverStockSharpService(
         {
             StrategyTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
             string msg;
-            int _cntBounds = SecuritiesBonds().Count;
+            
             if (tryFindStrategy.Length == 0)
             {
-                msg = $"strategy #{security.Code} not found in BondList ({_cntBounds} items)";
+                msg = $"strategy #{security.Code} not found in BondList ({bl.Count} items)";
                 response.AddError(msg);
                 _logger.LogError(msg);
                 return;
             }
             if (tryFindStrategy.Length != 1)
             {
-                msg = $"strategy #{security.Code} DOUBLE`s ({tryFindStrategy.Length}) found in BondList ({_cntBounds} items)";
+                msg = $"strategy #{security.Code} DOUBLE`s ({tryFindStrategy.Length}) found in BondList ({bl.Count} items)";
                 response.AddError(msg);
                 _logger.LogError(msg);
                 return;
@@ -424,7 +450,7 @@ public class DriverStockSharpService(
             InstrumentTradeStockSharpViewModel[] tryFindInstrument = [.. resInstruments.Response.Where(x => x.Id == currentStrategy.Id)];
             if (tryFindInstrument.Length == 0)
             {
-                msg = $"instrument #{currentStrategy.Id} not found in BondList ({_cntBounds} items)";
+                msg = $"instrument #{currentStrategy.Id} not found in BondList ({bl.Count} items)";
                 response.AddError(msg);
                 _logger.LogError(msg);
                 return;
@@ -480,7 +506,7 @@ public class DriverStockSharpService(
 
     public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
     {
-        List<Security> currentSecurities = SecuritiesBonds();
+        List<Security> currentSecurities = SecuritiesBonds(true);
         if (req.InstrumentId < 1)
         {
             quoteSizeStrategyVolume = req.Size;
@@ -933,7 +959,7 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError("Dashboard - not set");
 
 
-        List<Security> sbs = SecuritiesBonds();
+        List<Security> sbs = SecuritiesBonds(true);
         sbs.ForEach(security =>
         {
             //string bndName = security.Code.Substring(2, 5);
@@ -958,7 +984,7 @@ public class DriverStockSharpService(
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken cancellationToken = default)
     {
         Board = null;
-        if (SecuritiesBonds().Any())
+        if (SecuritiesBonds(false).Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
 
         TPaginationRequestStandardModel<AdaptersRequestModel> adReq = new()
@@ -1030,9 +1056,10 @@ public class DriverStockSharpService(
             res.AddError("can`t connect");
             return res;
         }
-
+        //BoardCriteriaCodeFilterStockSharp//BoardCriteriaCodeFilter
         await Task.WhenAll([
                 Task.Run(async () => { SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp, cancellationToken); }, cancellationToken),
+                Task.Run(async () => { BoardCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.BoardCriteriaCodeFilterStockSharp, cancellationToken); }, cancellationToken),
                 Task.Run(async () => { ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, cancellationToken); }, cancellationToken)
             ]);
 
@@ -1053,7 +1080,8 @@ public class DriverStockSharpService(
                     {
                         SecurityId = new SecurityId
                         {
-                            SecurityCode = _sc.Trim()
+                            SecurityCode = _sc.Trim(), 
+                            BoardCode = BoardCriteriaCodeFilter
                         },
                         TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
                     });
@@ -1234,7 +1262,7 @@ public class DriverStockSharpService(
         Security sec = conLink.Connector.Securities.FirstOrDefault(s => s.ToSecurityId() == orderBM.SecurityId);
         lock (OderBookList)
         {
-            if (SecuritiesBonds().Contains(sec))
+            if (SecuritiesBonds(true).Contains(sec))
             {
                 if (OderBookList.ContainsKey(sec))
                     OderBookList[sec] = orderBM;

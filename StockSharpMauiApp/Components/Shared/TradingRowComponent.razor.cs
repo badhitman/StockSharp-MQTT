@@ -164,7 +164,11 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
     public void UpdateConnectionNotificationHandle(AboutConnectResponseModel req)
     {
-        AboutConnection!.Update(req);
+        if (AboutConnection is null)
+            AboutConnection = req;
+        else
+            AboutConnection.Update(req);
+
         StateHasChangedCall();
     }
 

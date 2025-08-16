@@ -11,7 +11,7 @@ namespace StockSharpDriver;
 /// <summary>
 /// FlushStockSharpService
 /// </summary>
-public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, ILogger<FlushStockSharpService> loggerRepo) : IFlushStockSharpService
+public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IFlushStockSharpService
 {
     /// <inheritdoc/>
     public Task<TResponseModel<InstrumentTradeStockSharpViewModel>> SaveInstrument(InstrumentTradeStockSharpModel req)
