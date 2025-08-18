@@ -79,7 +79,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
     #endregion
 
-    #region Instrument
+    #region instrument`s
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> UpdateInstrumentAsync(InstrumentTradeStockSharpViewModel req, CancellationToken cancellationToken = default)
     {
@@ -376,6 +376,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
     #endregion
 
+    #region board`s
     /// <inheritdoc/>
     public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
     {
@@ -393,6 +394,33 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             Response = [.. data]
         };
     }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<BoardStockSharpViewModel>>> FindBoardsAsync(BoardStockSharpModel req, CancellationToken cancellationToken = default)
+    {
+        using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
+        ExchangeStockSharpModelDB _exc = req.Exchange is null
+            ? null
+            : await context.Exchanges.SingleAsync(x => x.Name == req.Exchange.Name && x.CountryCode == req.Exchange.CountryCode, cancellationToken: cancellationToken);//req.Exchange
+
+        IQueryable<BoardStockSharpModelDB> q = context.Boards.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(req.Code))
+            q = q.Where(x => EF.Functions.Like(x.Code, $"%{req.Code}%"));
+
+        if (_exc is not null)
+            q = q.Where(x => x.ExchangeId == _exc.Id);
+
+        List<BoardStockSharpModelDB> data = await q
+            .Include(x => x.Exchange)
+            .ToListAsync(cancellationToken: cancellationToken);
+
+        return new()
+        {
+            Response = [.. data]
+        };
+    }
+    #endregion
 
     /// <inheritdoc/>
     public async Task<TResponseModel<List<ExchangeStockSharpModel>>> GetExchangesAsync(int[] ids = null, CancellationToken cancellationToken = default)

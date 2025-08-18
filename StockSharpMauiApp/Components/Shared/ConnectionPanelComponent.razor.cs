@@ -1,10 +1,10 @@
-﻿using BlazorLib;
+﻿using Microsoft.AspNetCore.Components.Web;
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using MudBlazor;
 using Newtonsoft.Json;
+using BlazorLib;
+using MudBlazor;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;

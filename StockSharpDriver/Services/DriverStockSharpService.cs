@@ -139,23 +139,6 @@ public class DriverStockSharpService(
         return res;
     }
 
-    /*
-     lock (AllSecurities)
-        {
-            lock (StrategyTrades)
-            {
-                if (StrategyTrades.Count == 0)
-                    return res;
-
-                foreach (Security security in AllSecurities)
-                {
-                    if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
-                        res.Add(security);
-                }
-            }
-        }
-     */
-
     /// <inheritdoc/>
     public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
     {
@@ -175,8 +158,8 @@ public class DriverStockSharpService(
             res.AddError($"Strategy started! Stop strategy for initial load");
             return res;
         }
-        List<Security> currrBonds = SecuritiesBonds(false);
-        if (!currrBonds.Any())
+        List<Security> currBonds = SecuritiesBonds(true);
+        if (!currBonds.Any())
         {
             res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
             return res;
@@ -201,11 +184,12 @@ public class DriverStockSharpService(
 
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
 
-        currrBonds.ForEach(security =>
+        currBonds.ForEach(security =>
         {
-            //    string bndName = security.Code.Substring(2, 5);
-
-            //    BndPrice = OfzCurve.GetNode(security).ModelPrice;
+            string bndName = security.Code.Substring(2, 5);
+            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
+            StrategyTradeStockSharpModel _strat = StrategyTrades.FirstOrDefault(x => x.Equals(_sec));
+            BndPrice = Curve.GetNode(_sec).ModelPrice;
             //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
 
             //    if (!decUpD.IsNull())
@@ -376,6 +360,10 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError("Portfolio - not set");
 
         Board = req.Board;
+        TResponseModel<List<BoardStockSharpViewModel>> _matchBoards = await DataRepo.FindBoardsAsync(Board, cancellationToken);
+        if (!_matchBoards.Success() || _matchBoards.Response is null || _matchBoards.Response.Count != 1)
+            return ResponseBaseModel.CreateError($"Board ({_matchBoards.Response.Count} *) - not matched");
+
         SelectedPortfolio = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.SelectedPortfolio.ClientCode);
 
         if (SelectedPortfolio is null)
@@ -388,7 +376,7 @@ public class DriverStockSharpService(
         {
             PageNum = 0,
             PageSize = int.MaxValue,
-            //FavoriteFilter = true,
+            BoardsFilter = [_matchBoards.Response[0].Id],
         }, cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
@@ -430,7 +418,7 @@ public class DriverStockSharpService(
         {
             StrategyTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
             string msg;
-            
+
             if (tryFindStrategy.Length == 0)
             {
                 msg = $"strategy #{security.Code} not found in BondList ({bl.Count} items)";
@@ -1080,7 +1068,7 @@ public class DriverStockSharpService(
                     {
                         SecurityId = new SecurityId
                         {
-                            SecurityCode = _sc.Trim(), 
+                            SecurityCode = _sc.Trim(),
                             BoardCode = BoardCriteriaCodeFilter
                         },
                         TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
