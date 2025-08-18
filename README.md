@@ -20,6 +20,9 @@ Manage
 Rubrics (segments)
 ![rubrics view](./StockSharpMauiApp/img/rubrics-view.png)
 
+System (configs)
+![logs](./StockSharpMauiApp/img/system.png)
+
 Logs (imported of BlankCRM)
 ![logs](./StockSharpMauiApp/img/logs.png)
 
