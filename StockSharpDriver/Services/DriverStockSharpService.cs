@@ -340,6 +340,7 @@ public class DriverStockSharpService(
         return res;
     }
 
+
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
@@ -490,6 +491,13 @@ public class DriverStockSharpService(
             _ordersForQuoteSellReregister.Clear();
 
         return ResponseBaseModel.CreateInfo("Ok");
+    }
+
+    /// <inheritdoc/>
+    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
+    {
+        ClearStrategy();
+        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
     }
 
     public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
@@ -643,233 +651,6 @@ public class DriverStockSharpService(
         throw new NotImplementedException();
     }
 
-    /// <inheritdoc/>
-    void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
-    {
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = DataRepo.InstrumentsSelectAsync(new()
-        {
-            PageNum = 0,
-            PageSize = int.MaxValue,
-        }).Result;
-        string _msg;
-        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-        {
-            _msg = $"The instruments are not configured.";
-            _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
-            return;
-        }
-        List<StrategyTradeStockSharpModel> dataParse = ReadStrategies([.. resInstruments.Response.Select(x => x.Id)]).Result;
-
-        if (dataParse.Count == 0)
-        {
-            _msg = "Dashboard - not set";
-
-            _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
-            return;
-        }
-
-        Order tmpOrder;
-        Order newOrder;
-        IOrderBookMessage tmpDepth;
-        decimal price;
-
-        Security sec = conLink.Connector.Securities.FirstOrDefault(s => s.ToSecurityId() == depth.SecurityId);
-        InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(sec);
-        SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Equals(sec));
-
-        InstrumentTradeStockSharpViewModel currentInstrument = resInstruments.Response
-            .FirstOrDefault(x => x.Code == sec.Code && x.Currency == (int)sec.Currency && x.Board.Code == sec.Board.Code);
-
-        if (currentInstrument is null)
-        {
-            _msg = $"Instrument not found - {JsonConvert.SerializeObject(sec, Formatting.Indented)}";
-            _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
-            return;
-        }
-
-        StrategyTradeStockSharpModel currentStrategy = dataParse.FirstOrDefault(x => x.Id == currentInstrument.Id);
-        if (currentStrategy is null)
-        {
-            _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";
-            _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
-            return;
-        }
-        bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker);
-        if (!SbPos.IsNull() && !sec.IsNull())
-        {
-            if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && !depth.Bids.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
-            {
-                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Buy));
-
-                if (Orders.IsEmpty()) //if there is no orders in stakan
-                {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
-                    if (price > 0)
-                    {
-                        Order ord = new()
-                        {
-                            Security = sec,
-                            Portfolio = SelectedPortfolio,
-                            Price = price,
-                            Side = Sides.Buy,
-                            Comment = "Quote",
-                            IsMarketMaker = isMarketMaker,
-                            Volume = SbPos.BidVolume,
-                            ClientCode = ClientCodeStockSharp,
-                        };
-                        conLink.Connector.RegisterOrder(ord);
-                        eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` there is no orders in MarketDepth", MessageText = string.Format("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume), TypeMessage = MessagesTypesEnum.Warning });
-                    }
-                }
-                else
-                {
-                    tmpOrder = Orders.First();
-                    tmpDepth = (IOrderBookMessage)depth.Clone();
-
-                    int Len = tmpDepth.Bids.Length;
-                    for (int i = 0; i < Len; i++)
-                    {
-                        if ((tmpDepth.Bids[i].Price == tmpOrder.Price) && (tmpDepth.Bids[i].Volume >= tmpOrder.Balance))
-                        {
-                            tmpDepth.Bids[i].Volume = tmpDepth.Bids[i].Volume - tmpOrder.Balance;
-                            break;
-                        }
-                    }
-
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
-
-                    if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.BidVolume)))
-                    {
-                        newOrder = new Order()
-                        {
-                            Security = sec,
-                            Portfolio = SelectedPortfolio,
-                            Price = price,
-                            Side = Sides.Buy,
-                            Comment = "Quote",
-                            IsMarketMaker = isMarketMaker,
-                            Volume = SbPos.BidVolume,
-                            ClientCode = ClientCodeStockSharp,
-                        };
-                        _ordersForQuoteBuyReregister.Add(tmpOrder.Security.Code, newOrder);
-                        eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` with orders (x {Orders.Count()}) in MarketDepth", MessageText = string.Format("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
-                        conLink.Connector.CancelOrder(tmpOrder);
-                    }
-
-                    Orders.Skip(1).ForEach(s =>
-                    {
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Skip order", MessageText = string.Format("Order buy duplication!"), TypeMessage = MessagesTypesEnum.Warning });
-                        if (s.Id != tmpOrder.Id)
-                        {
-                            eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Duplicate buy order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
-                            //                                                       s.Security, s.Price, s.Volume);
-                            conLink.Connector.CancelOrder(s);
-                        }
-                    });
-                }
-            }
-
-            //only for sell orders
-            if (!_ordersForQuoteSellReregister.ContainsKey(sec.Code) && !depth.Asks.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Sell))))
-            {
-                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Sell));
-
-                if (Orders.IsEmpty()) //if there is no orders in stakan
-                {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
-                    if (price > 0)
-                    {
-                        Order ord = new()
-                        {
-                            Security = sec,
-                            Portfolio = SelectedPortfolio,
-                            Price = price,
-                            Side = Sides.Sell,
-                            Comment = "Quote",
-                            IsMarketMaker = isMarketMaker,
-                            Volume = SbPos.OfferVolume,
-                            ClientCode = ClientCodeStockSharp,
-                        };
-
-                        conLink.Connector.RegisterOrder(ord);
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume), TypeMessage = MessagesTypesEnum.Warning });
-                    }
-                }
-                else
-                {
-                    tmpOrder = Orders.First();
-                    tmpDepth = (IOrderBookMessage)depth.Clone();
-
-                    int Len = tmpDepth.Asks.Length;
-                    for (int i = 0; i < Len; i++)
-                    {
-                        if ((tmpDepth.Asks[i].Price == tmpOrder.Price) && (tmpDepth.Asks[i].Volume >= tmpOrder.Balance))
-                        {
-                            tmpDepth.Asks[i].Volume = tmpDepth.Asks[i].Volume - tmpOrder.Balance;
-                            break;
-                        }
-                    }
-
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
-
-                    if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.OfferVolume)))
-                    {
-                        newOrder = new Order()
-                        {
-                            Security = sec,
-                            Portfolio = SelectedPortfolio,
-                            Price = price,
-                            Side = Sides.Sell,
-                            Comment = "Quote",
-                            IsMarketMaker = isMarketMaker,
-                            Volume = SbPos.OfferVolume,
-                            ClientCode = ClientCodeStockSharp,
-                        };
-                        _ordersForQuoteSellReregister.Add(tmpOrder.Security.Code, newOrder);
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
-                        conLink.Connector.CancelOrder(tmpOrder);
-                    }
-
-                    Orders.Skip(1).ForEach(s =>
-                    {
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order sell duplication!"), TypeMessage = MessagesTypesEnum.Warning });
-                        if (s.Id != tmpOrder.Id)
-                        {
-                            eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Duplicate sell order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
-                            conLink.Connector.CancelOrder(s);
-                        }
-                    });
-                }
-            }
-        }
-    }
-
-
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
-    {
-        ClearStrategy();
-        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
-    }
-
-    private void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
-    {
-        _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
-        lock (DepthSubscriptions)
-            if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
-                return;
-
-        eventTrans.ToastClientShow(new() { HeadTitle = nameof(MarketDepthOrderBookHandle), TypeMessage = MessagesTypesEnum.Info, MessageText = $"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}" });
-
-        // Обработка стакана
-        Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
-        Console.WriteLine($"Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
-    }
-
     async Task<List<StrategyTradeStockSharpModel>> ReadStrategies(int?[] instrumentsIds, CancellationToken cancellationToken = default)
     {
         FindStorageBaseModel _findParametersQuery = new()
@@ -891,6 +672,7 @@ public class DriverStockSharpService(
 
         return [.. _q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)];
     }
+
 
     /// <inheritdoc/>
     public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
@@ -1204,7 +986,305 @@ public class DriverStockSharpService(
         throw new NotImplementedException();
     }
 
+    public Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
+    {
+        UnregisterEvents();
+        conLink.Connector.Dispose();
+        conLink.Connector = new();
+        RegisterEvents();
+        return Task.FromResult(ResponseBaseModel.CreateSuccess("Connection terminated"));
+    }
+
+    void DeleteAllQuotesByStrategy(string strategy)
+    {
+        IEnumerable<Order> orders = AllOrders.Where(s => s.State == OrderStates.Active);
+
+        if (string.IsNullOrEmpty(strategy))
+        {
+            foreach (Order order in orders)
+            {
+                conLink.Connector.CancelOrder(order);
+                eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` without strategy", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
+            }
+        }
+        else
+        {
+            foreach (Order order in orders)
+            {
+                if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
+                    conLink.Connector.CancelOrder(order);
+
+                eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` with strategy '{strategy}'", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
+            }
+        }
+    }
+
+    void ClearStrategy()
+    {
+        lock (DepthSubscriptions)
+        {
+            DepthSubscriptions.ForEach(conLink.Connector.UnSubscribe);
+            DepthSubscriptions.Clear();
+        }
+
+        if (SecurityCriteriaCodeFilterSubscription is not null)
+            conLink.Connector.UnSubscribe(SecurityCriteriaCodeFilterSubscription);
+        SecurityCriteriaCodeFilterSubscription = null;
+
+        conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
+
+        Board = null;
+        SelectedPortfolio = null;
+        ClientCodeStockSharp = null;
+        ProgramDataPath = null;
+
+        lock (StrategyTrades)
+            StrategyTrades.Clear();
+
+        lock (SBondPositionsList)
+            SBondPositionsList.Clear();
+
+        lock (SBondSizePositionsList)
+            SBondSizePositionsList.Clear();
+
+        lock (SBondSmallPositionsList)
+            SBondSmallPositionsList.Clear();
+
+        lock (OderBookList)
+            OderBookList.Clear();
+
+        lock (AllOrders)
+            AllOrders.Clear();
+
+        bondPositionTraded = 0;
+        bondSizePositionTraded = 0;
+        bondSmallPositionTraded = 0;
+        bondOutOfRangePositionTraded = 0;
+
+        lowLimit = 0.19m;
+        highLimit = 0.25m;
+    }
+
     #region events
+    /// <inheritdoc/>
+    void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
+    {
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = DataRepo.InstrumentsSelectAsync(new()
+        {
+            PageNum = 0,
+            PageSize = int.MaxValue,
+        }).Result;
+        string _msg;
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+        {
+            _msg = $"The instruments are not configured.";
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            return;
+        }
+        List<StrategyTradeStockSharpModel> dataParse = ReadStrategies([.. resInstruments.Response.Select(x => x.Id)]).Result;
+
+        if (dataParse.Count == 0)
+        {
+            _msg = "Dashboard - not set";
+
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            return;
+        }
+
+        Order tmpOrder;
+        Order newOrder;
+        IOrderBookMessage tmpDepth;
+        decimal price;
+
+        Security sec = conLink.Connector.Securities.FirstOrDefault(s => s.ToSecurityId() == depth.SecurityId);
+        InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(sec);
+        SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Equals(sec));
+
+        InstrumentTradeStockSharpViewModel currentInstrument = resInstruments.Response
+            .FirstOrDefault(x => x.Code == sec.Code && x.Currency == (int)sec.Currency && x.Board.Code == sec.Board.Code);
+
+        if (currentInstrument is null)
+        {
+            _msg = $"Instrument not found - {JsonConvert.SerializeObject(sec, Formatting.Indented)}";
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            return;
+        }
+
+        StrategyTradeStockSharpModel currentStrategy = dataParse.FirstOrDefault(x => x.Id == currentInstrument.Id);
+        if (currentStrategy is null)
+        {
+            _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            return;
+        }
+        bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker);
+        if (!SbPos.IsNull() && !sec.IsNull())
+        {
+            if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && !depth.Bids.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
+            {
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Buy));
+
+                if (Orders.IsEmpty()) //if there is no orders in stakan
+                {
+                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    if (price > 0)
+                    {
+                        Order ord = new()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Buy,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.BidVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+                        conLink.Connector.RegisterOrder(ord);
+                        eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` there is no orders in MarketDepth", MessageText = string.Format("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume), TypeMessage = MessagesTypesEnum.Warning });
+                    }
+                }
+                else
+                {
+                    tmpOrder = Orders.First();
+                    tmpDepth = (IOrderBookMessage)depth.Clone();
+
+                    int Len = tmpDepth.Bids.Length;
+                    for (int i = 0; i < Len; i++)
+                    {
+                        if ((tmpDepth.Bids[i].Price == tmpOrder.Price) && (tmpDepth.Bids[i].Volume >= tmpOrder.Balance))
+                        {
+                            tmpDepth.Bids[i].Volume = tmpDepth.Bids[i].Volume - tmpOrder.Balance;
+                            break;
+                        }
+                    }
+
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+
+                    if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.BidVolume)))
+                    {
+                        newOrder = new Order()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Buy,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.BidVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+                        _ordersForQuoteBuyReregister.Add(tmpOrder.Security.Code, newOrder);
+                        eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` with orders (x {Orders.Count()}) in MarketDepth", MessageText = string.Format("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                        conLink.Connector.CancelOrder(tmpOrder);
+                    }
+
+                    Orders.Skip(1).ForEach(s =>
+                    {
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Skip order", MessageText = string.Format("Order buy duplication!"), TypeMessage = MessagesTypesEnum.Warning });
+                        if (s.Id != tmpOrder.Id)
+                        {
+                            eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Duplicate buy order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                            //                                                       s.Security, s.Price, s.Volume);
+                            conLink.Connector.CancelOrder(s);
+                        }
+                    });
+                }
+            }
+
+            //only for sell orders
+            if (!_ordersForQuoteSellReregister.ContainsKey(sec.Code) && !depth.Asks.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Sell))))
+            {
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Sell));
+
+                if (Orders.IsEmpty()) //if there is no orders in stakan
+                {
+                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    if (price > 0)
+                    {
+                        Order ord = new()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Sell,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.OfferVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+
+                        conLink.Connector.RegisterOrder(ord);
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume), TypeMessage = MessagesTypesEnum.Warning });
+                    }
+                }
+                else
+                {
+                    tmpOrder = Orders.First();
+                    tmpDepth = (IOrderBookMessage)depth.Clone();
+
+                    int Len = tmpDepth.Asks.Length;
+                    for (int i = 0; i < Len; i++)
+                    {
+                        if ((tmpDepth.Asks[i].Price == tmpOrder.Price) && (tmpDepth.Asks[i].Volume >= tmpOrder.Balance))
+                        {
+                            tmpDepth.Asks[i].Volume = tmpDepth.Asks[i].Volume - tmpOrder.Balance;
+                            break;
+                        }
+                    }
+
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+
+                    if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.OfferVolume)))
+                    {
+                        newOrder = new Order()
+                        {
+                            Security = sec,
+                            Portfolio = SelectedPortfolio,
+                            Price = price,
+                            Side = Sides.Sell,
+                            Comment = "Quote",
+                            IsMarketMaker = isMarketMaker,
+                            Volume = SbPos.OfferVolume,
+                            ClientCode = ClientCodeStockSharp,
+                        };
+                        _ordersForQuoteSellReregister.Add(tmpOrder.Security.Code, newOrder);
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                        conLink.Connector.CancelOrder(tmpOrder);
+                    }
+
+                    Orders.Skip(1).ForEach(s =>
+                    {
+                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order sell duplication!"), TypeMessage = MessagesTypesEnum.Warning });
+                        if (s.Id != tmpOrder.Id)
+                        {
+                            eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Duplicate sell order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                            conLink.Connector.CancelOrder(s);
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
+    {
+        _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
+        lock (DepthSubscriptions)
+            if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
+                return;
+
+        eventTrans.ToastClientShow(new() { HeadTitle = nameof(MarketDepthOrderBookHandle), TypeMessage = MessagesTypesEnum.Info, MessageText = $"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}" });
+
+        // Обработка стакана
+        Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
+        Console.WriteLine($"Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
+    }
+
     void SecurityReceivedHandle(Subscription subscription, Security security)
     {
         lock (AllSecurities)
@@ -1359,28 +1439,6 @@ public class DriverStockSharpService(
         }
     }
 
-    #region todo
-    void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
-    {
-        //_logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
-    }
-
-    void Level1ReceivedHandle(Subscription subscription, Level1ChangeMessage levelCh)
-    {
-        //_logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
-    }
-
-    void DataTypeReceivedHandle(Subscription subscription, DataType argDt)
-    {
-        //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
-    }
-
-    void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
-    {
-        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
-    }
-    #endregion
-
     void LookupSecuritiesResultHandle(SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
         string _msg;
@@ -1409,87 +1467,29 @@ public class DriverStockSharpService(
             }
         }
     }
+
+    #region todo
+    void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
+    {
+        //_logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
+    }
+
+    void Level1ReceivedHandle(Subscription subscription, Level1ChangeMessage levelCh)
+    {
+        //_logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
+    }
+
+    void DataTypeReceivedHandle(Subscription subscription, DataType argDt)
+    {
+        //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
+    }
+
+    void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
+    {
+        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
+    }
     #endregion
-
-    void DeleteAllQuotesByStrategy(string strategy)
-    {
-        IEnumerable<Order> orders = AllOrders.Where(s => s.State == OrderStates.Active);
-
-        if (string.IsNullOrEmpty(strategy))
-        {
-            foreach (Order order in orders)
-            {
-                conLink.Connector.CancelOrder(order);
-                eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` without strategy", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
-            }
-        }
-        else
-        {
-            foreach (Order order in orders)
-            {
-                if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
-                    conLink.Connector.CancelOrder(order);
-
-                eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` with strategy '{strategy}'", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
-            }
-        }
-    }
-
-    void ClearStrategy()
-    {
-        lock (DepthSubscriptions)
-        {
-            DepthSubscriptions.ForEach(conLink.Connector.UnSubscribe);
-            DepthSubscriptions.Clear();
-        }
-
-        if (SecurityCriteriaCodeFilterSubscription is not null)
-            conLink.Connector.UnSubscribe(SecurityCriteriaCodeFilterSubscription);
-        SecurityCriteriaCodeFilterSubscription = null;
-
-        conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
-
-        Board = null;
-        SelectedPortfolio = null;
-        ClientCodeStockSharp = null;
-        ProgramDataPath = null;
-
-        lock (StrategyTrades)
-            StrategyTrades.Clear();
-
-        lock (SBondPositionsList)
-            SBondPositionsList.Clear();
-
-        lock (SBondSizePositionsList)
-            SBondSizePositionsList.Clear();
-
-        lock (SBondSmallPositionsList)
-            SBondSmallPositionsList.Clear();
-
-        lock (OderBookList)
-            OderBookList.Clear();
-
-        lock (AllOrders)
-            AllOrders.Clear();
-
-        bondPositionTraded = 0;
-        bondSizePositionTraded = 0;
-        bondSmallPositionTraded = 0;
-        bondOutOfRangePositionTraded = 0;
-
-        lowLimit = 0.19m;
-        highLimit = 0.25m;
-    }
-
-    public Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
-    {
-        UnregisterEvents();
-        conLink.Connector.Dispose();
-        conLink.Connector = new();
-        RegisterEvents();
-        return Task.FromResult(ResponseBaseModel.CreateSuccess("Connection terminated"));
-    }
-
+    #endregion
 
     void UnregisterEvents()
     {
