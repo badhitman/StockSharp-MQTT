@@ -14,16 +14,18 @@
 else
 {
     <MudTd DataLabel="Bond" Class="@_opClass" title="@Instrument.Name">
-        <code>@Instrument.Code</code>
+        <code class="me-2">@Instrument.Code</code>
         @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
         {
             foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)
             {
                 string colorClass = _ie.MarkerDescriptor switch
                 {
-                    (int)MarkersInstrumentStockSharpEnum.Illiquid => "primary",
+                    (int)MarkersInstrumentStockSharpEnum.Illiquid => "warning",
                     (int)MarkersInstrumentStockSharpEnum.IsNew => "info",
-                    (int)MarkersInstrumentStockSharpEnum.IsMarketMaker => "warning",
+                    (int)MarkersInstrumentStockSharpEnum.IsDisabled => "secondary",
+                    (int)MarkersInstrumentStockSharpEnum.IsFavorite => "success",
+                    (int)MarkersInstrumentStockSharpEnum.IsMarketMaker => "primary",
                     _ => "danger",
                 };
                 <span class="badge text-bg-@colorClass me-1">@(((MarkersInstrumentStockSharpEnum)_ie.MarkerDescriptor).DescriptionInfo())</span>
