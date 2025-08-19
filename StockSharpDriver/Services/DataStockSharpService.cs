@@ -247,7 +247,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (req.RubricsIds is null || req.RubricsIds.Length != 1)
         {
             context.RemoveRange(context.RubricsInstruments.Where(x => x.InstrumentId == req.InstrumentId));
-            return ResponseBaseModel.CreateInfo($"Ok. changes: {await context.SaveChangesAsync(cancellationToken)}");
+            return ResponseBaseModel.CreateInfo($"Ok (clear rubrics for instrument). changes: {await context.SaveChangesAsync(cancellationToken)}");
         }
 
         int[] rubricsIdsDb = await context.RubricsInstruments
@@ -261,7 +261,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (_rubricsIds.Length != 0)
         {
             context.RemoveRange(context.RubricsInstruments.Where(x => x.InstrumentId == req.InstrumentId && _rubricsIds.Contains(x.RubricId)));
-            _final.AddInfo($"Удалено связей: {await context.SaveChangesAsync(cancellationToken)}");
+            _final.AddInfo($"Deleted link`s: {await context.SaveChangesAsync(cancellationToken)}");
         }
 
         _rubricsIds = [.. req.RubricsIds.Where(x => !rubricsIdsDb.Contains(x))];
@@ -270,7 +270,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             try
             {
                 await context.AddRangeAsync(_rubricsIds.Select(x => new RubricInstrumentStockSharpModelDB() { RubricId = x, InstrumentId = req.InstrumentId }), cancellationToken);
-                _final.AddInfo($"Добавлено связей: {await context.SaveChangesAsync(cancellationToken)}");
+                _final.AddInfo($"Added link`s: {await context.SaveChangesAsync(cancellationToken)}");
             }
             catch (Exception ex)
             {
