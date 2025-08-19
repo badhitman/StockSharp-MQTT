@@ -6,6 +6,7 @@ using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SharedLib;
+using System.Collections.Generic;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -62,13 +63,8 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     }
 
 
-    IEnumerable<int>? _selectedBoards;
-    MarkersInstrumentStockSharpEnum?[]? MarkersFilter;
-
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
-
     List<TradingRowComponent> RowsComponents { get; set; } = [];
-
 
 
     /// <summary>
@@ -110,6 +106,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
                     TResponseModel<decimal> restoreQuoteVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume);
                     _quoteVolume = restoreQuoteVolume.Response;
                 }),
+
                 Task.Run(async () =>
                 {
                     await UpdateConnectionEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive, UpdateConnectionNotificationHandle);
@@ -118,40 +115,19 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
                 {
                     await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
                 }),
+
                 Task.Run(async () =>
                 {
-                   TResponseModel<MarkersInstrumentStockSharpEnum?[]?> readMarkersFilter = await StorageRepo.ReadParameterAsync<MarkersInstrumentStockSharpEnum?[]?>(GlobalStaticCloudStorageMetadata.MarkersDashboard);
-                   MarkersFilter = readMarkersFilter.Response;
-                }),
-                   Task.Run(async () => {
-                   TResponseModel<int[]> _readBoardsFilter = await StorageRepo.ReadParameterAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard);
-                   _selectedBoards = _readBoardsFilter.Response;
+                    TResponseModel<List<InstrumentTradeStockSharpViewModel>> readTrade = await DataRepo.ReadTradeInstrumentsAsync();
+                    lock(instruments)
+                    {
+                        instruments.Clear();
+                        if(readTrade.Response is not null && readTrade.Response.Count != 0)
+                            instruments.AddRange(readTrade.Response);
+                    }
                 })
             ]);
 
-        InstrumentsRequestModel req = new()
-        {
-            PageNum = 0,
-            PageSize = int.MaxValue,
-        };
-
-        if (MarkersFilter is not null)
-        {
-            req.MarkersFilter = MarkersFilter;
-        }
-
-        if (_selectedBoards is not null)
-        {
-            req.BoardsFilter = [.. _selectedBoards];
-        }
-
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await DataRepo.InstrumentsSelectAsync(req);
-        lock (instruments)
-        {
-            instruments.Clear();
-            if (res.Response is not null)
-                instruments.AddRange(res.Response);
-        }
         await SetBusyAsync(false);
     }
 

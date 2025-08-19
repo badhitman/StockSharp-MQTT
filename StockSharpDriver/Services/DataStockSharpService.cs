@@ -11,7 +11,9 @@ namespace StockSharpDriver;
 /// <summary>
 /// StockSharpDataService
 /// </summary>
-public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, IDbContextFactory<PropertiesStorageContext> cloudParametersDbFactory) : IDataStockSharpService
+public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory,
+    IParametersStorage storageRepo,
+    IDbContextFactory<PropertiesStorageContext> cloudParametersDbFactory) : IDataStockSharpService
 {
     #region CashFlow
     /// <inheritdoc/>
@@ -184,6 +186,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     {
         if (req.PageSize < 10)
             req.PageSize = 10;
+
         bool _notSet = req.MarkersFilter?.Contains(null) == true;
         int[] markersFilter = req.MarkersFilter is null ? null : [.. req.MarkersFilter.Where(x => x is not null).Select(x => (int)x)];
         // 
@@ -235,6 +238,35 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         };
 
         return res;
+    }
+
+    /// <inheritdoc/>
+    public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> ReadTradeInstrumentsAsync(CancellationToken cancellationToken = default)
+    {
+        int[] BoardsFilter = default;
+        MarkersInstrumentStockSharpEnum?[] MarkersFilter = default;
+        await Task.WhenAll([
+            Task.Run(async () => { MarkersFilter = await storageRepo.ReadAsync<MarkersInstrumentStockSharpEnum?[]>(GlobalStaticCloudStorageMetadata.MarkersDashboard); }, cancellationToken),
+            Task.Run(async () => { BoardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard); }, cancellationToken)]);
+
+        InstrumentsRequestModel req = new()
+        {
+            PageNum = 0,
+            PageSize = int.MaxValue,
+        };
+
+        if (MarkersFilter is not null)
+            req.MarkersFilter = MarkersFilter;
+
+        if (BoardsFilter is not null)
+            req.BoardsFilter = [.. BoardsFilter];
+
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await InstrumentsSelectAsync(req, cancellationToken);
+
+        return new()
+        {
+            Response = res.Response,
+        };
     }
     #endregion
 

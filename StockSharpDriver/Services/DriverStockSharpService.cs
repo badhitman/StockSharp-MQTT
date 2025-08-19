@@ -109,6 +109,10 @@ public class DriverStockSharpService(
        highYieldLimit = 5m;
     #endregion
 
+    bool StrategyStarted => Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0;
+    ConnectionStatesEnum ConnectionState => (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState));
+
+
     List<Security> SecuritiesBonds(bool ofStrategy)
     {
         List<Security> res = [];
@@ -142,9 +146,6 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
     {
-        SBond SBnd;
-        DateTime curDate;
-        decimal BndPrice, bondDV;
         ResponseSimpleModel res = new();
 
         if (conLink.Connector.ConnectionState != Ecng.ComponentModel.ConnectionStates.Connected)
@@ -153,11 +154,16 @@ public class DriverStockSharpService(
             return res;
         }
 
-        if (Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0)
+        if (StrategyStarted)
         {
-            res.AddError($"Strategy started! Stop strategy for initial load");
+            res.AddError($"{nameof(StrategyStarted)}! Stop strategy for initial load");
             return res;
         }
+
+        SBond SBnd;
+        DateTime curDate;
+        decimal BndPrice, bondDV;
+
         List<Security> currBonds = SecuritiesBonds(true);
         if (!currBonds.Any())
         {
@@ -250,8 +256,7 @@ public class DriverStockSharpService(
             //            {
             //                Highlimit.Value =
             //                    (int)
-            //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) *
-            //                         10000);
+            //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
 
             //                if (Highlimit.Value < 11)
             //                    Highlimit.Value = 11;
@@ -895,9 +900,9 @@ public class DriverStockSharpService(
         AboutConnectResponseModel res = new()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)),
+            ConnectionState = ConnectionState,
             LastConnectedAt = (_lc == DateTime.MinValue || _lc == default) ? null : _lc,
-            StrategyStarted = Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0,
+            StrategyStarted = StrategyStarted,
             LowLimit = lowLimit,
             HighLimit = highLimit,
             SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilter,
