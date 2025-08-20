@@ -160,11 +160,46 @@ public class DriverStockSharpService(
             return res;
         }
 
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await DataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+                
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+        {
+            res.AddError($"The instruments are not configured.");
+            return res;
+        }
+/*
+        List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        if (dataParse.Count == 0)
+            return ResponseBaseModel.CreateError("Dashboard - not set");
+
+        lock (StrategyTrades)
+        {
+            StrategyTrades.Clear();
+            foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
+            {
+                int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
+                if (_fx < 0)
+                    return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+
+                if (dataParse[_fx].ValueOperation < 1)
+                    return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
+
+                if (dataParse[_fx].BasePrice < 1)
+                    return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
+
+                StrategyTrades.Add(dataParse[_fx]);
+            }
+
+            if (StrategyTrades is null || StrategyTrades.Count == 0)
+                return ResponseBaseModel.CreateError("Instruments - is empty");
+        }*/
+
         SBond SBnd;
         DateTime curDate;
         decimal BndPrice, bondDV;
 
-        List<Security> currBonds = SecuritiesBonds(true);
+        List<Security> currBonds = SecuritiesBonds(false);
         if (!currBonds.Any())
         {
             res.AddError($"!{nameof(SecuritiesBonds)}().Any()");

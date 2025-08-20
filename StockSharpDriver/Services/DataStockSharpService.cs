@@ -243,11 +243,11 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     /// <inheritdoc/>
     public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> ReadTradeInstrumentsAsync(CancellationToken cancellationToken = default)
     {
-        int[] BoardsFilter = default;
-        MarkersInstrumentStockSharpEnum?[] MarkersFilter = default;
+        int[] _boardsFilter = default;
+        MarkersInstrumentStockSharpEnum?[] _markersFilter = default;
         await Task.WhenAll([
-            Task.Run(async () => { MarkersFilter = await storageRepo.ReadAsync<MarkersInstrumentStockSharpEnum?[]>(GlobalStaticCloudStorageMetadata.MarkersDashboard); }, cancellationToken),
-            Task.Run(async () => { BoardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard); }, cancellationToken)]);
+            Task.Run(async () => { _markersFilter = await storageRepo.ReadAsync<MarkersInstrumentStockSharpEnum?[]>(GlobalStaticCloudStorageMetadata.MarkersDashboard); }, cancellationToken),
+            Task.Run(async () => { _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard); }, cancellationToken)]);
 
         InstrumentsRequestModel req = new()
         {
@@ -255,11 +255,11 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             PageSize = int.MaxValue,
         };
 
-        if (MarkersFilter is not null)
-            req.MarkersFilter = MarkersFilter;
+        if (_markersFilter is not null)
+            req.MarkersFilter = _markersFilter;
 
-        if (BoardsFilter is not null)
-            req.BoardsFilter = [.. BoardsFilter];
+        if (_boardsFilter is not null)
+            req.BoardsFilter = [.. _boardsFilter];
 
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await InstrumentsSelectAsync(req, cancellationToken);
 
