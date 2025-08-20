@@ -17,6 +17,9 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
+    [Inject]
+    IEventNotifyReceive<DashboardTradeStockSharpModel> DashboardRepo { get; set; } = default!;
+
 
     /// <inheritdoc/>
     [Parameter, EditorRequired]
@@ -199,6 +202,18 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
         Parent.AddRowComponent(this);
         await base.OnInitializedAsync();
+
+        await DashboardRepo.RegisterAction($"{GlobalStaticConstantsTransmission.TransmissionQueues.DashboardTradeUpdateStockSharpNotifyReceive}#{Instrument.Id}", DashboardTradeUpdateHandle);
+
+    }
+
+    private void DashboardTradeUpdateHandle(DashboardTradeStockSharpModel model)
+    {
+        if (RestoreStrategy is not null && RestoreStrategy.Id == model.Id)
+        {
+            RestoreStrategy.Reload(model, Instrument);
+            StateHasChangedCall();
+        }
     }
 
     async Task SaveStrategy()
@@ -255,5 +270,11 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     {
         Instrument.Reload(sender);
         StateHasChangedCall();
+    }
+
+    public override void Dispose()
+    {
+        DashboardRepo.UnregisterAction();
+        base.Dispose();
     }
 }

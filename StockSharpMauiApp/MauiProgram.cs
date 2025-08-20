@@ -63,6 +63,7 @@ public static class MauiProgram
             .RegisterEventNotify<OrderStockSharpViewModel>()
             .RegisterEventNotify<UserTelegramBaseModel>()
             .RegisterEventNotify<ToastShowClientModel>()
+            .RegisterEventNotify<DashboardTradeStockSharpModel>()
             ;
         #endregion
         return builder.Build();

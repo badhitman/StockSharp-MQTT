@@ -168,17 +168,6 @@ public class DriverStockSharpService(
 
         List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        List<DashboardTradeStockSharpModel> _lst = [];
-
-        foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
-        {
-            int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
-            if (_fx < 0)
-                continue;
-
-            _lst.Add(dataParse[_fx]);
-        }
-
 
         SBond SBnd;
         DateTime curDate;
@@ -210,12 +199,12 @@ public class DriverStockSharpService(
         ]);
 
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
-        List<Task> tasks = [];
+        List<Task> tasksMaster = [], tasksSlave = [];
         currBonds.ForEach(security =>
         {
             string bndName = security.Code.Substring(2, 5);
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            DashboardTradeStockSharpModel _strat = _lst.FirstOrDefault(x => x.Equals(_sec));
+            DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.Equals(_sec));
             InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.FirstOrDefault(x => x.Id == _strat.Id);
             SBnd = Curve.GetNode(_sec);
             BndPrice = SBnd.ModelPrice;
@@ -306,13 +295,15 @@ public class DriverStockSharpService(
                 _strat.HightLimit = (int)(highLimit * 100);
             }
 
-            tasks.Add(Task.Run(async () => { await storageRepo.SaveAsync(_strat, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(_strat.Id), true); }));
+            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(_strat, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(_strat.Id), true); }));
+            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(_strat); }));
         });
 
-        if (tasks.Count != 0)
+        if (tasksMaster.Count != 0)
         {
-            res.AddSuccess($"Updated items (strategies): {tasks.Count}");
-            await Task.WhenAll(tasks);
+            res.AddSuccess($"Updated items (strategies): {tasksMaster.Count}");
+            await Task.WhenAll(tasksMaster);
+            await Task.WhenAll(tasksSlave);
         }
 
         return res;
