@@ -32,7 +32,7 @@ public class DriverStockSharpService(
     #region prop`s
     CurveModel Curve;
 
-    List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
+    readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
     Subscription SecurityCriteriaCodeFilterSubscription;
 
     BoardStockSharpModel Board;
@@ -203,10 +203,16 @@ public class DriverStockSharpService(
         }
 
         await Task.WhenAll([
-            Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume, cancellationToken)),
-            Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume, cancellationToken)),
+            Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume, 1000, cancellationToken)),
+            Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume, 2000, cancellationToken)),
         ]);
-
+        /*
+        quoteSmallStrategyBidVolume = 2000,
+        quoteSmallStrategyOfferVolume = 2000,
+        * 
+        GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume
+        GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume
+         */
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
 
         currBonds.ForEach(security =>
@@ -221,10 +227,10 @@ public class DriverStockSharpService(
             {
                 _strat.BasePrice = BndPrice;
 
-            //    LongUpDown SmallBidVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName);
+                //    LongUpDown SmallBidVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName);
 
-            //    if (_strat is not null)
-            //        SmallBidVolUpD.Value = (long)quoteSmallStrategyBidVolume;
+                //    if (_strat is not null)
+                //        SmallBidVolUpD.Value = (long)quoteSmallStrategyBidVolume;
 
             }
 
@@ -374,7 +380,7 @@ public class DriverStockSharpService(
 
         ClearStrategy();
 
-        ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, cancellationToken);
+        ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken);
         if (!string.IsNullOrWhiteSpace(ProgramDataPath))
             return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
 
@@ -851,9 +857,9 @@ public class DriverStockSharpService(
         }
         //BoardCriteriaCodeFilterStockSharp//BoardCriteriaCodeFilter
         await Task.WhenAll([
-                Task.Run(async () => { SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp, cancellationToken); }, cancellationToken),
-                Task.Run(async () => { BoardCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.BoardCriteriaCodeFilterStockSharp, cancellationToken); }, cancellationToken),
-                Task.Run(async () => { ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, cancellationToken); }, cancellationToken)
+                Task.Run(async () => { SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp,token: cancellationToken); }, cancellationToken),
+                Task.Run(async () => { BoardCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.BoardCriteriaCodeFilterStockSharp, token:cancellationToken); }, cancellationToken),
+                Task.Run(async () => { ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp,token: cancellationToken); }, cancellationToken)
             ]);
 
         RegisterEvents();

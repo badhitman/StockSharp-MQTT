@@ -158,7 +158,7 @@ public class ParametersStorage(
     }
 
     /// <inheritdoc/>
-    public async Task<T> ReadAsync<T>(StorageMetadataModel req, CancellationToken token = default)
+    public async Task<T> ReadAsync<T>(StorageMetadataModel req, T defaultValue = default, CancellationToken token = default)
     {
         req.Normalize();
         string mem_key = $"{req.PropertyName}/{req.OwnerPrimaryKey}/{req.PrefixPropertyName}/{req.ApplicationName}".Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
@@ -175,7 +175,7 @@ public class ParametersStorage(
             .FirstOrDefaultAsync(x => x.PropertyName == req.PropertyName, cancellationToken: token);
 
         if (pdb is null)
-            return default;
+            return defaultValue;
 
         try
         {
@@ -186,7 +186,7 @@ public class ParametersStorage(
         catch (Exception ex)
         {
             loggerRepo.LogError(ex, $"Ошибка де-сериализации [{typeof(T).FullName}] из: {pdb.SerializedDataJson}");
-            return default;
+            return defaultValue;
         }
     }
 
