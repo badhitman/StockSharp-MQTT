@@ -205,14 +205,10 @@ public class DriverStockSharpService(
         await Task.WhenAll([
             Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
             Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
+            Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
+            Task.Run(async () => quoteSmallStrategyOfferVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume, 2000, cancellationToken)),
         ]);
-        /*
-        quoteSmallStrategyBidVolume = 2000,
-        quoteSmallStrategyOfferVolume = 2000,
-        * 
-        GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume
-        GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume
-         */
+
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
 
         currBonds.ForEach(security =>
@@ -855,7 +851,7 @@ public class DriverStockSharpService(
             res.AddError("can`t connect");
             return res;
         }
-        //BoardCriteriaCodeFilterStockSharp//BoardCriteriaCodeFilter
+
         await Task.WhenAll([
                 Task.Run(async () => { SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp,token: cancellationToken); }, cancellationToken),
                 Task.Run(async () => { BoardCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.BoardCriteriaCodeFilterStockSharp, token:cancellationToken); }, cancellationToken),
