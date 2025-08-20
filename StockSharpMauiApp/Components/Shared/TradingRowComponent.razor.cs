@@ -27,7 +27,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     public required TradingAreaComponent Parent { get; set; }
 
 
-    public StrategyTradeStockSharpModel StrategyTrade => StrategyTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, IsAlter, LowLimit, HightLimit);
+    public DashboardTradeStockSharpModel StrategyTrade => DashboardTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, IsAlter, LowLimit, HightLimit);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
     decimal _lowLimit;
@@ -172,13 +172,13 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         StateHasChangedCall();
     }
 
-    StrategyTradeStockSharpModel? RestoreStrategy;
+    DashboardTradeStockSharpModel? RestoreStrategy;
 
     protected override async Task OnInitializedAsync()
     {
         await SetBusyAsync();
 
-        TResponseModel<StrategyTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<StrategyTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
+        TResponseModel<DashboardTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<DashboardTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
         RestoreStrategy = restoreStrategy.Response;
 
         if (RestoreStrategy is not null)

@@ -2,18 +2,18 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using Ecng.Collections;
+using Ecng.Common;
 using Microsoft.Extensions.Caching.Memory;
-using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using SharedLib;
+using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
-using Ecng.Collections;
-using Newtonsoft.Json;
-using StockSharp.Algo;
-using System.Security;
-using Ecng.Common;
 using System.Net;
-using SharedLib;
+using System.Security;
+using System.Text.RegularExpressions;
 
 namespace StockSharpDriver;
 
@@ -40,7 +40,7 @@ public class DriverStockSharpService(
 
     readonly List<MyTrade> myTrades = [];
 
-    readonly List<StrategyTradeStockSharpModel> StrategyTrades = [];
+    readonly List<DashboardTradeStockSharpModel> StrategyTrades = [];
     readonly List<FixMessageAdapterModelDB> Adapters = [];
 
     readonly List<SBond> SBondList = [];
@@ -80,12 +80,10 @@ public class DriverStockSharpService(
     readonly List<Subscription> DepthSubscriptions = [];
 
     decimal
-        quoteSmallStrategyBidVolume = 2000,
-        quoteSmallStrategyOfferVolume = 2000,
-
-        quoteSizeStrategyVolume = 2000,
-        quoteStrategyVolume = 1000,
-        skipVolume = 2500;
+       quoteSmallStrategyBidVolume = 2000,
+       quoteSmallStrategyOfferVolume = 2000,
+       quoteStrategyVolume = 1000,
+       quoteSizeStrategyVolume = 2000;
 
     decimal bondPositionTraded,
         bondSizePositionTraded,
@@ -161,39 +159,26 @@ public class DriverStockSharpService(
         }
 
         TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await DataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-                
+
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
         {
             res.AddError($"The instruments are not configured.");
             return res;
         }
-/*
-        List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        if (dataParse.Count == 0)
-            return ResponseBaseModel.CreateError("Dashboard - not set");
+        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        lock (StrategyTrades)
+        List<DashboardTradeStockSharpModel> _lst = [];
+
+        foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
         {
-            StrategyTrades.Clear();
-            foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
-            {
-                int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
-                if (_fx < 0)
-                    return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+            int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
+            if (_fx < 0)
+                continue;
 
-                if (dataParse[_fx].ValueOperation < 1)
-                    return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
+            _lst.Add(dataParse[_fx]);
+        }
 
-                if (dataParse[_fx].BasePrice < 1)
-                    return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
-
-                StrategyTrades.Add(dataParse[_fx]);
-            }
-
-            if (StrategyTrades is null || StrategyTrades.Count == 0)
-                return ResponseBaseModel.CreateError("Instruments - is empty");
-        }*/
 
         SBond SBnd;
         DateTime curDate;
@@ -220,7 +205,6 @@ public class DriverStockSharpService(
         await Task.WhenAll([
             Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume, cancellationToken)),
             Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume, cancellationToken)),
-            Task.Run(async () => skipVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.SkipSizeVolume, cancellationToken))
         ]);
 
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
@@ -229,152 +213,152 @@ public class DriverStockSharpService(
         {
             string bndName = security.Code.Substring(2, 5);
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            StrategyTradeStockSharpModel _strat = StrategyTrades.FirstOrDefault(x => x.Equals(_sec));
-            BndPrice = Curve.GetNode(_sec).ModelPrice;
-            //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
+            DashboardTradeStockSharpModel _strat = _lst.FirstOrDefault(x => x.Equals(_sec));
+            SBnd = Curve.GetNode(_sec);
+            BndPrice = SBnd.ModelPrice;
 
-            //    if (!decUpD.IsNull())
-            //    {
-            //        decUpD.Value = BndPrice;
-            //    }
+            if (_strat is not null)
+            {
+                _strat.BasePrice = BndPrice;
 
             //    LongUpDown SmallBidVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName);
 
-            //    if (!SmallBidVolUpD.IsNull())
+            //    if (_strat is not null)
             //        SmallBidVolUpD.Value = (long)quoteSmallStrategyBidVolume;
+
+            }
 
             //    LongUpDown SmallOfferVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName);
 
-            //    if (!SmallOfferVolUpD.IsNull())
+            //    if (_strat is not null)
             //        SmallOfferVolUpD.Value = (long)quoteSmallStrategyOfferVolume;
 
             //    LongUpDown WorkVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName);
 
-            //    if (!WorkVolUpD.IsNull())
+            //    if (_strat is not null)
             //        WorkVolUpD.Value = (long)quoteStrategyVolume;
 
             //    IntegerUpDown SmallOffset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName);
 
-            //    if (!SmallOffset.IsNull())
+            //    if (_strat is not null)
             //        SmallOffset.Value = 0;
 
             //    IntegerUpDown Offset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName);
 
-            //    if (!Offset.IsNull())
+            //    if (_strat is not null)
             //        Offset.Value = 0;
 
             //    IntegerUpDown Lowlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
             //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
 
-            //    SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
+            SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
 
-            //    if (!SBnd.IsNull())
-            //    {
-            //        decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
+            if (!SBnd.IsNull())
+            {
+                //        decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
 
-            //        if (yield > 0)  //Regular bonds
-            //        {
-            //            if (!Lowlimit.IsNull())
-            //            {
-            //                Lowlimit.Value =
-            //                    (int)
-            //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) *
-            //                         10000);
+                //        if (yield > 0)  //Regular bonds
+                //        {
+                //            if (!Lowlimit.IsNull())
+                //            {
+                //                Lowlimit.Value =
+                //                    (int)
+                //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) *
+                //                         10000);
 
-            //                if (Lowlimit.Value < 9)
-            //                    Lowlimit.Value = 9;
-            //                if (Lowlimit.Value > lowLimit * 100)
-            //                    Lowlimit.Value = (int)(lowLimit * 100);
-            //            }
+                //                if (Lowlimit.Value < 9)
+                //                    Lowlimit.Value = 9;
+                //                if (Lowlimit.Value > lowLimit * 100)
+                //                    Lowlimit.Value = (int)(lowLimit * 100);
+                //            }
 
-            //            if (!Highlimit.IsNull())
-            //            {
-            //                Highlimit.Value =
-            //                    (int)
-            //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
+                //            if (!Highlimit.IsNull())
+                //            {
+                //                Highlimit.Value =
+                //                    (int)
+                //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
 
-            //                if (Highlimit.Value < 11)
-            //                    Highlimit.Value = 11;
-            //                if (Highlimit.Value > highLimit * 100)
-            //                    Highlimit.Value = (int)(highLimit * 100);
-            //            }
+                //                if (Highlimit.Value < 11)
+                //                    Highlimit.Value = 11;
+                //                if (Highlimit.Value > highLimit * 100)
+                //                    Highlimit.Value = (int)(highLimit * 100);
+                //            }
 
-            //            if ((SBnd.Maturity - curDate).Days < 400)
-            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-            //            else if ((SBnd.Maturity - curDate).Days < 1100)
-            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-            //            else if ((SBnd.Maturity - curDate).Days < 1500)
-            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-            //            else
-            //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-            //        }
-            //        else
-            //        {
-            //            if (OfzCodesIlliquid.Contains(SBnd.UnderlyingSecurity.Code))
-            //            {
-            //                if ((SBnd.Maturity - curDate).Days < 300)
-            //                {
-            //                    WorkVolUpD.Value = 1000;
-            //                    Lowlimit.Value = (int)(lowLimit * 100);
-            //                    Highlimit.Value = (int)(highLimit * 100);
-            //                }
-            //                else
-            //                {
-            //                    WorkVolUpD.Value = 1000;
-            //                    Lowlimit.Value = (int)(lowLimit * 2 * 100);
-            //                    Highlimit.Value = (int)(highLimit * 2 * 100);
-            //                }
-            //            }
-            //            else
-            //            {
-            //                if ((SBnd.Maturity - curDate).Days < 500)
-            //                {
-            //                    WorkVolUpD.Value = 2000;
-            //                    Lowlimit.Value = (int)(lowLimit / 2 * 100);
-            //                    Highlimit.Value = (int)(highLimit / 2 * 100);
-            //                }
+                //            if ((SBnd.Maturity - curDate).Days < 400)
+                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+                //            else if ((SBnd.Maturity - curDate).Days < 1100)
+                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+                //            else if ((SBnd.Maturity - curDate).Days < 1500)
+                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+                //            else
+                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
+                //        }
+                //        else
+                //        {
+                //            if (OfzCodesIlliquid.Contains(SBnd.UnderlyingSecurity.Code))
+                //            {
+                //                if ((SBnd.Maturity - curDate).Days < 300)
+                //                {
+                //                    WorkVolUpD.Value = 1000;
+                //                    Lowlimit.Value = (int)(lowLimit * 100);
+                //                    Highlimit.Value = (int)(highLimit * 100);
+                //                }
+                //                else
+                //                {
+                //                    WorkVolUpD.Value = 1000;
+                //                    Lowlimit.Value = (int)(lowLimit * 2 * 100);
+                //                    Highlimit.Value = (int)(highLimit * 2 * 100);
+                //                }
+                //            }
+                //            else
+                //            {
+                //                if ((SBnd.Maturity - curDate).Days < 500)
+                //                {
+                //                    WorkVolUpD.Value = 2000;
+                //                    Lowlimit.Value = (int)(lowLimit / 2 * 100);
+                //                    Highlimit.Value = (int)(highLimit / 2 * 100);
+                //                }
 
-            //                else if ((SBnd.Maturity - curDate).Days < 2000)
-            //                {
-            //                    WorkVolUpD.Value = 2000;
-            //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
-            //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
-            //                }
+                //                else if ((SBnd.Maturity - curDate).Days < 2000)
+                //                {
+                //                    WorkVolUpD.Value = 2000;
+                //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
+                //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
+                //                }
 
-            //                else
-            //                {
-            //                    WorkVolUpD.Value = 2000;
-            //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
-            //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
-            //                }
-            //            }
-            //        }
-            //    }
-            //    else
-            //    {
-            //        if (!Lowlimit.IsNull())
-            //            Lowlimit.Value = (int)(lowLimit * 100);
+                //                else
+                //                {
+                //                    WorkVolUpD.Value = 2000;
+                //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
+                //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
+                //                }
+                //            }
+                //        }
+            }
+            else
+            {
+                //        if (!Lowlimit.IsNull())
+                //            Lowlimit.Value = (int)(lowLimit * 100);
 
-            //        if (!Highlimit.IsNull())
-            //            Highlimit.Value = (int)(highLimit * 100);
-            //    }
-            //});
+                //        if (!Highlimit.IsNull())
+                //            Highlimit.Value = (int)(highLimit * 100);
+            }
 
-            //btnStart.IsEnabled = true;
-            //X2.IsEnabled = true;
-            //Del2.IsEnabled = true;
-            //SPlus.IsEnabled = true;
-            //SMinus.IsEnabled = true;
-            //Reset_All.IsEnabled = true;
-
-            //SecuritiesBonds().ForEach(security =>
-            //{
-            //    string bndName = security.Code.Substring(2, 5);
-            //    Button btnRst = (Button)LogicalTreeHelper.FindLogicalNode(MyProgram, "Reset_" + bndName);
-
-            //    if (!btnRst.IsNull())
-            //        btnRst.IsEnabled = true;
         });
+        //btnStart.IsEnabled = true;
+        //X2.IsEnabled = true;
+        //Del2.IsEnabled = true;
+        //SPlus.IsEnabled = true;
+        //SMinus.IsEnabled = true;
+        //Reset_All.IsEnabled = true;
+
+        //SecuritiesBonds().ForEach(security =>
+        //{
+        //    string bndName = security.Code.Substring(2, 5);
+        //    Button btnRst = (Button)LogicalTreeHelper.FindLogicalNode(MyProgram, "Reset_" + bndName);
+
+        //    if (!btnRst.IsNull())
+        //        btnRst.IsEnabled = true;
 
         res.AddError(nameof(NotImplementedException));
         return res;
@@ -423,7 +407,7 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
         if (dataParse.Count == 0)
             return ResponseBaseModel.CreateError("Dashboard - not set");
@@ -457,7 +441,7 @@ public class DriverStockSharpService(
         bl.ForEach(securityHandleAction);
         void securityHandleAction(Security security)
         {
-            StrategyTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
+            DashboardTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
             string msg;
 
             if (tryFindStrategy.Length == 0)
@@ -474,7 +458,7 @@ public class DriverStockSharpService(
                 _logger.LogError(msg);
                 return;
             }
-            StrategyTradeStockSharpModel currentStrategy = tryFindStrategy[0];
+            DashboardTradeStockSharpModel currentStrategy = tryFindStrategy[0];
 
             InstrumentTradeStockSharpViewModel[] tryFindInstrument = [.. resInstruments.Response.Where(x => x.Id == currentStrategy.Id)];
             if (tryFindInstrument.Length == 0)
@@ -547,7 +531,6 @@ public class DriverStockSharpService(
         {
             quoteSizeStrategyVolume = req.Size;
             quoteStrategyVolume = req.Volume;
-            skipVolume = req.Skip;
 
             DeleteAllQuotesByStrategy("Size");
             DeleteAllQuotesByStrategy("Small");
@@ -573,7 +556,7 @@ public class DriverStockSharpService(
             if (resInstruments.Response is null || resInstruments.Response.Count == 0)
                 return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-            List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+            List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
             if (dataParse.Count == 0)
                 return ResponseBaseModel.CreateError("Dashboard - not set");
@@ -591,7 +574,7 @@ public class DriverStockSharpService(
                 if (dataParse[_fx].BasePrice < 1)
                     return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
 
-                StrategyTradeStockSharpModel currentStrategy = dataParse[_fx];
+                DashboardTradeStockSharpModel currentStrategy = dataParse[_fx];
 
                 Security currentSecurity = currentSecurities.FirstOrDefault(x =>
                 x.Code == currentStrategy.Code &&
@@ -691,7 +674,7 @@ public class DriverStockSharpService(
         throw new NotImplementedException();
     }
 
-    async Task<List<StrategyTradeStockSharpModel>> ReadStrategies(int?[] instrumentsIds, CancellationToken cancellationToken = default)
+    async Task<List<DashboardTradeStockSharpModel>> ReadDashboard(int?[] instrumentsIds, CancellationToken cancellationToken = default)
     {
         FindStorageBaseModel _findParametersQuery = new()
         {
@@ -700,12 +683,12 @@ public class DriverStockSharpService(
             OwnersPrimaryKeys = instrumentsIds
         };
 
-        FundedParametersModel<StrategyTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<StrategyTradeStockSharpModel>(_findParametersQuery, cancellationToken);
+        FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
 
         if (findStorageRows.Length == 0)
             return [];
 
-        IQueryable<IGrouping<int?, FundedParametersModel<StrategyTradeStockSharpModel>>> _q = findStorageRows
+        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows
             .GroupBy(x => x.OwnerPrimaryKey)
             .Where(x => x.Key.HasValue)
             .AsQueryable();
@@ -763,7 +746,7 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        List<StrategyTradeStockSharpModel> dataParse = await ReadStrategies([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
         if (dataParse.Count == 0)
             return ResponseBaseModel.CreateError("Dashboard - not set");
@@ -1122,7 +1105,7 @@ public class DriverStockSharpService(
             eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
-        List<StrategyTradeStockSharpModel> dataParse = ReadStrategies([.. resInstruments.Response.Select(x => x.Id)]).Result;
+        List<DashboardTradeStockSharpModel> dataParse = ReadDashboard([.. resInstruments.Response.Select(x => x.Id)]).Result;
 
         if (dataParse.Count == 0)
         {
@@ -1153,7 +1136,7 @@ public class DriverStockSharpService(
             return;
         }
 
-        StrategyTradeStockSharpModel currentStrategy = dataParse.FirstOrDefault(x => x.Id == currentInstrument.Id);
+        DashboardTradeStockSharpModel currentStrategy = dataParse.FirstOrDefault(x => x.Id == currentInstrument.Id);
         if (currentStrategy is null)
         {
             _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";

@@ -6,7 +6,6 @@ using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SharedLib;
-using System.Collections.Generic;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -51,18 +50,6 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         }
     }
 
-    decimal _skipSizeVolume;
-    decimal SkipSizeVolume
-    {
-        get => _skipSizeVolume;
-        set
-        {
-            _skipSizeVolume = value;
-            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_skipSizeVolume, GlobalStaticCloudStorageMetadata.SkipSizeVolume, true, false); });
-        }
-    }
-
-
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
     List<TradingRowComponent> RowsComponents { get; set; } = [];
 
@@ -91,11 +78,6 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         await SetBusyAsync();
 
         await Task.WhenAll([
-                Task.Run(async () =>
-                {
-                    TResponseModel<decimal> restoreSkipSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.SkipSizeVolume);
-                    _skipSizeVolume = restoreSkipSizeVolume.Response;
-                }),
                 Task.Run(async () =>
                 {
                     TResponseModel<decimal> restoreQuoteSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume);
