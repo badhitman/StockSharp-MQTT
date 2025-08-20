@@ -203,8 +203,8 @@ public class DriverStockSharpService(
         }
 
         await Task.WhenAll([
-            Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume, 1000, cancellationToken)),
-            Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume, 2000, cancellationToken)),
+            Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
+            Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
         ]);
         /*
         quoteSmallStrategyBidVolume = 2000,

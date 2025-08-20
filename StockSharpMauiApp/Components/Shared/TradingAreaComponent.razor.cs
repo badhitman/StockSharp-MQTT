@@ -35,7 +35,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _quoteVolume = value;
-            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteVolume, GlobalStaticCloudStorageMetadata.QuoteVolume, true, false); });
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteVolume, GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, true, false); });
         }
     }
 
@@ -46,7 +46,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         set
         {
             _quoteSizeVolume = value;
-            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteSizeVolume, GlobalStaticCloudStorageMetadata.QuoteSizeVolume, true, false); });
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteSizeVolume, GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, true, false); });
         }
     }
 
@@ -80,12 +80,12 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
         await Task.WhenAll([
                 Task.Run(async () =>
                 {
-                    TResponseModel<decimal> restoreQuoteSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeVolume);
+                    TResponseModel<decimal> restoreQuoteSizeVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume);
                     _quoteSizeVolume = restoreQuoteSizeVolume.Response;
                 }),
                 Task.Run(async () =>
                 {
-                    TResponseModel<decimal> restoreQuoteVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteVolume);
+                    TResponseModel<decimal> restoreQuoteVolume = await StorageRepo.ReadParameterAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume);
                     _quoteVolume = restoreQuoteVolume.Response;
                 }),
 
