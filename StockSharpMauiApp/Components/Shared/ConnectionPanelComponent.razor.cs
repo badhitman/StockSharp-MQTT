@@ -51,7 +51,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     List<BoardStockSharpViewModel>? allBoards;
     BoardStockSharpViewModel? SelectedBoard { get; set; }
 
-    bool CanStarted => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && !AboutConnection.StrategyStarted;
+    bool CanStarted => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.Curve is not null && !AboutConnection.StrategyStarted;
     bool CanStopped => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.StrategyStarted;
     bool CanInitialLoad => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && !AboutConnection.StrategyStarted;
 

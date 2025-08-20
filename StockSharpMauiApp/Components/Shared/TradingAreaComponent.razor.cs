@@ -97,7 +97,6 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
                 {
                     await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
                 }),
-
                 Task.Run(async () =>
                 {
                     TResponseModel<List<InstrumentTradeStockSharpViewModel>> readTrade = await DataRepo.ReadTradeInstrumentsAsync();

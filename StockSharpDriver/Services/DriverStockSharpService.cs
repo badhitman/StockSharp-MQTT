@@ -2,18 +2,18 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using Ecng.Collections;
-using Ecng.Common;
 using Microsoft.Extensions.Caching.Memory;
-using Newtonsoft.Json;
-using SharedLib;
-using StockSharp.Algo;
+using System.Text.RegularExpressions;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
-using System.Net;
+using Ecng.Collections;
+using Newtonsoft.Json;
+using StockSharp.Algo;
 using System.Security;
-using System.Text.RegularExpressions;
+using Ecng.Common;
+using System.Net;
+using SharedLib;
 
 namespace StockSharpDriver;
 
@@ -30,7 +30,7 @@ public class DriverStockSharpService(
     ConnectionLink conLink) : IDriverStockSharpService
 {
     #region prop`s
-    CurveModel Curve;
+    CurveModel Curve = null;
 
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
     Subscription SecurityCriteriaCodeFilterSubscription;
@@ -203,166 +203,118 @@ public class DriverStockSharpService(
         }
 
         await Task.WhenAll([
-            Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
-            Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
-            Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
-            Task.Run(async () => quoteSmallStrategyOfferVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
+                  Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteSmallStrategyOfferVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume, 2000, cancellationToken)),
         ]);
 
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
-
+        List<Task> tasks = [];
         currBonds.ForEach(security =>
         {
             string bndName = security.Code.Substring(2, 5);
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
             DashboardTradeStockSharpModel _strat = _lst.FirstOrDefault(x => x.Equals(_sec));
+            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.FirstOrDefault(x => x.Id == _strat.Id);
             SBnd = Curve.GetNode(_sec);
             BndPrice = SBnd.ModelPrice;
 
             if (_strat is not null)
             {
                 _strat.BasePrice = BndPrice;
-
-                //    LongUpDown SmallBidVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bndName);
-
-                //    if (_strat is not null)
-                //        SmallBidVolUpD.Value = (long)quoteSmallStrategyBidVolume;
-
+                _strat.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
+                _strat.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
+                _strat.WorkingVolume = (long)quoteStrategyVolume;
+                _strat.SmallOffset = 0;
+                _strat.Offset = 0;
             }
-
-            //    LongUpDown SmallOfferVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bndName);
-
-            //    if (_strat is not null)
-            //        SmallOfferVolUpD.Value = (long)quoteSmallStrategyOfferVolume;
-
-            //    LongUpDown WorkVolUpD = (LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bndName);
-
-            //    if (_strat is not null)
-            //        WorkVolUpD.Value = (long)quoteStrategyVolume;
-
-            //    IntegerUpDown SmallOffset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bndName);
-
-            //    if (_strat is not null)
-            //        SmallOffset.Value = 0;
-
-            //    IntegerUpDown Offset = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bndName);
-
-            //    if (_strat is not null)
-            //        Offset.Value = 0;
-
-            //    IntegerUpDown Lowlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
-            //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
 
             SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
 
-            if (!SBnd.IsNull())
+            if (SBnd is not null)
             {
-                //        decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
+                decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
+                if (yield > 0)  //Regular bonds
+                {
+                    _strat.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
 
-                //        if (yield > 0)  //Regular bonds
-                //        {
-                //            if (!Lowlimit.IsNull())
-                //            {
-                //                Lowlimit.Value =
-                //                    (int)
-                //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) *
-                //                         10000);
+                    if (_strat.LowLimit < 9)
+                        _strat.LowLimit = 9;
+                    if (_strat.LowLimit > lowLimit * 100)
+                        _strat.LowLimit = (int)(lowLimit * 100);
 
-                //                if (Lowlimit.Value < 9)
-                //                    Lowlimit.Value = 9;
-                //                if (Lowlimit.Value > lowLimit * 100)
-                //                    Lowlimit.Value = (int)(lowLimit * 100);
-                //            }
+                    _strat.HightLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
 
-                //            if (!Highlimit.IsNull())
-                //            {
-                //                Highlimit.Value =
-                //                    (int)
-                //                        ((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
+                    if (_strat.HightLimit < 11)
+                        _strat.HightLimit = 11;
+                    if (_strat.HightLimit > highLimit * 100)
+                        _strat.HightLimit = (int)(highLimit * 100);
 
-                //                if (Highlimit.Value < 11)
-                //                    Highlimit.Value = 11;
-                //                if (Highlimit.Value > highLimit * 100)
-                //                    Highlimit.Value = (int)(highLimit * 100);
-                //            }
-
-                //            if ((SBnd.Maturity - curDate).Days < 400)
-                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-                //            else if ((SBnd.Maturity - curDate).Days < 1100)
-                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-                //            else if ((SBnd.Maturity - curDate).Days < 1500)
-                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-                //            else
-                //                WorkVolUpD.Value = (long?)quoteStrategyVolume;
-                //        }
-                //        else
-                //        {
-                //            if (OfzCodesIlliquid.Contains(SBnd.UnderlyingSecurity.Code))
-                //            {
-                //                if ((SBnd.Maturity - curDate).Days < 300)
-                //                {
-                //                    WorkVolUpD.Value = 1000;
-                //                    Lowlimit.Value = (int)(lowLimit * 100);
-                //                    Highlimit.Value = (int)(highLimit * 100);
-                //                }
-                //                else
-                //                {
-                //                    WorkVolUpD.Value = 1000;
-                //                    Lowlimit.Value = (int)(lowLimit * 2 * 100);
-                //                    Highlimit.Value = (int)(highLimit * 2 * 100);
-                //                }
-                //            }
-                //            else
-                //            {
-                //                if ((SBnd.Maturity - curDate).Days < 500)
-                //                {
-                //                    WorkVolUpD.Value = 2000;
-                //                    Lowlimit.Value = (int)(lowLimit / 2 * 100);
-                //                    Highlimit.Value = (int)(highLimit / 2 * 100);
-                //                }
-
-                //                else if ((SBnd.Maturity - curDate).Days < 2000)
-                //                {
-                //                    WorkVolUpD.Value = 2000;
-                //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
-                //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
-                //                }
-
-                //                else
-                //                {
-                //                    WorkVolUpD.Value = 2000;
-                //                    Lowlimit.Value = (int)(lowLimit / 1.5m * 100);
-                //                    Highlimit.Value = (int)(highLimit / 1.5m * 100);
-                //                }
-                //            }
-                //        }
+                    if ((SBnd.Maturity - curDate).Days < 400)
+                        _strat.WorkingVolume = quoteStrategyVolume;
+                    else if ((SBnd.Maturity - curDate).Days < 1100)
+                        _strat.WorkingVolume = quoteStrategyVolume;
+                    else if ((SBnd.Maturity - curDate).Days < 1500)
+                        _strat.WorkingVolume = quoteStrategyVolume;
+                    else
+                        _strat.WorkingVolume = quoteStrategyVolume;
+                }
+                else
+                {
+                    if (_instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+                    {
+                        if ((SBnd.Maturity - curDate).Days < 300)
+                        {
+                            _strat.WorkingVolume = 1000;
+                            _strat.LowLimit = (int)(lowLimit * 100);
+                            _strat.HightLimit = (int)(highLimit * 100);
+                        }
+                        else
+                        {
+                            _strat.WorkingVolume = 1000;
+                            _strat.LowLimit = (int)(lowLimit * 2 * 100);
+                            _strat.HightLimit = (int)(highLimit * 2 * 100);
+                        }
+                    }
+                    else
+                    {
+                        if ((SBnd.Maturity - curDate).Days < 500)
+                        {
+                            _strat.WorkingVolume = 2000;
+                            _strat.LowLimit = (int)(lowLimit / 2 * 100);
+                            _strat.HightLimit = (int)(highLimit / 2 * 100);
+                        }
+                        else if ((SBnd.Maturity - curDate).Days < 2000)
+                        {
+                            _strat.WorkingVolume = 2000;
+                            _strat.LowLimit = (int)(lowLimit / 1.5m * 100);
+                            _strat.HightLimit = (int)(highLimit / 1.5m * 100);
+                        }
+                        else
+                        {
+                            _strat.WorkingVolume = 2000;
+                            _strat.LowLimit = (int)(lowLimit / 1.5m * 100);
+                            _strat.HightLimit = (int)(highLimit / 1.5m * 100);
+                        }
+                    }
+                }
             }
             else
             {
-                //        if (!Lowlimit.IsNull())
-                //            Lowlimit.Value = (int)(lowLimit * 100);
-
-                //        if (!Highlimit.IsNull())
-                //            Highlimit.Value = (int)(highLimit * 100);
+                _strat.LowLimit = (int)(lowLimit * 100);
+                _strat.HightLimit = (int)(highLimit * 100);
             }
 
+            tasks.Add(Task.Run(async () => { await storageRepo.SaveAsync(_strat, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(_strat.Id), true); }));
         });
-        //btnStart.IsEnabled = true;
-        //X2.IsEnabled = true;
-        //Del2.IsEnabled = true;
-        //SPlus.IsEnabled = true;
-        //SMinus.IsEnabled = true;
-        //Reset_All.IsEnabled = true;
 
-        //SecuritiesBonds().ForEach(security =>
-        //{
-        //    string bndName = security.Code.Substring(2, 5);
-        //    Button btnRst = (Button)LogicalTreeHelper.FindLogicalNode(MyProgram, "Reset_" + bndName);
+        if (tasks.Count != 0)
+        {
+            res.AddSuccess($"Updated items (strategies): {tasks.Count}");
+            await Task.WhenAll(tasks);
+        }
 
-        //    if (!btnRst.IsNull())
-        //        btnRst.IsEnabled = true;
-
-        res.AddError(nameof(NotImplementedException));
         return res;
     }
 
@@ -702,7 +654,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
     {
-        if (Curve.IsNull())
+        if (Curve is null)
             return Task.FromResult(ResponseBaseModel.CreateWarning("OfzCurve is null"));
 
         _logger.LogWarning($"Curve changed: {req.YieldChange}");
