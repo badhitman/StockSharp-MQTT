@@ -183,23 +183,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
         TResponseModel<DashboardTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<DashboardTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
         RestoreStrategy = restoreStrategy.Response;
-
-        if (RestoreStrategy is not null)
-        {
-            _lowLimit = RestoreStrategy.LowLimit;
-            _hightLimit = RestoreStrategy.HightLimit;
-            _isSmall = RestoreStrategy.IsSmall;
-            _basePrice = RestoreStrategy.BasePrice;
-            _valueOperation = RestoreStrategy.ValueOperation;
-            _offset = RestoreStrategy.Offset;
-            _isAlter = RestoreStrategy.IsAlter;
-
-            _smallBidVolume = RestoreStrategy.SmallBidVolume;
-            _smallOfferVolume = RestoreStrategy.SmallOfferVolume;
-            _smallOffset = RestoreStrategy.SmallOffset;
-            _workingVolume = RestoreStrategy.WorkingVolume;
-        }
-
+        SetFields();
         Parent.AddRowComponent(this);
         await base.OnInitializedAsync();
 
@@ -207,11 +191,31 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
     }
 
+    void SetFields()
+    {
+        if (RestoreStrategy is null)
+            return;
+
+        _lowLimit = RestoreStrategy.LowLimit;
+        _hightLimit = RestoreStrategy.HightLimit;
+        _isSmall = RestoreStrategy.IsSmall;
+        _basePrice = RestoreStrategy.BasePrice;
+        _valueOperation = RestoreStrategy.ValueOperation;
+        _offset = RestoreStrategy.Offset;
+        _isAlter = RestoreStrategy.IsAlter;
+
+        _smallBidVolume = RestoreStrategy.SmallBidVolume;
+        _smallOfferVolume = RestoreStrategy.SmallOfferVolume;
+        _smallOffset = RestoreStrategy.SmallOffset;
+        _workingVolume = RestoreStrategy.WorkingVolume;
+    }
+
     private void DashboardTradeUpdateHandle(DashboardTradeStockSharpModel model)
     {
         if (RestoreStrategy is not null && RestoreStrategy.Id == model.Id)
         {
             RestoreStrategy.Reload(model, Instrument);
+            SetFields();
             StateHasChangedCall();
         }
     }
