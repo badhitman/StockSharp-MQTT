@@ -16,9 +16,6 @@ public partial class ProgressIndicatorComponent : BlazorBusyComponentBaseModel
     [Inject]
     StockSharpClientConfigModel rabbitConf { get; set; } = default!;
 
-    [Inject]
-    IServiceProvider servicesProvider { get; set; } = default!;
-
 
     IMqttClient mqttClient = default!;
     MqttFactory mqttFactory = new();

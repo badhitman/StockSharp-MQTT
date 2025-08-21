@@ -203,7 +203,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         Parent.AddRowComponent(this);
         await base.OnInitializedAsync();
 
-        await DashboardRepo.RegisterAction($"{GlobalStaticConstantsTransmission.TransmissionQueues.DashboardTradeUpdateStockSharpNotifyReceive}#{Instrument.Id}", DashboardTradeUpdateHandle);
+        await DashboardRepo.RegisterAction($"{GlobalStaticConstantsTransmission.TransmissionQueues.DashboardTradeUpdateStockSharpNotifyReceive}:{Instrument.Id}", DashboardTradeUpdateHandle);
 
     }
 
