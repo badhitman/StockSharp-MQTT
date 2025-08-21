@@ -141,11 +141,6 @@ public class DriverStockSharpService(
         return res;
     }
 
-    //async Task SendConnectionHandle(CancellationToken cancellationToken = default)
-    //{
-    //    await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel() { CanConnect = conLink.Connector.CanConnect,  ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)) });
-    //}
-
     /// <inheritdoc/>
     public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
     {
@@ -198,7 +193,7 @@ public class DriverStockSharpService(
 
         SBond SBnd;
         DateTime curDate;
-        decimal BndPrice, bondDV;
+        decimal BndPrice;
 
         List<Security> currBonds = SecuritiesBonds(false);
         if (!currBonds.Any())
@@ -471,8 +466,8 @@ public class DriverStockSharpService(
 
         if (Curve is null || Curve.BondList.Count == 0)
         {
-            //ClearStrategy();
-            //return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+            ClearStrategy();
+            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
         }
 
         lock (_ordersForQuoteBuyReregister)
