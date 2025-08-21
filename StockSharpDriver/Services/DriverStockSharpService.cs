@@ -23,7 +23,7 @@ namespace StockSharpDriver;
 public class DriverStockSharpService(
     ILogger<DriverStockSharpService> _logger,
     IManageStockSharpService manageRepo,
-    IDataStockSharpService DataRepo,
+    IDataStockSharpService dataRepo,
     IParametersStorage storageRepo,
     IEventsStockSharp eventTrans,
     IMemoryCache memoryCache,
@@ -108,8 +108,7 @@ public class DriverStockSharpService(
     #endregion
 
     bool StrategyStarted => Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0;
-    ConnectionStatesEnum ConnectionState => (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState));
-
+    
 
     List<Security> SecuritiesBonds(bool ofStrategy)
     {
@@ -158,7 +157,7 @@ public class DriverStockSharpService(
             return res;
         }
 
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await DataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
         {
@@ -330,7 +329,7 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError("Portfolio - not set");
 
         Board = req.Board;
-        TResponseModel<List<BoardStockSharpViewModel>> _matchBoards = await DataRepo.FindBoardsAsync(Board, cancellationToken);
+        TResponseModel<List<BoardStockSharpViewModel>> _matchBoards = await dataRepo.FindBoardsAsync(Board, cancellationToken);
         if (!_matchBoards.Success() || _matchBoards.Response is null || _matchBoards.Response.Count != 1)
             return ResponseBaseModel.CreateError($"Board ({_matchBoards.Response.Count} *) - not matched");
 
@@ -342,7 +341,7 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError($"Portfolio #{req.SelectedPortfolio.ClientCode} - not found");
         }
 
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await dataRepo.InstrumentsSelectAsync(new()
         {
             PageNum = 0,
             PageSize = int.MaxValue,
@@ -491,7 +490,7 @@ public class DriverStockSharpService(
             if (!currentSecurities.Any())
                 return ResponseBaseModel.CreateError("BondList - not any");
 
-            TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
+            TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await dataRepo.InstrumentsSelectAsync(new()
             {
                 PageNum = 0,
                 PageSize = int.MaxValue,
@@ -567,7 +566,7 @@ public class DriverStockSharpService(
         }
         else
         {
-            TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await DataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
+            TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await dataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
 
             //    SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
             //    if (!SbPos.IsNull())
@@ -681,7 +680,7 @@ public class DriverStockSharpService(
             };
         }
 
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await DataRepo.InstrumentsSelectAsync(new()
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await dataRepo.InstrumentsSelectAsync(new()
         {
             PageNum = 0,
             PageSize = int.MaxValue,
@@ -863,7 +862,7 @@ public class DriverStockSharpService(
         AboutConnectResponseModel res = new()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = ConnectionState,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)),
             LastConnectedAt = (_lc == DateTime.MinValue || _lc == default) ? null : _lc,
             StrategyStarted = StrategyStarted,
             LowLimit = lowLimit,
@@ -1037,7 +1036,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
     {
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = DataRepo.InstrumentsSelectAsync(new()
+        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = dataRepo.InstrumentsSelectAsync(new()
         {
             PageNum = 0,
             PageSize = int.MaxValue,
