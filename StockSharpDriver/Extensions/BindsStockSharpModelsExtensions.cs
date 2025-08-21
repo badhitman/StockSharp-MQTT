@@ -110,6 +110,19 @@ public static class BindsStockSharpModelsExtensions
     }
 
     /// <inheritdoc/>
+    public static BoardStockSharpModel Bind(this BoardStockSharpModel main, BoardStockSharpViewModel inc)
+    {
+        main.Code = inc.Code;
+
+        if (inc is BoardStockSharpModelDB _other)
+            main.Exchange = _other.Exchange;
+        else
+            main.Exchange = inc.Exchange;
+
+        return main;
+    }
+
+    /// <inheritdoc/>
     public static ExchangeStockSharpModel Bind(this ExchangeStockSharpModel main, Exchange inc)
     {
         main.Name = inc.Name;

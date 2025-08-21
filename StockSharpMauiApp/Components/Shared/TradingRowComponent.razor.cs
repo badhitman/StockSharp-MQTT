@@ -224,7 +224,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
                 Offset = _offset,
                 BasePrice = _basePrice,
                 ValueOperation = _valueOperation,
-
                 SmallBidVolume = _smallBidVolume,
                 SmallOfferVolume = _smallOfferVolume,
                 SmallOffset = _smallOffset,
@@ -257,6 +256,11 @@ public partial class TradingRowComponent : StockSharpAboutComponent
                 TypeInstrument = Instrument.TypeInstrument,
                 UnderlyingSecurityId = Instrument.UnderlyingSecurityId,
                 UnderlyingSecurityType = Instrument.UnderlyingSecurityType,
+
+                PriceStep = Instrument.PriceStep,
+                MaxVolume = Instrument.MaxVolume,
+                MinVolume = Instrument.MinVolume,
+                VolumeStep = Instrument.VolumeStep,
             };
         else
             RestoreStrategy.Reload(StrategyTrade, Instrument);

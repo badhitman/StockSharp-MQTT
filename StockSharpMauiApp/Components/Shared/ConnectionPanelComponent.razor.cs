@@ -103,7 +103,14 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     {
         await SetBusyAsync();
         InitialLoadCheck = await DriverRepo.InitialLoad(reqDownloadBase);
+        SnackBarRepo.ShowMessagesResponse(InitialLoadCheck.Messages);
         await SetBusyAsync(false);
+
+        if (!InitialLoadCheck.Success())
+        {
+            await GetStatusConnection();
+            return;
+        }
 
         if (!string.IsNullOrWhiteSpace(InitialLoadCheck.Response))
             _visibleInitialQuestionsDownload = true;

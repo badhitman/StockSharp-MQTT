@@ -14,6 +14,7 @@ using System.Security;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
+using static SharedLib.GlobalStaticConstantsRoutes;
 
 namespace StockSharpDriver;
 
@@ -108,7 +109,7 @@ public class DriverStockSharpService(
     #endregion
 
     bool StrategyStarted => Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0;
-    
+
 
     List<Security> SecuritiesBonds(bool ofStrategy)
     {
@@ -166,7 +167,28 @@ public class DriverStockSharpService(
         }
 
         List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-        ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken);
+
+        await Task.WhenAll([
+                  Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
+                  Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
+                  Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken)),
+                  Task.Run(async () => {
+                    int[] _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
+                      if(_boardsFilter is not null && _boardsFilter.Length == 1)
+                      {
+                          TResponseModel<List<BoardStockSharpViewModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);                          
+                          Board = new BoardStockSharpModel().Bind(boardDb.Response.Single());                          
+                      }
+                  }, cancellationToken),
+        ]);
+
+        if(Board is null)
+        {
+            res.AddError($"Board is null");
+            return res;
+        }
 
         SBond SBnd;
         DateTime curDate;
@@ -190,13 +212,6 @@ public class DriverStockSharpService(
             return res;
         }
 
-        await Task.WhenAll([
-                  Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
-                  Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
-                  Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
-                  Task.Run(async () => quoteSmallStrategyOfferVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume, 2000, cancellationToken)),
-        ]);
-
         curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
         List<Task> tasksMaster = [], tasksSlave = [];
         currBonds.ForEach(security =>
@@ -204,6 +219,11 @@ public class DriverStockSharpService(
             string bndName = security.Code.Substring(2, 5);
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
             DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.Equals(_sec));
+
+#if DEBUG
+            _strat ??= dataParse.FirstOrDefault(x => x.Code.Equals(_sec.Code));
+#endif
+
             InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.FirstOrDefault(x => x.Id == _strat.Id);
             SBnd = Curve.GetNode(_sec);
             BndPrice = SBnd.ModelPrice;
@@ -569,22 +589,22 @@ public class DriverStockSharpService(
             TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await dataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
 
             //    SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-            //    if (!SbPos.IsNull())
+            //    if (!SbPos is null)
             //        SBondPositionsList.Remove(SbPos);
 
             //    SecurityPosition SbSizePos = SBondSizePositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-            //    if (!SbSizePos.IsNull())
+            //    if (!SbSizePos is null)
             //        SBondSizePositionsList.Remove(SbSizePos);
 
             //    SecurityPosition SbSmallPos = SBondSmallPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-            //    if (!SbSmallPos.IsNull())
+            //    if (!SbSmallPos is null)
             //        SBondSmallPositionsList.Remove(SbSmallPos);
 
             //    Security currentSecurity = currentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
 
             //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bondName);
 
-            //    if (!decUpD.IsNull())
+            //    if (!decUpD is null)
             //    {
             //        long? WorkVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bondName)).Value;
             //        long? SmallBidVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bondName)).Value;
@@ -623,8 +643,8 @@ public class DriverStockSharpService(
         FindStorageBaseModel _findParametersQuery = new()
         {
             ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
-            PropertyName = GlobalStaticConstantsRoutes.Routes.DUMP_ACTION_NAME,
-            OwnersPrimaryKeys = instrumentsIds
+            PropertyName = $"{Routes.TRADE_CONTROLLER_NAME}-{Routes.STRATEGY_CONTROLLER_NAME}",
+            OwnersPrimaryKeys = instrumentsIds,
         };
 
         FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
@@ -632,7 +652,7 @@ public class DriverStockSharpService(
         if (findStorageRows.Length == 0)
             return [];
 
-        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows
+        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x=>x.PrefixPropertyName == Routes.BROKER_CONTROLLER_NAME)
             .GroupBy(x => x.OwnerPrimaryKey)
             .Where(x => x.Key.HasValue)
             .AsQueryable();
@@ -653,7 +673,7 @@ public class DriverStockSharpService(
         {
             SBond SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
 
-            if (!SBnd.IsNull())
+            if (SBnd is not null)
             {
                 decimal yield = SBnd.GetYieldForPrice(Curve.CurveDate, bnd.ModelPrice / 100);
                 if (yield > 0) //Regular bonds
@@ -702,7 +722,7 @@ public class DriverStockSharpService(
             //string bndName = security.Code.Substring(2, 5);
             //DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
 
-            //if (!decUpD.IsNull())
+            //if (!decUpD is null)
             //{
             //    IntegerUpDown LowLimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
             //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
@@ -1089,11 +1109,11 @@ public class DriverStockSharpService(
             return;
         }
         bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker);
-        if (!SbPos.IsNull() && !sec.IsNull())
+        if (SbPos is not null && sec is not null)
         {
-            if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && !depth.Bids.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
+            if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && depth.Bids is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
             {
-                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Buy));
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Buy));
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
@@ -1164,9 +1184,9 @@ public class DriverStockSharpService(
             }
 
             //only for sell orders
-            if (!_ordersForQuoteSellReregister.ContainsKey(sec.Code) && !depth.Asks.IsNull() && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Sell))))
+            if (!_ordersForQuoteSellReregister.ContainsKey(sec.Code) && depth.Asks is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Sell))))
             {
-                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Sell));
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Sell));
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
@@ -1319,14 +1339,14 @@ public class DriverStockSharpService(
 
         SecurityPosition SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Equals(sec));
 
-        if (SbPos.IsNull())
+        if (SbPos is null)
             return;
 
         if (SbPos.LowLimit > SbPos.HighLimit)
             return;
 
         IEnumerable<Order> Orders = [.. AllOrders
-            .Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (!s.Comment.IsNull()) && s.Comment.ContainsIgnoreCase("Ofr"))];
+            .Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && s.Comment.ContainsIgnoreCase("Ofr"))];
 
         if (!Orders.IsEmpty() && (Orders.Count() > 4))
             return;
@@ -1334,7 +1354,7 @@ public class DriverStockSharpService(
         QuoteChange? bBid = depth.GetBestBid();
         QuoteChange? bAsk = depth.GetBestAsk();
 
-        if (bBid.IsNull() || bAsk.IsNull())
+        if (bBid is null || bAsk is null)
             return;
 
         if (bBid.Value.Price > Curve.GetNode(_sec).ModelPrice + SbPos.LowLimit + SbPos.HighLimit)

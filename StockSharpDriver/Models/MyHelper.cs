@@ -77,7 +77,7 @@ public static class MyHelper
 
         if (sec.PriceStep == 0) { sec.PriceStep = 0.001m; }
 
-        if (bAsk.IsNull() || bBid.IsNull())
+        if (bAsk is null || bBid is null)
             return 0;
 
         //If limits are wrong
