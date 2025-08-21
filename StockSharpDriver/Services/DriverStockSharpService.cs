@@ -141,6 +141,11 @@ public class DriverStockSharpService(
         return res;
     }
 
+    //async Task SendConnectionHandle(CancellationToken cancellationToken = default)
+    //{
+    //    await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel() { CanConnect = conLink.Connector.CanConnect,  ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)) });
+    //}
+
     /// <inheritdoc/>
     public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
     {
@@ -149,6 +154,7 @@ public class DriverStockSharpService(
         if (conLink.Connector.ConnectionState != Ecng.ComponentModel.ConnectionStates.Connected)
         {
             res.AddError($"Connection: {Enum.GetName(conLink.Connector.ConnectionState)}");
+
             return res;
         }
 
@@ -178,13 +184,13 @@ public class DriverStockSharpService(
                     int[] _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
                       if(_boardsFilter is not null && _boardsFilter.Length == 1)
                       {
-                          TResponseModel<List<BoardStockSharpViewModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);                          
-                          Board = new BoardStockSharpModel().Bind(boardDb.Response.Single());                          
+                          TResponseModel<List<BoardStockSharpViewModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
+                          Board = new BoardStockSharpModel().Bind(boardDb.Response.Single());
                       }
                   }, cancellationToken),
         ]);
 
-        if(Board is null)
+        if (Board is null)
         {
             res.AddError($"Board is null");
             return res;
@@ -648,7 +654,7 @@ public class DriverStockSharpService(
         if (findStorageRows.Length == 0)
             return [];
 
-        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x=>x.PrefixPropertyName == Routes.BROKER_CONTROLLER_NAME)
+        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x => x.PrefixPropertyName == Routes.BROKER_CONTROLLER_NAME)
             .GroupBy(x => x.OwnerPrimaryKey)
             .Where(x => x.Key.HasValue)
             .AsQueryable();
