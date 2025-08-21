@@ -218,11 +218,7 @@ public class DriverStockSharpService(
         {
             string bndName = security.Code.Substring(2, 5);
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.Equals(_sec));
-
-#if DEBUG
-            _strat ??= dataParse.FirstOrDefault(x => x.Code.Equals(_sec.Code));
-#endif
+            DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.IdRemote.Equals(_sec.IdRemote));
 
             InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.FirstOrDefault(x => x.Id == _strat.Id);
             SBnd = Curve.GetNode(_sec);
