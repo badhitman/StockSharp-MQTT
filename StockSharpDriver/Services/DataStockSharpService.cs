@@ -2,9 +2,11 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using DbcLib;
 using Microsoft.EntityFrameworkCore;
 using SharedLib;
-using DbcLib;
+using System.Linq;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace StockSharpDriver;
 
@@ -187,14 +189,37 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (req.PageSize < 10)
             req.PageSize = 10;
 
+        int[] _allMArkers = [.. Enum.GetValues<MarkersInstrumentStockSharpEnum>().Select(x => (int)x)];
+
         bool _notSet = req.MarkersFilter?.Contains(null) == true;
-        int[] markersFilter = req.MarkersFilter is null ? null : [.. req.MarkersFilter.Where(x => x is not null).Select(x => (int)x)];
-        // 
+        IEnumerable<int> _woq = req.MarkersFilter?.Where(x => x is not null).Select(x => (int)x.Value);
+
+        int[] markersFilterShow = _woq is null || !_woq.Any()
+            ? null
+            : [.. _woq.Select(x => (int)x)];
+
+        int[] markersFilterSkip = markersFilterShow is null || markersFilterShow.Length == 0 || markersFilterShow.Length == _allMArkers.Length
+           ? null
+           : [.. _allMArkers.Where(x => !markersFilterShow.Contains(x))];
+
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        IQueryable<InstrumentStockSharpModelDB> q = context
-            .Instruments
-            .Where(x => (markersFilter == null || (markersFilter.Length == 0 && !_notSet)) || context.InstrumentsMarkers.Any(y => y.InstrumentId == x.Id && markersFilter.Any(z => z == y.MarkerDescriptor)) || (_notSet && !context.InstrumentsMarkers.Any(y => y.InstrumentId == x.Id)))
-            .AsQueryable();
+        IQueryable<InstrumentStockSharpModelDB> q = context.Instruments.AsQueryable();
+
+        if (markersFilterShow is null || markersFilterShow.Length == 0)
+        {
+            if (_notSet)
+                q = q.Where(x => !context.InstrumentsMarkers.Any(y => y.InstrumentId == x.Id));
+        }
+        else
+        {
+            if (markersFilterSkip is not null && markersFilterSkip.Length != 0)
+                q = q.Where(x => !context.InstrumentsMarkers.Any(y => y.InstrumentId == x.Id && markersFilterSkip.Contains(y.MarkerDescriptor)));
+
+            if (!_notSet)
+                q = q.Where(x => context.InstrumentsMarkers.Any(y => y.InstrumentId == x.Id));
+            else
+                q = q.Where(x => context.InstrumentsMarkers.Any(y => markersFilterShow.Contains(y.MarkerDescriptor)));
+        }
 
         if (req.BoardsFilter is not null && req.BoardsFilter.Length != 0)
             q = q.Where(x => req.BoardsFilter.Any(y => y == x.BoardId));
@@ -226,6 +251,8 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             .Skip(req.PageSize * req.PageNum)
             .Take(req.PageSize)
             .ToListAsync(cancellationToken: cancellationToken);
+
+        // string sql = q.ToQueryString();
 
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = new()
         {
