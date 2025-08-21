@@ -166,7 +166,7 @@ public class DriverStockSharpService(
         }
 
         List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
+        ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken);
 
         SBond SBnd;
         DateTime curDate;
@@ -178,9 +178,9 @@ public class DriverStockSharpService(
             res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
             return res;
         }
-
-        Curve = new CurveModel(MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db"));
-        res.Response = Curve.GetCurveFromDb(ProgramDataPath + "RedArrowData.db", conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
+        DateTime _gnvd = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
+        Curve = new CurveModel(_gnvd);
+        res.Response = Curve.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
         if (!string.IsNullOrWhiteSpace(res.Response))
             return res;
 

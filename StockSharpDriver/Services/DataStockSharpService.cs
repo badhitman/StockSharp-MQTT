@@ -2,11 +2,9 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using DbcLib;
 using Microsoft.EntityFrameworkCore;
 using SharedLib;
-using System.Linq;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using DbcLib;
 
 namespace StockSharpDriver;
 

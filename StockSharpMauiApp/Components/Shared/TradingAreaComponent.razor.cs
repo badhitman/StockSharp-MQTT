@@ -133,6 +133,15 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
                 return;
 
             int _i = -1;
+
+            _i = instruments.FindIndex(x => x.Id == model.Id);
+            if (_i != -1)
+            {
+                model.Markers = instruments[_i].Markers;
+                instruments[_i].Reload(model);
+                instruments[_i].LastUpdatedAtUTC = DateTime.Now;
+            }
+
             _i = RowsComponents.FindIndex(x => x.Instrument.Id == model.Id);
             if (_i != -1)
             {

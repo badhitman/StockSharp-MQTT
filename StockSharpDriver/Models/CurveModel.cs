@@ -65,9 +65,9 @@ public class CurveModel : CurveBaseModel
             {
                 reqToast = new()
                 {
-                    HeadTitle = $"{nameof(GetCurveFromDb)}: [CurveDate.Day]!=[{dt.Day}]",
-                    TypeMessage = MessagesTypesEnum.Warning,
-                    MessageText = $"Wrong Date! Pls update the curve!"
+                    HeadTitle = $"Wrong Date!",
+                    TypeMessage = MessagesTypesEnum.Error,
+                    MessageText = $"Pls update the curve! {nameof(GetCurveFromDb)}: [CurveDate.Day]!=[{dt.Day}]"
                 };
                 eventTrans.ToastClientShow(reqToast);
                 BondList.Clear();
