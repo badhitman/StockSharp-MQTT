@@ -107,7 +107,7 @@ public class ConnectionStockSharpWorker(
 
     void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
-        _logger.LogTrace($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr, GlobalStaticConstants.JsonSerializerSettings)}");        
+        _logger.LogTrace($"Call > `{nameof(OwnTradeReceivedHandle)}`: {JsonConvert.SerializeObject(tr, GlobalStaticConstants.JsonSerializerSettings)}");
     }
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
@@ -141,7 +141,8 @@ public class ConnectionStockSharpWorker(
 
     void LookupPortfoliosResultHandle(StockSharp.Messages.PortfolioLookupMessage portfolioLM, IEnumerable<Portfolio> portfolios, Exception ex)
     {
-        _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM, GlobalStaticConstants.JsonSerializerSettings)}");
+        if (ex is not null)
+            _logger.LogError(ex, $"Call > `{nameof(LookupPortfoliosResultHandle)}`: {JsonConvert.SerializeObject(portfolioLM, GlobalStaticConstants.JsonSerializerSettings)}");
         foreach (Portfolio port in portfolios)
         {
             PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);

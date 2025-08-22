@@ -149,7 +149,6 @@ public class DriverStockSharpService(
         if (conLink.Connector.ConnectionState != Ecng.ComponentModel.ConnectionStates.Connected)
         {
             res.AddError($"Connection: {Enum.GetName(conLink.Connector.ConnectionState)}");
-
             return res;
         }
 
@@ -321,7 +320,8 @@ public class DriverStockSharpService(
             await Task.WhenAll(tasksMaster);
             await Task.WhenAll(tasksSlave);
         }
-
+        
+        res.AddInfo("Data loaded!!!");
         return res;
     }
 
@@ -1435,7 +1435,7 @@ public class DriverStockSharpService(
         else
         {
             _msg = $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`";
-            _logger.LogInformation(_msg);
+            _logger.LogDebug(_msg);
             // eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult), TypeMessage = MessagesTypesEnum.Info, MessageText = _msg });
             lock (AllSecurities)
             {

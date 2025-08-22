@@ -2,16 +2,18 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using Microsoft.EntityFrameworkCore;
-using SharedLib;
 using DbcLib;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using SharedLib;
+using System.Diagnostics.Metrics;
 
 namespace StockSharpDriver;
 
 /// <summary>
 /// FlushStockSharpService
 /// </summary>
-public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IFlushStockSharpService
+public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory, ILogger<FlushStockSharpService> logger) : IFlushStockSharpService
 {
     /// <inheritdoc/>
     public Task<TResponseModel<InstrumentTradeStockSharpViewModel>> SaveInstrument(InstrumentTradeStockSharpModel req)
@@ -31,13 +33,16 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             instrumentDb.Board = null;
 
             context.Add(instrumentDb);
+            logger.LogInformation($"New instrument (save): {JsonConvert.SerializeObject(instrumentDb)}");
         }
         else
         {
             instrumentDb.SetUpdate(req);
             context.Update(instrumentDb);
+            logger.LogDebug($"Actuality/update instrument: {instrumentDb.IdRemote}");
         }
         context.SaveChanges();
+
         instrumentDb.Board = board;
         return Task.FromResult(new TResponseModel<InstrumentTradeStockSharpViewModel>() { Response = instrumentDb });
     }
@@ -64,11 +69,13 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             portDb.Board = null;
 
             context.Add(portDb);
+            logger.LogInformation($"New portfolio (save): {JsonConvert.SerializeObject(portDb)}");
         }
         else
         {
             portDb.SetUpdate(req);
             context.Update(portDb);
+            logger.LogDebug($"Actuality/update portfolio: {portDb}");
         }
         await context.SaveChangesAsync();
         portDb.Board = board;
@@ -108,11 +115,13 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             orderDb.Portfolio = null;
 
             context.Add(orderDb);
+            logger.LogInformation($"New order (save): {JsonConvert.SerializeObject(orderDb)}");
         }
         else
         {
             orderDb.SetUpdate(req);
             context.Update(orderDb);
+            logger.LogInformation($"Update order: {JsonConvert.SerializeObject(orderDb)}");
         }
         context.SaveChanges();
 
@@ -139,11 +148,13 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
             boardDb.Exchange = null;
 
             context.Add(boardDb);
+            logger.LogInformation($"New board (save): {JsonConvert.SerializeObject(boardDb)}");
         }
         else
         {
             boardDb.SetUpdate(req);
             context.Update(boardDb);
+            logger.LogDebug($"Actuality/update board: {boardDb}");
         }
         context.SaveChanges();
 
@@ -162,11 +173,13 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         {
             exchangeDb = new ExchangeStockSharpModelDB().Bind(req);
             context.Add(exchangeDb);
+            logger.LogInformation($"New exchange (save): {JsonConvert.SerializeObject(exchangeDb)}");
         }
         else
         {
             exchangeDb.SetUpdate(req);
             context.Update(exchangeDb);
+            logger.LogDebug($"Actuality/update exchange: {exchangeDb}");
         }
         context.SaveChanges();
         return Task.FromResult(new TResponseModel<ExchangeStockSharpViewModel>() { Response = exchangeDb });
