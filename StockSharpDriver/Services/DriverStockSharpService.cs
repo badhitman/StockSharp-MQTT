@@ -14,7 +14,6 @@ using System.Security;
 using Ecng.Common;
 using System.Net;
 using SharedLib;
-using static SharedLib.GlobalStaticConstantsRoutes;
 
 namespace StockSharpDriver;
 
@@ -320,7 +319,7 @@ public class DriverStockSharpService(
             await Task.WhenAll(tasksMaster);
             await Task.WhenAll(tasksSlave);
         }
-        
+
         res.AddInfo("Data loaded!!!");
         return res;
     }
@@ -640,7 +639,7 @@ public class DriverStockSharpService(
         FindStorageBaseModel _findParametersQuery = new()
         {
             ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
-            PropertyName = $"{Routes.TRADE_CONTROLLER_NAME}-{Routes.STRATEGY_CONTROLLER_NAME}",
+            PropertyName = $"{GlobalStaticConstantsRoutes.Routes.TRADE_CONTROLLER_NAME}-{GlobalStaticConstantsRoutes.Routes.STRATEGY_CONTROLLER_NAME}",
             OwnersPrimaryKeys = instrumentsIds,
         };
 
@@ -649,7 +648,7 @@ public class DriverStockSharpService(
         if (findStorageRows.Length == 0)
             return [];
 
-        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x => x.PrefixPropertyName == Routes.BROKER_CONTROLLER_NAME)
+        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x => x.PrefixPropertyName == GlobalStaticConstantsRoutes.Routes.BROKER_CONTROLLER_NAME)
             .GroupBy(x => x.OwnerPrimaryKey)
             .Where(x => x.Key.HasValue)
             .AsQueryable();
