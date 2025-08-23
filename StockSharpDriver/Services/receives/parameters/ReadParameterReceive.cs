@@ -10,7 +10,7 @@ namespace Transmission.Receives.storage;
 /// <summary>
 /// Read parameter
 /// </summary>
-public class ReadParameterReceive(IParametersStorage serializeStorageRepo, ILogger<ReadParameterReceive> LoggerRepo)
+public class ReadParameterReceive(IParametersStorage serializeStorageRepo)
     : IMQTTReceive<StorageMetadataModel, TResponseModel<StorageCloudParameterPayloadModel>>
 {
     /// <inheritdoc/>
