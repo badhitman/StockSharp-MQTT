@@ -12,13 +12,13 @@ namespace Transmission.Receives.storage;
 /// Save parameter
 /// </summary>
 public class SaveParameterReceive(IParametersStorage serializeStorageRepo, ILogger<SaveParameterReceive> LoggerRepo)
-    : IMQTTReceive<StorageCloudParameterPayloadModel, TResponseModel<long?>>
+    : IMQTTReceive<StorageCloudParameterPayloadModel, TResponseModel<int?>>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.SaveCloudParameterReceive;
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<long?>> ResponseHandleActionAsync(StorageCloudParameterPayloadModel req, CancellationToken token = default)
+    public async Task<TResponseModel<int?>> ResponseHandleActionAsync(StorageCloudParameterPayloadModel req, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(req);
         req.Normalize();

@@ -13,7 +13,7 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
                 name: "CloudProperties",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ApplicationName = table.Column<string>(type: "TEXT", nullable: true),
                     PropertyName = table.Column<string>(type: "TEXT", nullable: true),
@@ -32,7 +32,7 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
                 name: "CloudTags",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ApplicationName = table.Column<string>(type: "TEXT", nullable: true),
                     PropertyName = table.Column<string>(type: "TEXT", nullable: true),
