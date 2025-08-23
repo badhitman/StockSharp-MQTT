@@ -25,10 +25,6 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
 
-    InstrumentTradeStockSharpViewModel? manualOrderContext;
-    bool ManualOrderCreating;
-    private readonly DialogOptions _dialogOptions = new() { FullWidth = true, MaxWidth = MaxWidth.ExtraLarge };
-
     static readonly StorageMetadataModel setBoards = new()
     {
         ApplicationName = nameof(InstrumentsTableStockSharpComponent),
@@ -66,6 +62,8 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
     static readonly ReadOnlyCollection<string> columnsExt = new([_mtp, _dc, _std, _fv, _mcs, _isin, _ps, _issD, _mtD, _cr, _lfP, _cmnt, _rbcs]);
 
 
+    List<InstrumentTableRowComponent> rowsCom = [];
+
     IEnumerable<string>? columnsSelected;
     public IEnumerable<string>? ColumnsSelected
     {
@@ -74,6 +72,8 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
         {
             columnsSelected = value;
             InvokeAsync(SaveParameters);
+            lock (rowsCom)
+                rowsCom.ForEach(x => x.StateHasChangedCall());
         }
     }
 
@@ -154,6 +154,14 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
             : $"{_res}primary";
     }
 
+    public void AddRowTable(InstrumentTableRowComponent row)
+    {
+        lock (rowsCom)
+        {
+            rowsCom.Add(row);
+        }
+    }
+
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
@@ -168,7 +176,7 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
             Task.Run(async () => {
                 TResponseModel<MarkersInstrumentStockSharpEnum?[]?> markersSet = await StorageRepo.ReadParameterAsync<MarkersInstrumentStockSharpEnum?[]?>(filterMarkers);
                 _markersSelected = markersSet.Response ?? [];
-            }),            
+            }),
             Task.Run(async () => {
                 TResponseModel<BoardStockSharpViewModel[]?> boardsSet = await StorageRepo.ReadParameterAsync<BoardStockSharpViewModel[]?>(setBoards);
                 _selectedBoards = boardsSet.Response;
@@ -176,12 +184,6 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
             Task.Run(ReloadBoards)]);
 
         await SetBusyAsync(false);
-    }
-
-    public void ManualOrder(InstrumentTradeStockSharpViewModel req)
-    {
-        manualOrderContext = req;
-        ManualOrderCreating = true;
     }
 
     async Task ReloadBoards()
@@ -252,6 +254,10 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
         await SetBusyAsync(token: token);
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await SsRepo.InstrumentsSelectAsync(req, token);
         await SetBusyAsync(false, token: token);
+        lock (rowsCom)
+        {
+            rowsCom.Clear();
+        }
         return new TableData<InstrumentTradeStockSharpViewModel>() { TotalItems = res.TotalRowsCount, Items = res.Response };
     }
 }

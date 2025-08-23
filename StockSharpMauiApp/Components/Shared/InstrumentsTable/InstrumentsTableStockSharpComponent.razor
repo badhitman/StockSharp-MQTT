@@ -165,14 +165,3 @@
         <MudTablePager />
     </PagerContent>
 </MudTable>
-
-<MudDialog @bind-Visible="ManualOrderCreating" Options="_dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-3" /> New order
-        </MudText>
-    </TitleContent>
-    <DialogContent>
-        <TestComponent SetInstrument="manualOrderContext" />
-    </DialogContent>
-</MudDialog>

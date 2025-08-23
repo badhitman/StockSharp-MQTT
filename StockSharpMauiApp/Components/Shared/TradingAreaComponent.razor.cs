@@ -19,13 +19,13 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     protected IDataStockSharpService DataRepo { get; set; } = default!;
 
     [Inject]
-    protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
-
-    [Inject]
     protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
 
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
+
+    [Inject]
+    protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
 
     decimal _quoteVolume;
@@ -51,8 +51,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     }
 
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
-    List<TradingRowComponent> RowsComponents { get; set; } = [];
-
+    readonly List<TradingRowComponent> RowsComponents = [];
 
     /// <summary>
     /// Here we simulate getting the paged, filtered and ordered data from the server

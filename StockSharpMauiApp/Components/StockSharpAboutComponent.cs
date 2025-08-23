@@ -17,6 +17,9 @@ public class StockSharpAboutComponent : BlazorBusyComponentBaseModel
     [Inject]
     protected IDriverStockSharpService DriverRepo { get; set; } = default!;
 
+    [Inject]
+    IEventNotifyReceive<UpdateConnectionHandleModel> ConnectionEventRepo { get; set; } = default!;
+
 
     /// <inheritdoc/>
     protected AboutConnectResponseModel? AboutConnection;
@@ -45,6 +48,31 @@ public class StockSharpAboutComponent : BlazorBusyComponentBaseModel
     {
         await base.OnInitializedAsync();
         await SetBusyAsync();
+        await ConnectionEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.UpdateConnectionStockSharpNotifyReceive, UpdateConnectionAction);
         await GetStatusConnection();
+    }
+
+    private void UpdateConnectionAction(UpdateConnectionHandleModel model)
+    {
+        if (AboutConnection is null)
+            return;
+
+        AboutConnection.CanConnect = model.CanConnect;
+        AboutConnection.ConnectionState = model.ConnectionState;
+        StateHasChangedCall();
+        InvokeAsync(async () => {
+            if (AboutConnection is null)
+                AboutConnection = await DriverRepo.AboutConnection();
+            else
+                AboutConnection.Update(await DriverRepo.AboutConnection());
+
+            StateHasChangedCall();
+        });
+    }
+
+    public override void Dispose()
+    {
+        ConnectionEventRepo.UnregisterAction();
+        base.Dispose();
     }
 }

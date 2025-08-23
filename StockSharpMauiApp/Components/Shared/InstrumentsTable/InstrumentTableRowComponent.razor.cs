@@ -4,6 +4,7 @@
 
 using BlazorLib;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared.InstrumentsTable;
@@ -20,10 +21,26 @@ public partial class InstrumentTableRowComponent : BlazorBusyComponentBaseModel
     [Parameter, EditorRequired]
     public required InstrumentsTableStockSharpComponent Owner { get; set; }
 
+
+    InstrumentTradeStockSharpViewModel? manualOrderContext;
+    bool ManualOrderCreating;
+    private readonly DialogOptions _dialogOptions = new() { FullWidth = true, MaxWidth = MaxWidth.ExtraLarge };
+
+
+    public void ManualOrder()
+    {
+        if (Owner.EachDisable)
+            return;
+
+        manualOrderContext = GlobalTools.CreateDeepCopy(Context);
+        ManualOrderCreating = true;
+    }
+
     protected async override Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
         await InstrumentEventRepo.RegisterAction($"{GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive}:{Context.Id}", InstrumentNotificationHandle);
+        Owner.AddRowTable(this);
     }
 
     void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
