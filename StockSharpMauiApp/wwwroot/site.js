@@ -1,9 +1,8 @@
 ﻿window.TradeInstrumentStrategy = {
     ButtonSplash: function (instrumentId) {
         // console.warn(`call -> TradeInstrumentStrategy.ButtonSplash(instrumentId:${instrumentId})`);
-        var options = {};
+        var options = {}; // color : #
         $(`#trade-instrument-${instrumentId}-row`).effect('highlight', options, 500);
-        //$(`#trade-instrument-${instrumentId}-row`).animate({ color: 'red' }, 500);
     },
 }
 

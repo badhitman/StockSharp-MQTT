@@ -312,7 +312,7 @@ public class DriverStockSharpService(
 
         if (tasksMaster.Count != 0)
         {
-            res.AddSuccess($"Updated items (strategies): {tasksMaster.Count}");
+            res.AddInfo($"Updated items (strategies): {tasksMaster.Count}");
             await Task.WhenAll(tasksMaster);
             await Task.WhenAll(tasksSlave);
         }
