@@ -40,6 +40,21 @@ public class ChatTelegramModelDB : ChatTelegramViewModel
     /// </summary>
     public int LastMessageId { get; set; }
 
+    /// <summary>
+    /// ChatPhoto
+    /// </summary>
+    public ChatPhotoTelegramModelDB ChatPhoto { get; set; }
+
+    /// <summary>
+    /// Messages
+    /// </summary>
+    public List<MessageTelegramModelDB> Messages { get; set; }
+
+    /// <summary>
+    /// ChatsJoins
+    /// </summary>
+    public List<JoinUserChatModelDB> UsersJoins { get; set; }
+
     /// <inheritdoc/>
     public override string ToString()
     {
@@ -76,6 +91,6 @@ public class ChatTelegramModelDB : ChatTelegramViewModel
     /// <inheritdoc/>
     public override int GetHashCode()
     {
-        return $"{Id}{ChatTelegramId}{Type}{Title}{Username}{FirstName}{LastName}{IsForum}".GetHashCode();
+        return HashCode.Combine(Id, ChatTelegramId, Type, Title, Username, FirstName, LastName, IsForum);
     }
 }
