@@ -32,7 +32,7 @@ else
             }
         }
     </MudTd>
-    <MudTd DataLabel="Price"><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
+    <MudTd DataLabel="Price" Class="@($"trade-instrument-{Instrument.Id}-row")"><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
     <MudTd DataLabel="Volume"><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
     <MudTd Class="@_opClass" DataLabel="Actions">
         <div class="btn-group btn-group-sm" role="group">
@@ -42,22 +42,22 @@ else
             <button disabled="@(!Available)" type="button" class="btn btn-outline-primary" title="Ask">A</button>
         </div>
     </MudTd>
-    <MudTd DataLabel="SBV">
+    <MudTd DataLabel="SBV" Class="@($"trade-instrument-{Instrument.Id}-row")">
         <input @bind-value="SmallBidVolume" type="number" class="form-control form-control-sm" @bind-value:event="oninput">
     </MudTd>
-    <MudTd DataLabel="SOV">
+    <MudTd DataLabel="SOV" Class="@($"trade-instrument-{Instrument.Id}-row")">
         <input @bind-value="SmallOfferVolume" type="number" class="form-control form-control-sm" @bind-value:event="oninput">
     </MudTd>
     <MudTd DataLabel="SO">
         <input @bind-value="SmallOffset" type="number" class="form-control form-control-sm" @bind-value:event="oninput">
     </MudTd>
-    <MudTd DataLabel="WV">
+    <MudTd DataLabel="WV" Class="@($"trade-instrument-{Instrument.Id}-row")">
         <input @bind-value="WorkingVolume" type="number" class="form-control form-control-sm" @bind-value:event="oninput">
     </MudTd>
     <MudTd DataLabel="Shift">
         <input @bind-value="Offset" type="number" class="form-control form-control-sm" @bind-value:event="oninput">
     </MudTd>
-    <MudTd DataLabel="Confines">
+    <MudTd DataLabel="Confines" Class="@($"trade-instrument-{Instrument.Id}-row")">
         <div class="input-group input-group-sm">
             <div class="input-group-text">
                 <label class="form-check-label me-1">
@@ -79,7 +79,7 @@ else
     </MudTd>
     <MudTd Class="@_opClass">
         <div class="input-group input-group-sm">
-            <button id="@($"trade-instrument-{Instrument.Id}-row")" title="reset" disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
+            <button id="" title="reset" disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle @($"trade-instrument-{Instrument.Id}-row")" type="button"></button>
         </div>
     </MudTd>
 }
