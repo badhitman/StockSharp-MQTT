@@ -15,9 +15,6 @@ public partial class InstrumentTableRowComponent : BlazorBusyComponentBaseModel
     [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
-    [Inject]
-    IJSRuntime JsRuntimeRepo { get; set; } = default!;
-
 
     [Parameter, EditorRequired]
     public required InstrumentTradeStockSharpViewModel Context { get; set; }
@@ -52,7 +49,6 @@ public partial class InstrumentTableRowComponent : BlazorBusyComponentBaseModel
         model.Markers = Context.Markers;
         Context.Reload(model);
         StateHasChangedCall();
-        InvokeAsync(async () => { await JsRuntimeRepo.InvokeVoidAsync("TradeInstrumentStrategy.ButtonSplash", model.Id); });
     }
 
     public override void Dispose()
