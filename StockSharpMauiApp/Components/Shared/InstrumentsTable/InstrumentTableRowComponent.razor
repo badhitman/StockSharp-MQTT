@@ -1,0 +1,82 @@
+﻿@using BlazorLib
+
+@inherits BlazorBusyComponentBaseModel
+
+<MudTd DataLabel="Name" title="@($"last updated: {(DateTime.UtcNow - Context.LastUpdatedAtUTC).Duration().ToReadableString()}")">
+    <div class="hstack">
+        <MudHighlighter Text="@Context.Name" HighlightedText="@Owner.SearchString" />
+        <sup style="cursor:pointer;" class="bi bi-gear ms-1" @onclick="() => Owner.OpenDialogAsync(Context)"></sup>
+        <sup @onclick="() => { if (!Owner.EachDisable) { Owner.ManualOrder(Context); } }" style="@Owner.StyleTradeSup(Context)" class="@Owner.ClassTradeSup(Context)"></sup>
+    </div>
+</MudTd>
+<MudTd DataLabel="Code">
+    <strong class="me-2">
+        <MudHighlighter Text="@Context.IdRemote" HighlightedText="@Owner.SearchString" />
+    </strong>
+</MudTd>
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._mcs) == true)
+{
+    <MudTd DataLabel="Markers">
+        <MarkersOfInstrumentComponent Instrument="Context" />
+    </MudTd>
+}
+<MudTd DataLabel="Currency">@((CurrenciesTypesEnum)Context.Currency)</MudTd>
+<MudTd DataLabel="Type">@((InstrumentsStockSharpTypesEnum)Context.TypeInstrument)</MudTd>
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._mtp) == true)
+{
+    <MudTd DataLabel="Multiplier">@(Context.Multiplier)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._std) == true)
+{
+    <MudTd DataLabel="Settlement">@(Context.SettlementDate?.ToString("d"))</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._fv) == true)
+{
+    <MudTd DataLabel="FaceValue">@(Context.FaceValue)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._dc) == true)
+{
+    <MudTd DataLabel="Settlement">@(Context.Decimals)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._isin) == true)
+{
+    <MudTd DataLabel="ISIN">@(Context.ISIN)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._ps) == true)
+{
+    <MudTd DataLabel="PriceStep">@(Context.PriceStep)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._issD) == true)
+{
+    <MudTd DataLabel="Issue">
+        @if (Context.IssueDate != default)
+        {
+            <text>@(Context.IssueDate.ToShortDateString())</text>
+        }
+    </MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._mtD) == true)
+{
+    <MudTd DataLabel="Maturity">
+        @if (Context.MaturityDate != default)
+        {
+            <text>@(Context.MaturityDate.ToShortDateString())</text>
+        }
+    </MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._cr) == true)
+{
+    <MudTd DataLabel="CouponRate">@(Context.CouponRate)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._lfP) == true)
+{
+    <MudTd DataLabel="LastFairPrice">@(Context.LastFairPrice)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._cmnt) == true)
+{
+    <MudTd DataLabel="Comment">@(Context.Comment)</MudTd>
+}
+@if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._rbcs) == true)
+{
+    <MudTd DataLabel="Rubrics"><RubricsForInstrumentComponent Instrument="Context" /></MudTd>
+}

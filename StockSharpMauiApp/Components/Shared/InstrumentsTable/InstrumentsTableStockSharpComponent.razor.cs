@@ -8,7 +8,7 @@ using MudBlazor;
 using SharedLib;
 using System.Collections.ObjectModel;
 
-namespace StockSharpMauiApp.Components.Shared;
+namespace StockSharpMauiApp.Components.Shared.InstrumentsTable;
 
 /// <summary>
 /// InstrumentsTableStockSharpComponent
@@ -23,9 +23,6 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
 
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
-
-    [Inject]
-    protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
 
     InstrumentTradeStockSharpViewModel? manualOrderContext;
@@ -53,27 +50,27 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
         PropertyName = $"form-set.{nameof(MarkersSelected)}"
     };
 
-    static readonly string _mtp = nameof(InstrumentTradeStockSharpModel.Multiplier),
-        _std = nameof(InstrumentTradeStockSharpModel.SettlementDate),
-        _fv = nameof(InstrumentTradeStockSharpModel.FaceValue),
-        _dc = nameof(InstrumentTradeStockSharpModel.Decimals),
-        _ps = nameof(InstrumentTradeStockSharpModel.PriceStep),
-        _isin = nameof(InstrumentTradeStockSharpViewModel.ISIN),
-        _issD = nameof(InstrumentTradeStockSharpViewModel.IssueDate),
-        _mtD = nameof(InstrumentTradeStockSharpViewModel.MaturityDate),
-        _cr = nameof(InstrumentTradeStockSharpViewModel.CouponRate),
-        _lfP = nameof(InstrumentTradeStockSharpViewModel.LastFairPrice),
-        _cmnt = nameof(InstrumentTradeStockSharpViewModel.Comment),
-        _mcs = "Markers", _rbcs = "Rubrics";
+    public static readonly string _mtp = nameof(InstrumentTradeStockSharpModel.Multiplier),
+         _std = nameof(InstrumentTradeStockSharpModel.SettlementDate),
+         _fv = nameof(InstrumentTradeStockSharpModel.FaceValue),
+         _dc = nameof(InstrumentTradeStockSharpModel.Decimals),
+         _ps = nameof(InstrumentTradeStockSharpModel.PriceStep),
+         _isin = nameof(InstrumentTradeStockSharpViewModel.ISIN),
+         _issD = nameof(InstrumentTradeStockSharpViewModel.IssueDate),
+         _mtD = nameof(InstrumentTradeStockSharpViewModel.MaturityDate),
+         _cr = nameof(InstrumentTradeStockSharpViewModel.CouponRate),
+         _lfP = nameof(InstrumentTradeStockSharpViewModel.LastFairPrice),
+         _cmnt = nameof(InstrumentTradeStockSharpViewModel.Comment),
+         _mcs = "Markers", _rbcs = "Rubrics";
 
     static readonly ReadOnlyCollection<string> columnsExt = new([_mtp, _dc, _std, _fv, _mcs, _isin, _ps, _issD, _mtD, _cr, _lfP, _cmnt, _rbcs]);
 
 
     IEnumerable<string>? columnsSelected;
-    IEnumerable<string>? ColumnsSelected
+    public IEnumerable<string>? ColumnsSelected
     {
         get => columnsSelected;
-        set
+        private set
         {
             columnsSelected = value;
             InvokeAsync(SaveParameters);
@@ -130,7 +127,15 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
     }
 
     MudTable<InstrumentTradeStockSharpViewModel>? _tableRef;
-    private string? searchString = null;
+    string? _searchString = null;
+    public string? SearchString
+    {
+        get => _searchString;
+        private set
+        {
+            _searchString = value;
+        }
+    }
 
     readonly List<BoardStockSharpViewModel> Boards = [];
 
@@ -138,10 +143,10 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
     private static string GetMultiSelectionText(List<string?> selectedValues)
         => $"{string.Join(", ", selectedValues.Select(x => x is null ? "~not set~" : x))}";
 
-    string StyleTradeSup(InstrumentTradeStockSharpViewModel ctx)
-        => EachDisable || ctx.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt ? "" : "cursor:pointer;";
+    public string StyleTradeSup(InstrumentTradeStockSharpViewModel ctx)
+         => EachDisable || ctx.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt ? "" : "cursor:pointer;";
 
-    string ClassTradeSup(InstrumentTradeStockSharpViewModel ctx)
+    public string ClassTradeSup(InstrumentTradeStockSharpViewModel ctx)
     {
         string _res = "ms-1 bi bi-coin text-";
         return EachDisable || ctx.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt
@@ -163,10 +168,7 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
             Task.Run(async () => {
                 TResponseModel<MarkersInstrumentStockSharpEnum?[]?> markersSet = await StorageRepo.ReadParameterAsync<MarkersInstrumentStockSharpEnum?[]?>(filterMarkers);
                 _markersSelected = markersSet.Response ?? [];
-            }),
-            Task.Run(async () => {
-                await InstrumentEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentReceivedStockSharpNotifyReceive, InstrumentNotificationHandle);
-            }),
+            }),            
             Task.Run(async () => {
                 TResponseModel<BoardStockSharpViewModel[]?> boardsSet = await StorageRepo.ReadParameterAsync<BoardStockSharpViewModel[]?>(setBoards);
                 _selectedBoards = boardsSet.Response;
@@ -176,34 +178,7 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
         await SetBusyAsync(false);
     }
 
-    void InstrumentNotificationHandle(InstrumentTradeStockSharpViewModel model)
-    {
-        //lock (instruments)
-        //{
-        //    if (instruments.Count == 0)
-        //        return;
-
-        //    int _i = -1;
-
-        //    _i = instruments.FindIndex(x => x.Id == model.Id);
-        //    if (_i != -1)
-        //    {
-        //        model.Markers = instruments[_i].Markers;
-        //        instruments[_i].Reload(model);
-        //        instruments[_i].LastUpdatedAtUTC = DateTime.Now;
-        //    }
-
-        //    _i = RowsComponents.FindIndex(x => x.Instrument.Id == model.Id);
-        //    if (_i != -1)
-        //    {
-        //        model.Markers = RowsComponents[_i].Instrument.Markers;
-        //        RowsComponents[_i].Update(model);
-        //        StateHasChangedCall();
-        //    }
-        //}
-    }
-
-    void ManualOrder(InstrumentTradeStockSharpViewModel req)
+    public void ManualOrder(InstrumentTradeStockSharpViewModel req)
     {
         manualOrderContext = req;
         ManualOrderCreating = true;
@@ -223,12 +198,12 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
 
     async Task OnSearch(string text)
     {
-        searchString = text;
+        SearchString = text;
         if (_tableRef is not null)
             await _tableRef.ReloadServerData();
     }
 
-    async Task<IDialogReference> OpenDialogAsync(InstrumentTradeStockSharpViewModel Instrument)
+    public async Task<IDialogReference> OpenDialogAsync(InstrumentTradeStockSharpViewModel Instrument)
     {
         DialogOptions options = new() { MaxWidth = MaxWidth.ExtraLarge, CloseOnEscapeKey = true, BackdropClick = true, FullWidth = true, };
         DialogParameters<InstrumentEditComponent> parameters = new() { { x => x.Instrument, Instrument } };
@@ -265,7 +240,7 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
         InstrumentsRequestModel req = new()
         {
             BoardsFilter = [.. SelectedBoards.Select(x => x.Id)],
-            FindQuery = searchString,
+            FindQuery = SearchString,
             PageNum = state.Page,
             PageSize = state.PageSize,
             SortingDirection = state.SortDirection == SortDirection.Ascending ? DirectionsEnum.Up : DirectionsEnum.Down,
@@ -278,11 +253,5 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> res = await SsRepo.InstrumentsSelectAsync(req, token);
         await SetBusyAsync(false, token: token);
         return new TableData<InstrumentTradeStockSharpViewModel>() { TotalItems = res.TotalRowsCount, Items = res.Response };
-    }
-
-    public override void Dispose()
-    {
-        InstrumentEventRepo.UnregisterAction();
-        base.Dispose();
     }
 }

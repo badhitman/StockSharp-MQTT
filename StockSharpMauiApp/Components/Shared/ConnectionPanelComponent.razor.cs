@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Components.Web;
+﻿////////////////////////////////////////////////
+// © https://github.com/badhitman - @FakeGov 
+////////////////////////////////////////////////
+
+using Microsoft.AspNetCore.Components.Web;
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
