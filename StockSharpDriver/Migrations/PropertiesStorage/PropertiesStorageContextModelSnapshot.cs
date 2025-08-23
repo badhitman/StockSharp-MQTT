@@ -94,7 +94,7 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
 
             modelBuilder.Entity("SharedLib.StorageCloudParameterModelDB", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -134,7 +134,7 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
 
             modelBuilder.Entity("SharedLib.TagModelDB", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 

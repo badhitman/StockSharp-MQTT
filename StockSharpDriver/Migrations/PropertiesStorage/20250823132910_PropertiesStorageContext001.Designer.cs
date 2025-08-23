@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations.PropertiesStorage
 {
     [DbContext(typeof(PropertiesStorageContext))]
-    [Migration("20250722074446_PropertiesStorageContext001")]
+    [Migration("20250823132910_PropertiesStorageContext001")]
     partial class PropertiesStorageContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -96,7 +96,7 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
 
             modelBuilder.Entity("SharedLib.StorageCloudParameterModelDB", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -136,7 +136,7 @@ namespace StockSharpDriver.Migrations.PropertiesStorage
 
             modelBuilder.Entity("SharedLib.TagModelDB", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 

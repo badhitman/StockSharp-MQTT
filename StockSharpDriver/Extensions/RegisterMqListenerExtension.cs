@@ -23,7 +23,7 @@ public static class RegisterMqListenerExtension
     {
         return services
             .RegisterMqListener<DeleteParameterReceive, StorageMetadataModel, ResponseBaseModel>()
-            .RegisterMqListener<SaveParameterReceive, StorageCloudParameterPayloadModel, TResponseModel<int?>>()
+            .RegisterMqListener<SaveParameterReceive, StorageCloudParameterPayloadModel, TResponseModel<long?>>()
             .RegisterMqListener<ReadParameterReceive, StorageMetadataModel, TResponseModel<StorageCloudParameterPayloadModel>>()
             .RegisterMqListener<ReadParametersReceive, StorageMetadataModel[], TResponseModel<List<StorageCloudParameterPayloadModel>>>()
             .RegisterMqListener<FindParametersReceive, FindStorageBaseModel, TResponseModel<FoundParameterModel[]>>()

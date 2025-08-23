@@ -213,10 +213,10 @@ public class ParametersStorage(
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<int?>> FlushParameterAsync(StorageCloudParameterViewModel set, bool trimHistory = false, CancellationToken token = default)
+    public async Task<TResponseModel<long?>> FlushParameterAsync(StorageCloudParameterViewModel set, bool trimHistory = false, CancellationToken token = default)
     {
         using PropertiesStorageContext context = await cloudParametersDbFactory.CreateDbContextAsync(token);
-        TResponseModel<int?> res = new();
+        TResponseModel<long?> res = new();
         StorageCloudParameterModelDB _set = (StorageCloudParameterModelDB)set;
         _set.Id = 0;
         await context.AddAsync(_set, token);
