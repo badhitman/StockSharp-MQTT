@@ -6,7 +6,10 @@
     <div class="hstack">
         <MudHighlighter Text="@Context.Name" HighlightedText="@Owner.SearchString" />
         <sup style="cursor:pointer;" class="bi bi-gear ms-1" @onclick="() => Owner.OpenDialogAsync(Context)"></sup>
-        <sup @onclick="() => { if (!Owner.EachDisable) { ManualOrder(); } }" style="@Owner.StyleTradeSup(Context)" class="@Owner.ClassTradeSup(Context)"></sup>
+        <sup @onclick="() => { if (!Owner.EachDisable) { ManualOrder(); } }"
+             style="@Owner.StyleTradeSup(Context)"
+             class="@Owner.ClassTradeSup(Context)"
+             id="@($"trade-instrument-{Context.Id}-row")"></sup>
     </div>
 </MudTd>
 <MudTd DataLabel="Code">

@@ -1,4 +1,13 @@
-﻿window.Toast = {
+﻿window.TradeInstrumentStrategy = {
+    ButtonSplash: function (instrumentId) {
+        // console.warn(`call -> TradeInstrumentStrategy.ButtonSplash(instrumentId:${instrumentId})`);
+        var options = {};
+        $(`#trade-instrument-${instrumentId}-row`).effect('highlight', options, 500);
+        //$(`#trade-instrument-${instrumentId}-row`).animate({ color: 'red' }, 500);
+    },
+}
+
+window.Toast = {
     Info: function (title, text) {
         //console.warn(`call -> Toast.Info(text:${text})`);
         $.toast({

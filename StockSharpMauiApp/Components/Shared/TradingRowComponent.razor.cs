@@ -2,9 +2,10 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using BlazorLib.Components.StockSharp;
-using Microsoft.AspNetCore.Components;
 using BlazorLib;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
@@ -19,6 +20,9 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
     [Inject]
     IEventNotifyReceive<DashboardTradeStockSharpModel> DashboardRepo { get; set; } = default!;
+
+    [Inject]
+    IJSRuntime JsRuntimeRepo { get; set; } = default!;
 
 
     /// <inheritdoc/>
@@ -182,6 +186,13 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         await SetBusyAsync();
 
         TResponseModel<DashboardTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<DashboardTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
+
+        if (restoreStrategy.Response is null)
+        {
+            restoreStrategy.Response = new DashboardTradeStockSharpModel().Bind(Instrument);
+            await StorageRepo.SaveParameterAsync(restoreStrategy.Response, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id), true, false);
+        }
+
         RestoreStrategy = restoreStrategy.Response;
         SetFields();
         Parent.AddRowComponent(this);
@@ -217,6 +228,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
             RestoreStrategy.Reload(model, Instrument);
             SetFields();
             StateHasChangedCall();
+            InvokeAsync(async () => { await JsRuntimeRepo.InvokeVoidAsync("TradeInstrumentStrategy.ButtonSplash", model.Id); });
         }
     }
 

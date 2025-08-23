@@ -79,7 +79,7 @@ else
     </MudTd>
     <MudTd Class="@_opClass">
         <div class="input-group input-group-sm">
-            <button title="reset" disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
+            <button id="@($"trade-instrument-{Instrument.Id}-row")" title="reset" disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle" type="button"></button>
         </div>
     </MudTd>
 }

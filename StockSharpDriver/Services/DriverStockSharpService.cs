@@ -217,21 +217,18 @@ public class DriverStockSharpService(
         {
             string bndName = security.Code.Substring(2, 5);
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.IdRemote.Equals(_sec.IdRemote));
+            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
+            DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
 
-            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.FirstOrDefault(x => x.Id == _strat.Id);
             SBnd = Curve.GetNode(_sec);
             BndPrice = SBnd.ModelPrice;
 
-            if (_strat is not null)
-            {
-                _strat.BasePrice = BndPrice;
-                _strat.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
-                _strat.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
-                _strat.WorkingVolume = (long)quoteStrategyVolume;
-                _strat.SmallOffset = 0;
-                _strat.Offset = 0;
-            }
+            _strat.BasePrice = BndPrice;
+            _strat.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
+            _strat.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
+            _strat.WorkingVolume = (long)quoteStrategyVolume;
+            _strat.SmallOffset = 0;
+            _strat.Offset = 0;
 
             SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
 
