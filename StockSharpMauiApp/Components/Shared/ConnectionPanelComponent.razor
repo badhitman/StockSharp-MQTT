@@ -68,7 +68,7 @@
             {
                 <MudSpacer />
                 <nav class="navbar navbar-expand-lg bg-body-tertiary">
-                    <div class="container-fluid" id="brands-filter-dashboard">
+                    <div class="container-fluid" id="boards-filter-dashboard">
                         @if (Boards is null)
                         {
                             <span class="navbar-brand">init...</span>
@@ -141,7 +141,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <p>Manage strategy</p>
+        <p>Manage strategy for starting</p>
         @if (allBoards is null)
         {
             <figure class="text-center">
@@ -155,7 +155,7 @@
         }
         else
         {
-            <MudSelect T="BoardStockSharpViewModel" Label="Board`s [restriction]" MultiSelection @bind-SelectedValues="Boards">
+            <MudSelect T="BoardStockSharpViewModel" Label="Board`s [restriction]" ReadOnly MultiSelection @bind-SelectedValues="Boards">
                 @foreach (BoardStockSharpViewModel _board in allBoards)
                 {
                     <MudSelectItem T="BoardStockSharpViewModel" Value="@_board">@_board</MudSelectItem>
