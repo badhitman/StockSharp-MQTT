@@ -2,18 +2,18 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using Ecng.Collections;
+using Ecng.Common;
 using Microsoft.Extensions.Caching.Memory;
-using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using SharedLib;
+using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
-using Ecng.Collections;
-using Newtonsoft.Json;
-using StockSharp.Algo;
-using System.Security;
-using Ecng.Common;
 using System.Net;
-using SharedLib;
+using System.Security;
+using System.Text.RegularExpressions;
 
 namespace StockSharpDriver;
 
@@ -35,7 +35,7 @@ public class DriverStockSharpService(
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
     Subscription SecurityCriteriaCodeFilterSubscription;
 
-    BoardStockSharpModel Board;
+    List<BoardStockSharpViewModel> Boards = [];
     Portfolio SelectedPortfolio;
 
     readonly List<MyTrade> myTrades = [];
@@ -107,7 +107,7 @@ public class DriverStockSharpService(
        highYieldLimit = 5m;
     #endregion
 
-    bool StrategyStarted => Board is not null && StrategyTrades is not null && StrategyTrades.Count != 0;
+    bool StrategyStarted => Boards.Count == 0 && StrategyTrades is not null && StrategyTrades.Count != 0;
 
 
     List<Security> SecuritiesBonds(bool ofStrategy)
@@ -123,14 +123,15 @@ public class DriverStockSharpService(
 
                 foreach (Security security in AllSecurities)
                 {
+                    BoardStockSharpModel _bo = new BoardStockSharpModel().Bind(security.Board);
                     if (ofStrategy)
                     {
-                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board))))
+                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Boards.Count == 0 || Boards.Any(x => x.Equals(_bo))))
                             res.Add(security);
                     }
                     else
                     {
-                        if (Board is null || Board.Equals(new BoardStockSharpModel().Bind(security.Board)))
+                        if (Boards.Count == 0 || Boards.Any(x => x.Equals(_bo)))
                             res.Add(security);
                     }
                 }
@@ -175,15 +176,15 @@ public class DriverStockSharpService(
                   Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken)),
                   Task.Run(async () => {
                     int[] _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
-                      if(_boardsFilter is not null && _boardsFilter.Length == 1)
-                      {
-                          TResponseModel<List<BoardStockSharpViewModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
-                          Board = new BoardStockSharpModel().Bind(boardDb.Response.Single());
-                      }
+                    if(_boardsFilter is not null && _boardsFilter.Length != 0)
+                    {
+                        TResponseModel<List<BoardStockSharpViewModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
+                        Boards = boardDb.Response;
+                    }
                   }, cancellationToken),
         ]);
 
-        if (Board is null)
+        if (Boards.Count == 0)
         {
             res.AddError($"Board is null");
             return res;
@@ -201,7 +202,7 @@ public class DriverStockSharpService(
         }
         DateTime _gnvd = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
         Curve = new CurveModel(_gnvd);
-        res.Response = Curve.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, Board, req.BigPriceDifferences, ref eventTrans);
+        res.Response = Curve.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, Boards, req.BigPriceDifferences, ref eventTrans);
         if (!string.IsNullOrWhiteSpace(res.Response))
             return res;
 
@@ -335,16 +336,15 @@ public class DriverStockSharpService(
         if (!string.IsNullOrWhiteSpace(ProgramDataPath))
             return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
 
-        if (req.Board is null)
+        if (Boards.Count == 0)
             return ResponseBaseModel.CreateError("Board - not set");
 
         if (req.SelectedPortfolio is null)
             return ResponseBaseModel.CreateError("Portfolio - not set");
 
-        Board = req.Board;
-        TResponseModel<List<BoardStockSharpViewModel>> _matchBoards = await dataRepo.FindBoardsAsync(Board, cancellationToken);
-        if (!_matchBoards.Success() || _matchBoards.Response is null || _matchBoards.Response.Count != 1)
-            return ResponseBaseModel.CreateError($"Board ({_matchBoards.Response.Count} *) - not matched");
+        //TResponseModel<List<BoardStockSharpViewModel>> _matchBoards = await dataRepo.FindBoardsAsync(Board, cancellationToken);
+        //if (!_matchBoards.Success() || _matchBoards.Response is null || _matchBoards.Response.Count != 1)
+        //    return ResponseBaseModel.CreateError($"Board ({_matchBoards.Response.Count} *) - not matched");
 
         SelectedPortfolio = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.SelectedPortfolio.ClientCode);
 
@@ -353,13 +353,7 @@ public class DriverStockSharpService(
             ClearStrategy();
             return ResponseBaseModel.CreateError($"Portfolio #{req.SelectedPortfolio.ClientCode} - not found");
         }
-
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await dataRepo.InstrumentsSelectAsync(new()
-        {
-            PageNum = 0,
-            PageSize = int.MaxValue,
-            BoardsFilter = [_matchBoards.Response[0].Id],
-        }, cancellationToken);
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
@@ -507,7 +501,6 @@ public class DriverStockSharpService(
             {
                 PageNum = 0,
                 PageSize = int.MaxValue,
-                //FavoriteFilter = true,
             }, cancellationToken);
 
             if (resInstruments.Response is null || resInstruments.Response.Count == 0)
@@ -733,7 +726,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken cancellationToken = default)
     {
-        Board = null;
+        Boards.Clear();
         if (SecuritiesBonds(false).Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
 
@@ -1013,7 +1006,7 @@ public class DriverStockSharpService(
 
         conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
 
-        Board = null;
+        Boards.Clear();
         SelectedPortfolio = null;
         ClientCodeStockSharp = null;
         ProgramDataPath = null;

@@ -66,7 +66,16 @@
             }
             else
             {
-                <strong>@SelectedBoard</strong>
+                <form class="d-flex">
+                    @if (Boards is null)
+                    {
+                        <text>init...</text>
+                    }
+                    else
+                    {
+                        <strong class="form-control-plaintext">@(string.Join(", ", Boards.Select(x => x.ToString())))</strong>
+                    }
+                </form>
                 <MudSpacer />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(!CanStarted)" />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(!CanStopped)" />
@@ -144,7 +153,7 @@
         }
         else
         {
-            <MudSelect T="BoardStockSharpViewModel" Label="Board [restriction]" @bind-Value="SelectedBoard">
+            <MudSelect T="BoardStockSharpViewModel" Label="Board`s [restriction]" MultiSelection @bind-SelectedValues="Boards">
                 @foreach (BoardStockSharpViewModel _board in allBoards)
                 {
                     <MudSelectItem T="BoardStockSharpViewModel" Value="@_board">@_board</MudSelectItem>

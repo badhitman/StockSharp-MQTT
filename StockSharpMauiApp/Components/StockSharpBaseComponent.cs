@@ -13,10 +13,10 @@ namespace StockSharpMauiApp.Components;
 public class StockSharpBaseComponent : StockSharpAboutComponent
 {
     /// <inheritdoc/>
-    protected async Task Connect(ConnectRequestModel req)
+    protected virtual async Task Connect()
     {
         await SetBusyAsync();
-        ResponseBaseModel _con = await DriverRepo.Connect(req);
+        ResponseBaseModel _con = await DriverRepo.Connect(new ConnectRequestModel());
         SnackBarRepo.ShowMessagesResponse(_con.Messages);
         await GetStatusConnection();
     }

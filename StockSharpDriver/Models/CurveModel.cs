@@ -20,7 +20,7 @@ public class CurveModel : CurveBaseModel
     /// <summary>
     /// Load Curve form database
     /// </summary>
-    public string GetCurveFromDb(string DbName, Connector trader, BoardStockSharpModel board, List<string> bigPriceDifferences, ref IEventsStockSharp eventTrans)
+    public string GetCurveFromDb(string DbName, Connector trader, List<BoardStockSharpViewModel> boards, List<string> bigPriceDifferences, ref IEventsStockSharp eventTrans)
     {
         string secName;
         decimal secPrice;
@@ -58,7 +58,7 @@ public class CurveModel : CurveBaseModel
 
             bool checkBoard(ExchangeBoard reqEx)
             {
-                return reqEx.Code == board.Code && reqEx.Exchange.Name == board.Exchange.Name && (int?)reqEx.Exchange.CountryCode == board.Exchange.CountryCode;
+                return boards.Any(board => reqEx.Code == board.Code && reqEx.Exchange.Name == board.Exchange.Name && (int?)reqEx.Exchange.CountryCode == board.Exchange.CountryCode);
             }
 
             if (CurveDate.Day != dt.Day)

@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
 using MudBlazor;
@@ -35,10 +34,10 @@ public partial class OrdersStockSharpViewComponent : StockSharpAboutComponent
         {
             PageNum = state.Page,
             PageSize = state.PageSize,
-            Payload = new()
-            {
-
-            }
+            //Payload = new()
+            //{
+                 
+            //}
         };
         TPaginationResponseModel<OrderStockSharpViewModel> res = await SsRepo.OrdersSelectAsync(req, token);
         partData = res.Response;
