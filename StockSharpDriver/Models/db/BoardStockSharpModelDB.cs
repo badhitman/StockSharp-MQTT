@@ -22,10 +22,7 @@ public class BoardStockSharpModelDB : BoardStockSharpViewModel, IBaseStockSharpM
     public int? ExchangeId { get; set; }
 
     /// <inheritdoc/>
-    public override ExchangeStockSharpModel GetExchange()
-    {
-        return new ExchangeStockSharpModel().Bind(Exchange);
-    }
+    public override ExchangeStockSharpModel GetExchange() => new ExchangeStockSharpModel().Bind(Exchange);
 
     /// <summary>
     /// Инструменты (биржевые торговые)
