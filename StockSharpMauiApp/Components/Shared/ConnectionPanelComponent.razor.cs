@@ -212,6 +212,14 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     void DisconnectMouseOver(MouseEventArgs e) => DisconnectTitle = "Close";
     void DisconnectMouseOut(MouseEventArgs e) => DisconnectTitle = "";
 
+    protected override async Task GetStatusConnection()
+    {
+        await Task.WhenAll([
+                Task.Run(ReadBoards),
+                Task.Run(base.GetStatusConnection)
+            ]);
+    }
+
     async Task AboutBotAsync()
     {
         TResponseModel<UserTelegramBaseModel> rest = await TelegramRepo.AboutBotAsync();

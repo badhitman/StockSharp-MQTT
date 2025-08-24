@@ -58,7 +58,14 @@ public class CurveModel : CurveBaseModel
 
             bool checkBoard(ExchangeBoard reqEx)
             {
-                return boards.Any(board => reqEx.Code == board.Code && reqEx.Exchange.Name == board.Exchange.Name && (int?)reqEx.Exchange.CountryCode == board.Exchange.CountryCode);
+                return boards.Any(board => 
+                {
+                    ExchangeStockSharpModel _ge = board.GetExchange();
+                    return 
+                        reqEx.Code == board.Code && 
+                        reqEx.Exchange.Name == _ge.Name && 
+                        (int?)reqEx.Exchange.CountryCode == _ge.CountryCode; 
+                });
             }
 
             if (CurveDate.Day != dt.Day)
