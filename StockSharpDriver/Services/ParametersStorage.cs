@@ -157,7 +157,7 @@ public class ParametersStorage(
     }
 
     /// <inheritdoc/>
-    public async Task<T> ReadAsync<T>(StorageMetadataModel req, T defaultValue = default, CancellationToken token = default)
+    public async Task<T?> ReadAsync<T>(StorageMetadataModel req, T? defaultValue = default, CancellationToken token = default)
     {
         req.Normalize();
         string mem_key = $"{req.PropertyName}/{req.OwnerPrimaryKey}/{req.PrefixPropertyName}/{req.ApplicationName}".Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
@@ -167,7 +167,7 @@ public class ParametersStorage(
         using PropertiesStorageContext context = await cloudParametersDbFactory.CreateDbContextAsync(token);
         string _tn = typeof(T).FullName ?? throw new Exception();
 
-        StorageCloudParameterModelDB pdb = await context
+        StorageCloudParameterModelDB? pdb = await context
             .CloudProperties
             .Where(x => x.TypeName == _tn && x.OwnerPrimaryKey == req.OwnerPrimaryKey && x.PrefixPropertyName == req.PrefixPropertyName && x.ApplicationName == req.ApplicationName)
             .OrderByDescending(x => x.CreatedAt)
@@ -178,7 +178,7 @@ public class ParametersStorage(
 
         try
         {
-            T rawData = JsonConvert.DeserializeObject<T>(pdb.SerializedDataJson);
+            T? rawData = JsonConvert.DeserializeObject<T>(pdb.SerializedDataJson);
             cache.Set(mem_key, rawData, new MemoryCacheEntryOptions().SetAbsoluteExpiration(_ts));
             return rawData;
         }
@@ -297,7 +297,7 @@ public class ParametersStorage(
         }
         string msg;
         using PropertiesStorageContext context = await cloudParametersDbFactory.CreateDbContextAsync(token);
-        StorageCloudParameterModelDB parameter_db = await context
+        StorageCloudParameterModelDB? parameter_db = await context
             .CloudProperties
             .OrderByDescending(x => x.CreatedAt)
             .FirstOrDefaultAsync(x =>

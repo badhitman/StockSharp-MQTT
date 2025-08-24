@@ -221,7 +221,7 @@ public class RubricsService(
 
         using PropertiesStorageContext context = await helpdeskDbFactory.CreateDbContextAsync(token);
 
-        RubricStandardModel lpi = await context
+        RubricStandardModel? lpi = await context
             .Rubrics
             .Include(x => x.Parent)
             .FirstOrDefaultAsync(x => x.Id == rubricId, cancellationToken: token);

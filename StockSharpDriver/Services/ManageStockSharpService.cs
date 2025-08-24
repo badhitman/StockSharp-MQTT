@@ -120,7 +120,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
         }
         else
         {
-            FixMessageAdapterModelDB ad = await ctx.Adapters.FirstOrDefaultAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
+            FixMessageAdapterModelDB? ad = await ctx.Adapters.FirstOrDefaultAsync(x => x.Id == req.Id, cancellationToken: cancellationToken);
             if (ad is null)
             {
                 res.AddError($"Адаптер #{req.Id} не найден");

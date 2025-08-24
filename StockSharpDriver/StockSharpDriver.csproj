@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
-		<Nullable>disable</Nullable>
+		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>dotnet-StockSharpDriver-ddabf846-f53f-434a-a818-e9ef1aa49e1f</UserSecretsId>
 	</PropertyGroup>

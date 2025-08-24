@@ -10,13 +10,13 @@ namespace Transmission.Receives.StockSharpDriver;
 /// CashFlowDeleteStockSharpReceive
 /// </summary>
 public class CashFlowDeleteStockSharpReceive(IDataStockSharpService ssRepo)
-    : IMQTTReceive<int, ResponseBaseModel>
+    : IMQTTReceive<int, ResponseBaseModel?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.CashFlowDeleteStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResponseHandleActionAsync(int req, CancellationToken token = default)
+    public async Task<ResponseBaseModel?> ResponseHandleActionAsync(int req, CancellationToken token = default)
     {
         //if (req is null)
         //    throw new ArgumentNullException(nameof(req));

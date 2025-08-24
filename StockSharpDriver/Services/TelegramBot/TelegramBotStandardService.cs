@@ -67,7 +67,7 @@ public class TelegramBotStandardService(ITelegramBotClient _botClient, ILogger<T
         //}
 
         ParseMode parse_mode;
-        if (Enum.TryParse(typeof(ParseMode), message.ParseModeName, true, out object parse_mode_out))
+        if (Enum.TryParse(typeof(ParseMode), message.ParseModeName, true, out object? parse_mode_out) && parse_mode_out is not null)
             parse_mode = (ParseMode)parse_mode_out;
         else
         {
@@ -77,7 +77,7 @@ public class TelegramBotStandardService(ITelegramBotClient _botClient, ILogger<T
             res.AddWarning(msg);
         }
 
-        IReplyMarkup replyKB = message.ReplyKeyboard is null
+        IReplyMarkup? replyKB = message.ReplyKeyboard is null
             ? null
             : new InlineKeyboardMarkup(message.ReplyKeyboard
             .Select(x => x.Select(y => InlineKeyboardButton.WithCallbackData(y.Title, y.Data))));

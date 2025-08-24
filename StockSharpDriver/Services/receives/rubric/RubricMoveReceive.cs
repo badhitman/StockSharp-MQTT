@@ -11,13 +11,13 @@ namespace Transmission.Receives.rubrics;
 /// Сдвинуть рубрику
 /// </summary>
 public class RubricMoveReceive(IRubricsService hdRepo, ILogger<RubricMoveReceive> loggerRepo)
-    : IMQTTReceive<TAuthRequestModel<RowMoveModel>, ResponseBaseModel>
+    : IMQTTReceive<TAuthRequestModel<RowMoveModel>?, ResponseBaseModel?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.RubricForIssuesMoveHelpDeskReceive;
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResponseHandleActionAsync(TAuthRequestModel<RowMoveModel> req, CancellationToken token = default)
+    public async Task<ResponseBaseModel?> ResponseHandleActionAsync(TAuthRequestModel<RowMoveModel>? req, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(req);
         loggerRepo.LogInformation($"call `{GetType().Name}`: {JsonConvert.SerializeObject(req)}");

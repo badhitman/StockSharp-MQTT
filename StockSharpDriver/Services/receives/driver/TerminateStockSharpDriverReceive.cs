@@ -10,13 +10,13 @@ namespace Transmission.Receives.StockSharpDriver;
 /// TerminateStockSharpDriverReceive
 /// </summary>
 public class TerminateStockSharpDriverReceive(IDriverStockSharpService ssRepo)
-    : IMQTTReceive<object, ResponseBaseModel>
+    : IMQTTReceive<object?, ResponseBaseModel?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.TerminateStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResponseHandleActionAsync(object req, CancellationToken token = default)
+    public async Task<ResponseBaseModel?> ResponseHandleActionAsync(object? req, CancellationToken token = default)
     {
         //if (req is null)
         //    throw new ArgumentNullException(nameof(req));

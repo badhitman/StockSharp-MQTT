@@ -10,13 +10,13 @@ namespace Transmission.Receives.StockSharpDriver;
 /// UpdateOrCreateAdapterStockSharpDriverReceive
 /// </summary>
 public class UpdateOrCreateAdapterStockSharpDriverReceive(IManageStockSharpService ssRepo)
-    : IMQTTReceive<FixMessageAdapterModelDB, TResponseModel<FixMessageAdapterModelDB>>
+    : IMQTTReceive<FixMessageAdapterModelDB?, TResponseModel<FixMessageAdapterModelDB>?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.UpdateOrCreateAdapterStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<FixMessageAdapterModelDB>> ResponseHandleActionAsync(FixMessageAdapterModelDB req, CancellationToken token = default)
+    public async Task<TResponseModel<FixMessageAdapterModelDB>?> ResponseHandleActionAsync(FixMessageAdapterModelDB? req, CancellationToken token = default)
     {
         if (req is null)
             throw new ArgumentNullException(nameof(req));

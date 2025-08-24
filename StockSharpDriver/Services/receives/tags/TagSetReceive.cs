@@ -11,13 +11,13 @@ namespace Transmission.Receives.storage;
 /// TagSetReceive
 /// </summary>
 public class TagSetReceive(ILogger<TagSetReceive> loggerRepo, IParametersStorage serializeStorageRepo)
-    : IMQTTReceive<TagSetModel, ResponseBaseModel>
+    : IMQTTReceive<TagSetModel?, ResponseBaseModel?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.TagSetReceive;
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResponseHandleActionAsync(TagSetModel req, CancellationToken token = default)
+    public async Task<ResponseBaseModel?> ResponseHandleActionAsync(TagSetModel? req, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(req);
         loggerRepo.LogDebug($"call `{GetType().Name}`: {JsonConvert.SerializeObject(req)}");

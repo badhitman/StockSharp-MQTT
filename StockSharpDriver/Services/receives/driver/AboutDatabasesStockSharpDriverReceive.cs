@@ -7,13 +7,13 @@ using SharedLib;
 namespace Transmission.Receives.StockSharpDriver;
 
 public class AboutDatabasesStockSharpDriverReceive(IManageStockSharpService ssRepo)
-    : IMQTTReceive<object, AboutDatabasesResponseModel>
+    : IMQTTReceive<object?, AboutDatabasesResponseModel?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.AboutDatabasesStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<AboutDatabasesResponseModel> ResponseHandleActionAsync(object req, CancellationToken token = default)
+    public async Task<AboutDatabasesResponseModel?> ResponseHandleActionAsync(object? req, CancellationToken token = default)
     {
         //if (req is null)
         //    throw new ArgumentNullException(nameof(req));

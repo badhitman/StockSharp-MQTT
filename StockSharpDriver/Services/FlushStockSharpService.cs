@@ -87,7 +87,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync();
         OrderStockSharpModelDB orderDb = await context.Orders.FirstOrDefaultAsync(x => x.TransactionId == req.TransactionId);
 
-        PortfolioTradeModelDB portfolioDb = null;
+        PortfolioTradeModelDB? portfolioDb = null;
         if (!string.IsNullOrWhiteSpace(req.Portfolio.Name))
         {
             portfolioDb = context.Portfolios
@@ -136,7 +136,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
         ExchangeStockSharpModelDB exchange = (ExchangeStockSharpModelDB)(await SaveExchange(req.Exchange)).Response;
 
-        BoardStockSharpModelDB boardDb = context.Boards
+        BoardStockSharpModelDB? boardDb = context.Boards
             .FirstOrDefault(x => x.Code == req.Code && x.ExchangeId == exchange.Id);
         if (boardDb is null)
         {
@@ -166,7 +166,7 @@ public class FlushStockSharpService(IDbContextFactory<StockSharpAppContext> tool
     public Task<TResponseModel<ExchangeStockSharpViewModel>> SaveExchange(ExchangeStockSharpModel req)
     {
         using StockSharpAppContext context = toolsDbFactory.CreateDbContext();
-        ExchangeStockSharpModelDB exchangeDb = context.Exchanges
+        ExchangeStockSharpModelDB? exchangeDb = context.Exchanges
             .FirstOrDefault(x => x.Name == req.Name && x.CountryCode == req.CountryCode);
         if (exchangeDb is null)
         {

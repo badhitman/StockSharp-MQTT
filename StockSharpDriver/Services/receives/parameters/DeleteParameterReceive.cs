@@ -11,13 +11,13 @@ namespace Transmission.Receives.storage;
 /// Delete parameter
 /// </summary>
 public class DeleteParameterReceive(IParametersStorage serializeStorageRepo, ILogger<DeleteParameterReceive> LoggerRepo)
-    : IMQTTReceive<StorageMetadataModel, ResponseBaseModel>
+    : IMQTTReceive<StorageMetadataModel?, ResponseBaseModel?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.DeleteCloudParameterReceive;
 
     /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResponseHandleActionAsync(StorageMetadataModel req, CancellationToken token = default)
+    public async Task<ResponseBaseModel?> ResponseHandleActionAsync(StorageMetadataModel? req, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(req);
         req.Normalize();

@@ -12,13 +12,13 @@ namespace Transmission.Receives.rubrics;
 /// CreateIssueTheme
 /// </summary>
 public class RubricCreateOrUpdateReceive(IRubricsService hdRepo, ILogger<RubricCreateOrUpdateReceive> loggerRepo)
-    : IMQTTReceive<RubricStandardModel, TResponseModel<int>>
+    : IMQTTReceive<RubricStandardModel?, TResponseModel<int>?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.RubricForIssuesUpdateReceive;
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<int>> ResponseHandleActionAsync(RubricStandardModel rubric, CancellationToken token = default)
+    public async Task<TResponseModel<int>?> ResponseHandleActionAsync(RubricStandardModel? rubric, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(rubric);
         loggerRepo.LogInformation($"call `{GetType().Name}`: {JsonConvert.SerializeObject(rubric)}");

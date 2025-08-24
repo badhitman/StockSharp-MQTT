@@ -10,13 +10,13 @@ namespace Transmission.Receives.StockSharpDriver;
 /// InstrumentsSelectStockSharpDriverReceive
 /// </summary>
 public class ReadTradeInstrumentsStockSharpDriverReceive(IDataStockSharpService ssRepo)
-    : IMQTTReceive<object, TResponseModel<List<InstrumentTradeStockSharpViewModel>>>
+    : IMQTTReceive<object?, TResponseModel<List<InstrumentTradeStockSharpViewModel>>?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.InstrumentsReadTradeStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> ResponseHandleActionAsync(object req, CancellationToken token = default)
+    public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>?> ResponseHandleActionAsync(object? req, CancellationToken token = default)
     {
         //if (req is null)
         //    throw new ArgumentNullException(nameof(req));

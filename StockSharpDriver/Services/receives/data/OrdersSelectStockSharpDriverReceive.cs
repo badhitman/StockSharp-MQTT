@@ -10,13 +10,13 @@ namespace Transmission.Receives.StockSharpDriver;
 /// OrdersSelectStockSharpDriverReceive
 /// </summary>
 public class OrdersSelectStockSharpDriverReceive(IManageStockSharpService ssRepo)
-    : IMQTTReceive<TPaginationRequestStandardModel<OrdersSelectStockSharpRequestModel>, TPaginationResponseModel<OrderStockSharpViewModel>>
+    : IMQTTReceive<TPaginationRequestStandardModel<OrdersSelectStockSharpRequestModel>?, TPaginationResponseModel<OrderStockSharpViewModel>?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.OrdersSelectStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<OrderStockSharpViewModel>> ResponseHandleActionAsync(TPaginationRequestStandardModel<OrdersSelectStockSharpRequestModel> req, CancellationToken token = default)
+    public async Task<TPaginationResponseModel<OrderStockSharpViewModel>?> ResponseHandleActionAsync(TPaginationRequestStandardModel<OrdersSelectStockSharpRequestModel>? req, CancellationToken token = default)
     {
         if (req is null)
             throw new ArgumentNullException(nameof(req));

@@ -15,7 +15,7 @@ public class BoardStockSharpModelDB : BoardStockSharpViewModel, IBaseStockSharpM
     /// <summary>
     /// Exchange
     /// </summary>
-    public new ExchangeStockSharpModelDB Exchange { get; set; }
+    public new ExchangeStockSharpModelDB? Exchange { get; set; }
     /// <summary>
     /// Exchange
     /// </summary>
@@ -24,7 +24,7 @@ public class BoardStockSharpModelDB : BoardStockSharpViewModel, IBaseStockSharpM
     /// <summary>
     /// Инструменты (биржевые торговые)
     /// </summary>
-    public List<InstrumentStockSharpModelDB> Instruments { get; set; }
+    public List<InstrumentStockSharpModelDB>? Instruments { get; set; }
 
     /// <inheritdoc/>
     public void SetUpdate(BoardStockSharpModel req)

@@ -10,13 +10,13 @@ namespace Transmission.Receives.StockSharpDriver;
 /// GetExchangesStockSharpDriverReceive
 /// </summary>
 public class GetExchangesStockSharpDriverReceive(IDataStockSharpService ssRepo)
-    : IMQTTReceive<int[], TResponseModel<List<ExchangeStockSharpModel>>>
+    : IMQTTReceive<int[]?, TResponseModel<List<ExchangeStockSharpModel>>?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.GetExchangesStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<ExchangeStockSharpModel>>> ResponseHandleActionAsync(int[] req, CancellationToken token = default)
+    public async Task<TResponseModel<List<ExchangeStockSharpModel>>?> ResponseHandleActionAsync(int[]? req, CancellationToken token = default)
     {
         //if (req is null)
         //    throw new ArgumentNullException(nameof(req));

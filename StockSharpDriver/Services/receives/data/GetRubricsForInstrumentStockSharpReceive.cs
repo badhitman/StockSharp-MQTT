@@ -10,13 +10,13 @@ namespace Transmission.Receives.StockSharpDriver;
 /// GetRubricsForInstrumentStockSharpReceive
 /// </summary>
 public class GetRubricsForInstrumentStockSharpReceive(IDataStockSharpService ssRepo)
-    : IMQTTReceive<int, TResponseModel<List<UniversalBaseModel>>>
+    : IMQTTReceive<int, TResponseModel<List<UniversalBaseModel>>?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.GetRubricsForInstrumentStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<UniversalBaseModel>>> ResponseHandleActionAsync(int req, CancellationToken token = default)
+    public async Task<TResponseModel<List<UniversalBaseModel>>?> ResponseHandleActionAsync(int req, CancellationToken token = default)
     {
         //if (req is null)
         //    throw new ArgumentNullException(nameof(req));
