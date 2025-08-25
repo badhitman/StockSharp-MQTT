@@ -19,13 +19,13 @@ public static class BindsStockSharpModelsExtensions
         main.Instrument = new InstrumentTradeStockSharpModel().Bind(inc.Security);
         main.Portfolio = new PortfolioStockSharpModel().Bind(inc.Portfolio);
 
-        main.State = (OrderStatesEnum)Enum.Parse(typeof(OrderStatesEnum), Enum.GetName(inc.State));
-        main.PositionEffect = inc.PositionEffect is null ? null : (OrderPositionEffectsEnum)Enum.Parse(typeof(OrderPositionEffectsEnum), Enum.GetName(inc.PositionEffect.Value));
-        main.TimeInForce = inc.TimeInForce is null ? null : (TimeInForceEnum)Enum.Parse(typeof(TimeInForceEnum), Enum.GetName(inc.TimeInForce.Value));
-        main.Type = inc.Type is null ? null : (OrderTypesEnum)Enum.Parse(typeof(OrderTypesEnum), Enum.GetName(inc.Type.Value));
-        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value));
-        main.Side = (SidesEnum)Enum.Parse(typeof(SidesEnum), Enum.GetName(inc.Side));
-        main.MarginMode = inc.MarginMode is null ? null : (MarginModesEnum)Enum.Parse(typeof(MarginModesEnum), Enum.GetName(inc.MarginMode.Value));
+        main.State = (OrderStatesEnum)Enum.Parse(typeof(OrderStatesEnum), Enum.GetName(inc.State)!);
+        main.PositionEffect = inc.PositionEffect is null ? null : (OrderPositionEffectsEnum)Enum.Parse(typeof(OrderPositionEffectsEnum), Enum.GetName(inc.PositionEffect.Value)!);
+        main.TimeInForce = inc.TimeInForce is null ? null : (TimeInForceEnum)Enum.Parse(typeof(TimeInForceEnum), Enum.GetName(inc.TimeInForce.Value)!);
+        main.Type = inc.Type is null ? null : (OrderTypesEnum)Enum.Parse(typeof(OrderTypesEnum), Enum.GetName(inc.Type.Value)!);
+        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value)!);
+        main.Side = (SidesEnum)Enum.Parse(typeof(SidesEnum), Enum.GetName(inc.Side)!);
+        main.MarginMode = inc.MarginMode is null ? null : (MarginModesEnum)Enum.Parse(typeof(MarginModesEnum), Enum.GetName(inc.MarginMode.Value)!);
 
         main.IsMarketMaker = inc.IsMarketMaker;
         main.Slippage = inc.Slippage;
@@ -87,12 +87,12 @@ public static class BindsStockSharpModelsExtensions
         main.VolumeStep = inc.VolumeStep;
         main.PriceStep = inc.PriceStep;
 
-        main.Currency = (int)(inc.Currency is null ? CurrenciesTypesEnum.None : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value)));
-        main.UnderlyingSecurityType = (int)(inc.UnderlyingSecurityType is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.UnderlyingSecurityType.Value)));
-        main.TypeInstrument = (int)(inc.Type is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.Type.Value)));
-        main.SettlementType = (int)(inc.SettlementType is null ? SettlementTypesEnum.None : (SettlementTypesEnum)Enum.Parse(typeof(SettlementTypesEnum), Enum.GetName(inc.SettlementType.Value)));
-        main.OptionType = (int)(inc.OptionType is null ? OptionInstrumentTradeTypesEnum.None : (OptionInstrumentTradeTypesEnum)Enum.Parse(typeof(OptionInstrumentTradeTypesEnum), Enum.GetName(inc.OptionType.Value)));
-        main.OptionStyle = (int)(inc.OptionStyle is null ? OptionTradeInstrumentStylesEnum.None : (OptionTradeInstrumentStylesEnum)Enum.Parse(typeof(OptionTradeInstrumentStylesEnum), Enum.GetName(inc.OptionStyle.Value)));
+        main.Currency = (int)(inc.Currency is null ? CurrenciesTypesEnum.None : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value)!));
+        main.UnderlyingSecurityType = (int)(inc.UnderlyingSecurityType is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.UnderlyingSecurityType.Value)!));
+        main.TypeInstrument = (int)(inc.Type is null ? InstrumentsStockSharpTypesEnum.None : (InstrumentsStockSharpTypesEnum)Enum.Parse(typeof(InstrumentsStockSharpTypesEnum), Enum.GetName(inc.Type.Value)!));
+        main.SettlementType = (int)(inc.SettlementType is null ? SettlementTypesEnum.None : (SettlementTypesEnum)Enum.Parse(typeof(SettlementTypesEnum), Enum.GetName(inc.SettlementType.Value)!));
+        main.OptionType = (int)(inc.OptionType is null ? OptionInstrumentTradeTypesEnum.None : (OptionInstrumentTradeTypesEnum)Enum.Parse(typeof(OptionInstrumentTradeTypesEnum), Enum.GetName(inc.OptionType.Value)!));
+        main.OptionStyle = (int)(inc.OptionStyle is null ? OptionTradeInstrumentStylesEnum.None : (OptionTradeInstrumentStylesEnum)Enum.Parse(typeof(OptionTradeInstrumentStylesEnum), Enum.GetName(inc.OptionStyle.Value)!));
 
         main.Board = inc.Board is null
             ? null
@@ -126,7 +126,7 @@ public static class BindsStockSharpModelsExtensions
     public static ExchangeStockSharpModel Bind(this ExchangeStockSharpModel main, Exchange inc)
     {
         main.Name = inc.Name;
-        main.CountryCode = inc.CountryCode is null ? null : (int)(CountryCodesEnum)Enum.Parse(typeof(CountryCodesEnum), Enum.GetName(inc.CountryCode.Value));
+        main.CountryCode = inc.CountryCode is null ? null : (int)(CountryCodesEnum)Enum.Parse(typeof(CountryCodesEnum), Enum.GetName(inc.CountryCode.Value)!);
         return main;
     }
 
@@ -135,8 +135,8 @@ public static class BindsStockSharpModelsExtensions
     {
         main.Board = inc.Board is null ? null : new BoardStockSharpModel().Bind(inc.Board);
 
-        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value));
-        main.State = inc.State is null ? null : (PortfolioStatesEnum)Enum.Parse(typeof(PortfolioStatesEnum), Enum.GetName(inc.State.Value));
+        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value)!);
+        main.State = inc.State is null ? null : (PortfolioStatesEnum)Enum.Parse(typeof(PortfolioStatesEnum), Enum.GetName(inc.State.Value)!);
 
         main.ClientCode = inc.ClientCode;
         main.Name = inc.Name;
@@ -179,7 +179,7 @@ public static class BindsStockSharpModelsExtensions
         }
 
         main.StrategyId = inc.StrategyId;
-        main.Side = inc.Side is null ? null : (SidesEnum)Enum.Parse(typeof(SidesEnum), Enum.GetName(inc.Side.Value));
+        main.Side = inc.Side is null ? null : (SidesEnum)Enum.Parse(typeof(SidesEnum), Enum.GetName(inc.Side.Value)!);
         main.Leverage = inc.Leverage;
         main.CommissionTaker = inc.CommissionTaker;
         main.CommissionMaker = inc.CommissionMaker;

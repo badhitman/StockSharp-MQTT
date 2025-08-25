@@ -118,7 +118,7 @@
         {
             <p>Big price difference in #@InitialLoadCheck.Response</p>
         }
-        @if (reqDownloadBase.BigPriceDifferences.Count != 0)
+        @if (reqDownloadBase.BigPriceDifferences is not null && reqDownloadBase.BigPriceDifferences.Count != 0)
         {
             <hr />
             @foreach (var _r in reqDownloadBase.BigPriceDifferences)

@@ -117,11 +117,12 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     {
         SnackBarRepo.Warn($"Disallow BigPriceDifference for instrument #{InitialLoadCheck?.Response}");
         _visibleInitialQuestionsDownload = false;
-        reqDownloadBase.BigPriceDifferences.Clear();
+        reqDownloadBase.BigPriceDifferences?.Clear();
     }
 
     async Task AllowBigPriceDifferenceAsync()
     {
+        reqDownloadBase.BigPriceDifferences ??= [];
         reqDownloadBase.BigPriceDifferences.Add(InitialLoadCheck?.Response ?? throw new Exception(nameof(AllowBigPriceDifferenceAsync)));
         _visibleInitialQuestionsDownload = false;
         await DownloadBaseAsync();

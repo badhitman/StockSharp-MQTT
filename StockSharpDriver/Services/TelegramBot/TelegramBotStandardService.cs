@@ -80,7 +80,7 @@ public class TelegramBotStandardService(ITelegramBotClient _botClient, ILogger<T
         IReplyMarkup? replyKB = message.ReplyKeyboard is null
             ? null
             : new InlineKeyboardMarkup(message.ReplyKeyboard
-            .Select(x => x.Select(y => InlineKeyboardButton.WithCallbackData(y.Title, y.Data))));
+            .Select(x => x.Select(y => InlineKeyboardButton.WithCallbackData(y.Title ?? "~not set~", y.Data ?? "~not set~"))));
         Message sender_msg;
         //MessageTelegramModelDB msg_db;
         try

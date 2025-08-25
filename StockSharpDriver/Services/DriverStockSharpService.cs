@@ -35,7 +35,7 @@ public class DriverStockSharpService(
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
     Subscription? SecurityCriteriaCodeFilterSubscription;
 
-    List<BoardStockSharpViewModel> Boards = [];
+    List<BoardStockSharpViewModel>? Boards;
     Portfolio? SelectedPortfolio;
 
     readonly List<MyTrade> myTrades = [];
@@ -107,7 +107,7 @@ public class DriverStockSharpService(
        highYieldLimit = 5m;
     #endregion
 
-    bool StrategyStarted => Boards.Count == 0 && StrategyTrades is not null && StrategyTrades.Count != 0;
+    bool StrategyStarted => Boards is not null && Boards.Count != 0 && StrategyTrades is not null && StrategyTrades.Count != 0;
 
 
     List<Security> SecuritiesBonds(bool ofStrategy)
@@ -126,12 +126,12 @@ public class DriverStockSharpService(
                     BoardStockSharpModel _bo = new BoardStockSharpModel().Bind(security.Board);
                     if (ofStrategy)
                     {
-                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Boards.Count == 0 || Boards.Any(x => x.Equals(_bo))))
+                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Boards is null || Boards.Count == 0 || Boards.Any(x => x.Equals(_bo))))
                             res.Add(security);
                     }
                     else
                     {
-                        if (Boards.Count == 0 || Boards.Any(x => x.Equals(_bo)))
+                        if (Boards is null || Boards.Count == 0 || Boards.Any(x => x.Equals(_bo)))
                             res.Add(security);
                     }
                 }
@@ -196,7 +196,7 @@ public class DriverStockSharpService(
             return res;
         }
 
-        if (Boards.Count == 0)
+        if (Boards is null || Boards.Count == 0)
         {
             res.AddError($"Board is null");
             return res;
@@ -350,7 +350,7 @@ public class DriverStockSharpService(
         if (!string.IsNullOrWhiteSpace(ProgramDataPath))
             return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
 
-        if (Boards.Count == 0)
+        if (Boards is null || Boards.Count == 0)
             return ResponseBaseModel.CreateError("Board - not set");
 
         if (req.SelectedPortfolio is null)
@@ -493,7 +493,7 @@ public class DriverStockSharpService(
         List<Security> currentSecurities = SecuritiesBonds(true);
         TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await dataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
 
-        InstrumentTradeStockSharpViewModel? currInstrument = readInstrument.Response.FirstOrDefault(x => x.Id == req.InstrumentId);
+        InstrumentTradeStockSharpViewModel? currInstrument = readInstrument.Response?.FirstOrDefault(x => x.Id == req.InstrumentId);
         if (currInstrument is null)
             return ResponseBaseModel.CreateError("current instrument not found");
 
@@ -752,7 +752,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken cancellationToken = default)
     {
-        Boards.Clear();
+        Boards?.Clear();
         if (SecuritiesBonds(false).Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
 
@@ -1043,7 +1043,7 @@ public class DriverStockSharpService(
 
         conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
 
-        Boards.Clear();
+        Boards?.Clear();
         SelectedPortfolio = null;
         ClientCodeStockSharp = null;
         ProgramDataPath = null;
