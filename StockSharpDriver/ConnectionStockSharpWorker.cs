@@ -70,7 +70,7 @@ public class ConnectionStockSharpWorker(
     {
         _logger.LogDebug($"Call > `{nameof(SecurityReceivedHandle)}`: {JsonConvert.SerializeObject(sec, GlobalStaticConstants.JsonSerializerSettings)}");
         InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(sec);
-        InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response;
+        InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response!;
         eventTrans.InstrumentReceived(dbRes);
     }
 
@@ -79,7 +79,7 @@ public class ConnectionStockSharpWorker(
         _logger.LogDebug($"Call > `{nameof(PortfolioReceivedHandle)}`: {JsonConvert.SerializeObject(port, GlobalStaticConstants.JsonSerializerSettings)}");
         PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
         TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
-        eventTrans.PortfolioReceived(echoData.Response);
+        eventTrans.PortfolioReceived(echoData.Response!);
     }
 
     void BoardReceivedHandle(Subscription subscription, ExchangeBoard boardExchange)
@@ -94,7 +94,7 @@ public class ConnectionStockSharpWorker(
     {
         _logger.LogWarning($"Call > `{nameof(OrderReceivedHandle)}`: {JsonConvert.SerializeObject(orderSource, GlobalStaticConstants.JsonSerializerSettings)}");
 
-        InstrumentTradeStockSharpViewModel instrumentDBRes = dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(orderSource.Security)).Result.Response;
+        InstrumentTradeStockSharpViewModel instrumentDBRes = dataRepo.SaveInstrument(new InstrumentTradeStockSharpModel().Bind(orderSource.Security)).Result.Response!;
 
         OrderStockSharpModel order = new OrderStockSharpModel().Bind(orderSource);
 
@@ -133,7 +133,7 @@ public class ConnectionStockSharpWorker(
             foreach (Security security in securities)
             {
                 InstrumentTradeStockSharpModel instrument = new InstrumentTradeStockSharpModel().Bind(security);
-                InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response;
+                InstrumentTradeStockSharpViewModel dbRes = dataRepo.SaveInstrument(instrument).Result.Response!;
                 eventTrans.InstrumentReceived(dbRes);
             }
         }
@@ -147,7 +147,7 @@ public class ConnectionStockSharpWorker(
         {
             PortfolioStockSharpModel portfolio = new PortfolioStockSharpModel().Bind(port);
             TResponseModel<PortfolioStockSharpViewModel> echoData = dataRepo.SavePortfolio(portfolio).Result;
-            eventTrans.PortfolioReceived(echoData.Response).Wait();
+            eventTrans.PortfolioReceived(echoData.Response!).Wait();
         }
     }
 
@@ -212,7 +212,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)),
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!),
         }).Wait();
     }
     void ConnectionErrorHandle(Exception ex)
@@ -227,7 +227,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
         }).Wait();
     }
     void ErrorHandle(Exception ex)
@@ -327,7 +327,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
         }).Wait();
     }
     void DisconnectedHandle()
@@ -336,7 +336,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
         }).Wait();
     }
     void DataTypeReceivedHandle(Subscription subscription, StockSharp.Messages.DataType argDt)
@@ -349,7 +349,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
         }).Wait();
     }
     void ConnectionLostHandle(StockSharp.Messages.IMessageAdapter sender)
@@ -358,7 +358,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
         }).Wait();
     }
     void ConnectedExHandle(StockSharp.Messages.IMessageAdapter sender)
@@ -367,7 +367,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
         }).Wait();
     }
     void ConnectedHandle()
@@ -376,7 +376,7 @@ public class ConnectionStockSharpWorker(
         eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
         {
             CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState))
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
         }).Wait();
     }
     void CandleReceivedHandle(Subscription subscription, StockSharp.Messages.ICandleMessage candleMessage)

@@ -34,7 +34,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     public required TradingAreaComponent Parent { get; set; }
 
 
-    public DashboardTradeStockSharpModel StrategyTrade => DashboardTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, IsAlter, LowLimit, HightLimit);
+    public DashboardTradeStockSharpModel StrategyTrade => DashboardTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, LowLimit, HightLimit);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
     decimal _lowLimit;
@@ -71,20 +71,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         private set
         {
             _isSmall = value;
-            InvokeAsync(SaveStrategy);
-        }
-    }
-
-    bool _isAlter;
-    public bool IsAlter
-    {
-        get
-        {
-            return _isAlter;
-        }
-        private set
-        {
-            _isAlter = value;
             InvokeAsync(SaveStrategy);
         }
     }
@@ -185,7 +171,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     {
         await SetBusyAsync();
 
-        TResponseModel<DashboardTradeStockSharpModel> restoreStrategy = await StorageRepo.ReadParameterAsync<DashboardTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
+        TResponseModel<DashboardTradeStockSharpModel?> restoreStrategy = await StorageRepo.ReadParameterAsync<DashboardTradeStockSharpModel>(GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(Instrument.Id));
 
         if (restoreStrategy.Response is null)
         {
@@ -213,7 +199,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         _basePrice = RestoreStrategy.BasePrice;
         _valueOperation = RestoreStrategy.ValueOperation;
         _offset = RestoreStrategy.Offset;
-        _isAlter = RestoreStrategy.IsAlter;
 
         _smallBidVolume = RestoreStrategy.SmallBidVolume;
         _smallOfferVolume = RestoreStrategy.SmallOfferVolume;
@@ -245,7 +230,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
                 SmallOffset = _smallOffset,
                 WorkingVolume = _workingVolume,
 
-                IsAlter = _isAlter,
                 IsSmall = _isSmall,
                 LowLimit = _lowLimit,
                 HightLimit = _hightLimit,

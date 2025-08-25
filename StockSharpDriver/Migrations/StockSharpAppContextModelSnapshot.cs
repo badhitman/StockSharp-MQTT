@@ -260,7 +260,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<DateTime>("CreatedAtUTC")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Currency")
+                    b.Property<int?>("Currency")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("Decimals")
@@ -479,7 +479,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<decimal?>("Slippage")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("State")
+                    b.Property<int?>("State")
                         .HasColumnType("INTEGER");
 
                     b.Property<long?>("Status")

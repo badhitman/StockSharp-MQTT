@@ -80,8 +80,22 @@ public class ParametersStorage(
     /// <inheritdoc/>
     public async Task<TPaginationResponseModel<TagViewModel>> TagsSelectAsync(TPaginationRequestModel<SelectMetadataRequestModel> req, CancellationToken token = default)
     {
+        if (req.Payload is null)
+        {
+            loggerRepo.LogError($"err [{nameof(TagsSelectAsync)}]: request.Payload is null");
+            return new()
+            {
+                PageNum = req.PageNum,
+                PageSize = req.PageSize,
+                SortingDirection = req.SortingDirection,
+                SortBy = req.SortBy,
+                TotalRowsCount = 0,
+            };
+        }
+
         if (req.PageSize < 5)
             req.PageSize = 5;
+
         using PropertiesStorageContext context = await cloudParametersDbFactory.CreateDbContextAsync(token);
 
         IQueryable<TagModelDB> q = context
@@ -150,7 +164,7 @@ public class ParametersStorage(
              ApplicationName = x.ApplicationName,
              CreatedAt = x.CreatedAt,
              OwnerPrimaryKey = x.OwnerPrimaryKey,
-             Payload = JsonConvert.DeserializeObject<T>(x.SerializedDataJson),
+             Payload = x.SerializedDataJson is null ? default : JsonConvert.DeserializeObject<T>(x.SerializedDataJson),
              PrefixPropertyName = x.PrefixPropertyName,
              PropertyName = x.PropertyName,
         })];
@@ -178,7 +192,7 @@ public class ParametersStorage(
 
         try
         {
-            T? rawData = JsonConvert.DeserializeObject<T>(pdb.SerializedDataJson);
+            T? rawData = pdb.SerializedDataJson is null ? default : JsonConvert.DeserializeObject<T>(pdb.SerializedDataJson);
             cache.Set(mem_key, rawData, new MemoryCacheEntryOptions().SetAbsoluteExpiration(_ts));
             return rawData;
         }

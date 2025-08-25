@@ -51,7 +51,10 @@ public class RubricsService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> RubricMoveAsync(TRequestModel<RowMoveModel> req, CancellationToken token = default)
     {
-        ResponseBaseModel res = new();
+        if (req.Payload is null)
+        {
+            return ResponseBaseModel.CreateError($"err - {nameof(RubricMoveAsync)}: request.Payload is null");
+        }
 
         using PropertiesStorageContext context = await helpdeskDbFactory.CreateDbContextAsync(token);
 
@@ -63,6 +66,8 @@ public class RubricsService(
 
         using IDbContextTransaction transaction = context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
         LockUniqueTokenModelDB locker = new() { Token = $"rubric-sort-upd-{data.ParentId}" };
+
+        ResponseBaseModel res = new();
         try
         {
             await context.AddAsync(locker, token);
@@ -154,13 +159,16 @@ public class RubricsService(
     public async Task<TResponseModel<int>> RubricCreateOrUpdateAsync(RubricStandardModel rubric, CancellationToken token = default)
     {
         TResponseModel<int> res = new();
-        Regex rx = new(@"\s+", RegexOptions.Compiled);
-        rubric.Name = rx.Replace(rubric.Name.Trim(), " ");
+
         if (string.IsNullOrWhiteSpace(rubric.Name))
         {
             res.AddError("Объект должен иметь имя");
             return res;
         }
+
+        Regex rx = new(@"\s+", RegexOptions.Compiled);
+        rubric.Name = rx.Replace(rubric.Name.Trim(), " ");
+
         rubric.NormalizedNameUpper = rubric.Name.ToUpper();
         using PropertiesStorageContext context = await helpdeskDbFactory.CreateDbContextAsync(token);
 

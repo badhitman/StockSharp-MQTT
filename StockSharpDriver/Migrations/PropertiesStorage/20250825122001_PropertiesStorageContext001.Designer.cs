@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations.PropertiesStorage
 {
     [DbContext(typeof(PropertiesStorageContext))]
-    [Migration("20250823135034_PropertiesStorageContext001")]
+    [Migration("20250825122001_PropertiesStorageContext001")]
     partial class PropertiesStorageContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

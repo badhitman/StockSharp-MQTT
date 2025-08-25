@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations.NLogs
 {
     [DbContext(typeof(NLogsContext))]
-    [Migration("20250429053609_NLogsContext001")]
+    [Migration("20250825121853_NLogsContext001")]
     partial class NLogsContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -497,53 +497,59 @@ public class DriverStockSharpService(
         if (currInstrument is null)
             return ResponseBaseModel.CreateError("current instrument not found");
 
-        SecurityPosition? SbPos = SBondPositionsList.FirstOrDefault(sp => sp.Sec.Code == currInstrument.Code);
-        if (SbPos is not null)
-            SBondPositionsList.Remove(SbPos);
+        SBondPositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
+        SBondSizePositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
+        SBondSmallPositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
 
-        //    SecurityPosition SbSizePos = SBondSizePositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-        //    if (!SbSizePos is null)
-        //        SBondSizePositionsList.Remove(SbSizePos);
+        Security currentSecurity = currentSecurities.First(sec => sec.Id == currInstrument.IdRemote);
+        string msg;
+        if (currentSecurity is null)
+        {
+            msg = $"Security - not found for instrument: {JsonConvert.SerializeObject(currInstrument, Formatting.Indented)}";
+            _logger.LogError(msg);
+            return ResponseBaseModel.CreateError(msg);
+        }
 
-        //    SecurityPosition SbSmallPos = SBondSmallPositionsList.FirstOrDefault(sp => sp.Sec.Code.ContainsIgnoreCase(bondName));
-        //    if (!SbSmallPos is null)
-        //        SBondSmallPositionsList.Remove(SbSmallPos);
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
 
-        //    Security currentSecurity = currentSecurities.FirstOrDefault(sec => sec.Code.ContainsIgnoreCase(bondName));
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        //    DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bondName);
+        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        //    if (!decUpD is null)
-        //    {
-        //        long? WorkVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "WorkingVolume_" + bondName)).Value;
-        //        long? SmallBidVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallBidVolume_" + bondName)).Value;
-        //        long? SmallOfferVol = ((LongUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOfferVolume_" + bondName)).Value;
-        //        int? LowLimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bondName)).Value;
-        //        int? Highlimit = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bondName)).Value;
-        //        int? SmallOffset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "SmallOffset_" + bondName)).Value;
-        //        int? Offset = ((IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Offset_" + bondName)).Value;
-        //        bool? IsSmall = ((CheckBox)LogicalTreeHelper.FindLogicalNode(MyProgram, "IsMM_" + bondName)).IsChecked;
+        if (dataParse.Count == 0)
+            return ResponseBaseModel.CreateError("Dashboard - not set");
 
-        //        SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+        int _fx = dataParse.FindIndex(x => x.Id == req.InstrumentId);
+        if (_fx < 0)
+            return ResponseBaseModel.CreateError($"Instrument not set strategy: {currInstrument}");
 
-        //        if ((bool)IsSmall)
-        //            SBondSmallPositionsList.Add(new SecurityPosition(currentSecurity, "Small", (decimal)(0.0301), (decimal)(Highlimit - 0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+        DashboardTradeStockSharpModel currentStrategy = dataParse[_fx];
 
-        //        if (OfzCodes.Contains(currentSecurity.Code) || OfzCodesNew.Contains(currentSecurity.Code))
-        //            SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", (decimal)(Highlimit + 0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-        //    }
-        //    else
-        //    {
-        //        SBondPositionsList.Add(new SecurityPosition(currentSecurity, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
+        InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
 
-        //        if (OfzCodes.Contains(currentSecurity.Code) || OfzCodesNew.Contains(currentSecurity.Code))
-        //            SBondSizePositionsList.Add(new SecurityPosition(currentSecurity, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-        //    }
+        decimal WorkVol = currentStrategy.WorkingVolume;
+        decimal SmallBidVol = currentStrategy.SmallBidVolume;
+        decimal SmallOfferVol = currentStrategy.SmallOfferVolume;
+        decimal LowLimit = currentStrategy.LowLimit;
+        decimal Highlimit = currentStrategy.HightLimit;
+        decimal SmallOffset = currentStrategy.SmallOffset;
+        decimal Offset = currentStrategy.Offset;
+        bool IsSmall = currentStrategy.IsSmall;
 
-        //    Subscription sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
-        //    OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
+        SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
 
-        throw new NotImplementedException();
+        if (IsSmall)
+            SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (decimal)(Highlimit - (decimal)0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+
+        int[] _dsc = [(int)MarkersInstrumentStockSharpEnum.IsNew];
+
+        SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (decimal)(Highlimit + (decimal)0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+
+        Subscription sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).First();
+        OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
+
+        return ResponseBaseModel.CreateInfo($"`{nameof(ResetStrategy)}` - done");
     }
 
     /// <inheritdoc/>
@@ -568,11 +574,7 @@ public class DriverStockSharpService(
         if (!currentSecurities.Any())
             return ResponseBaseModel.CreateError("BondList - not any");
 
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await dataRepo.InstrumentsSelectAsync(new()
-        {
-            PageNum = 0,
-            PageSize = int.MaxValue,
-        }, cancellationToken);
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
@@ -609,33 +611,23 @@ public class DriverStockSharpService(
                 return ResponseBaseModel.CreateError(msg);
             }
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
-            if (!currentStrategy.IsAlter)
-            {
-                decimal WorkVol = currentStrategy.WorkingVolume;
-                decimal SmallBidVol = currentStrategy.SmallBidVolume;
-                decimal SmallOfferVol = currentStrategy.SmallOfferVolume;
-                decimal LowLimit = currentStrategy.LowLimit;
-                decimal Highlimit = currentStrategy.HightLimit;
-                decimal SmallOffset = currentStrategy.SmallOffset;
-                decimal Offset = currentStrategy.Offset;
-                bool IsSmall = currentStrategy.IsSmall;
+            decimal WorkVol = currentStrategy.WorkingVolume;
+            decimal SmallBidVol = currentStrategy.SmallBidVolume;
+            decimal SmallOfferVol = currentStrategy.SmallOfferVolume;
+            decimal LowLimit = currentStrategy.LowLimit;
+            decimal Highlimit = currentStrategy.HightLimit;
+            decimal SmallOffset = currentStrategy.SmallOffset;
+            decimal Offset = currentStrategy.Offset;
+            bool IsSmall = currentStrategy.IsSmall;
 
-                SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", LowLimit / 100,
-                 Highlimit / 100, WorkVol, WorkVol, Offset / 100));
+            SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", LowLimit / 100,
+             Highlimit / 100, WorkVol, WorkVol, Offset / 100));
 
-                if (IsSmall)
-                    SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
+            if (IsSmall)
+                SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
 
-                if (!instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
-                    SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-            }
-            else
-            {
-                SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
-
-                if (!instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
-                    SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-            }
+            if (!instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+                SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
 
             Subscription? sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
 
@@ -647,7 +639,7 @@ public class DriverStockSharpService(
                 return ResponseBaseModel.CreateError("sub is not null");
             }
         }
-        throw new NotImplementedException();
+        return ResponseBaseModel.CreateInfo($"done: reset for {resInstruments.Response.Count} instruments");
     }
 
     async Task<List<DashboardTradeStockSharpModel>> ReadDashboard(int?[] instrumentsIds, CancellationToken cancellationToken = default)
@@ -712,12 +704,7 @@ public class DriverStockSharpService(
             };
         }
 
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = await dataRepo.InstrumentsSelectAsync(new()
-        {
-            PageNum = 0,
-            PageSize = int.MaxValue,
-            //FavoriteFilter = true,
-        }, cancellationToken);
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
 
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");

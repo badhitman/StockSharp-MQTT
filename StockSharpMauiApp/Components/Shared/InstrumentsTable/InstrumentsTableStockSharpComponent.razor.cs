@@ -170,7 +170,7 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
 
         await Task.WhenAll([
             Task.Run(async () => {
-                TResponseModel<string[]> readColumnsSet = await StorageRepo.ReadParameterAsync<string[]>(setCol);
+                TResponseModel<string[]?> readColumnsSet = await StorageRepo.ReadParameterAsync<string[]>(setCol);
                 columnsSelected = readColumnsSet.Response;
             }),
             Task.Run(async () => {

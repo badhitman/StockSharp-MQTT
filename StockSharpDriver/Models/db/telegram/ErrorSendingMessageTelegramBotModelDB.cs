@@ -48,7 +48,7 @@ public class ErrorSendingMessageTelegramBotModelDB : IdSwitchableModel
     /// <summary>
     /// Подпись (от кого сообщение). Если null, то подписи не будет
     /// </summary>
-    public string SignFrom { get; set; }
+    public string? SignFrom { get; set; }
 
     /// <summary>
     /// Имя режима парсинга сообщений Telegram (default: Html). Пример: Html, Markdown, MarkdownV2

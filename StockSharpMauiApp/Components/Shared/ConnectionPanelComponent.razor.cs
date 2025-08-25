@@ -258,7 +258,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     async Task ReadBoards()
     {
-        TResponseModel<int[]> _boardsFilter = await StorageRepo.ReadParameterAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard);
+        TResponseModel<int[]?> _boardsFilter = await StorageRepo.ReadParameterAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard);
         if (_boardsFilter.Response is not null && _boardsFilter.Response.Length != 0)
         {
             TResponseModel<List<BoardStockSharpViewModel>> boardDb = await DataRepo.GetBoardsAsync(_boardsFilter.Response);

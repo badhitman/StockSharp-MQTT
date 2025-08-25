@@ -66,7 +66,7 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
             dt += TimeSpan.FromDays(req.FromDays);
         }
 
-        CashFlows.RemoveAll(x => instrumentDb.CashFlows
+        CashFlows.RemoveAll(x => instrumentDb.CashFlows!
             .Where(y => x.Coupon == x.Coupon)
             .Where(y => x.Notional == x.Notional)
             .Where(y => x.StartDate == x.StartDate)
@@ -85,9 +85,9 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
                 .ToListAsync(cancellationToken: cancellationToken);
         }
 
-        if (instrumentDb.CashFlows.Count != 0)
+        if (instrumentDb.CashFlows!.Count != 0)
         {
-            CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.Instrument.MaturityDate.Equals(req.MaturityDate));
+            CashFlowModelDB _cff = instrumentDb.CashFlows.First(s => s.Instrument!.MaturityDate.Equals(req.MaturityDate));
             _cff.Notional = req.NotionalFirst;
             ctx.Update(_cff);
             if (await ctx.SaveChangesAsync(cancellationToken) != 0)

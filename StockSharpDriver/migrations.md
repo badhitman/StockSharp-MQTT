@@ -12,6 +12,6 @@ EntityFrameworkCore\Update-Database -Context PropertiesStorageContext -Project S
 ```
 
 ```
-EntityFrameworkCore\Add-Migration NLogsContext002 -Context NLogsContext -Project StockSharpDriver -StartupProject StockSharpDriver
+EntityFrameworkCore\Add-Migration NLogsContext001 -Context NLogsContext -Project StockSharpDriver -StartupProject StockSharpDriver
 Update-Database -Context NLogsContext -Project StockSharpDriver -StartupProject StockSharpDriver
 ```

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250815053301_AppStockSharpContext001")]
+    [Migration("20250825122132_AppStockSharpContext001")]
     partial class AppStockSharpContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -262,7 +262,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<DateTime>("CreatedAtUTC")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Currency")
+                    b.Property<int?>("Currency")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("Decimals")
@@ -481,7 +481,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<decimal?>("Slippage")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("State")
+                    b.Property<int?>("State")
                         .HasColumnType("INTEGER");
 
                     b.Property<long?>("Status")

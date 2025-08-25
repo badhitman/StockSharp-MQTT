@@ -95,7 +95,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> GetInstrumentsAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> GetInstrumentsAsync(int[]? ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<InstrumentStockSharpModelDB> q = ids is null || ids.Length == 0
@@ -103,8 +103,9 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             : context.Instruments.Where(x => ids.Contains(x.Id));
 
         List<InstrumentStockSharpModelDB> data = await q
+            .Include(x => x.Markers)
             .Include(x => x.Board)
-            .ThenInclude(x => x.Exchange)
+            .ThenInclude(x => x!.Exchange)
             .ToListAsync(cancellationToken: cancellationToken);
 
         return new()
@@ -117,7 +118,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     public async Task<TResponseModel<List<MarkerInstrumentStockSharpViewModel>>> GetMarkersForInstrumentAsync(int instrumentId, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        InstrumentStockSharpModelDB instrumentDb = await context
+        InstrumentStockSharpModelDB? instrumentDb = await context
             .Instruments
             .Include(x => x.Markers)
             .FirstOrDefaultAsync(x => x.Id == instrumentId, cancellationToken: cancellationToken);
@@ -190,13 +191,13 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         int[] _allMArkers = [.. Enum.GetValues<MarkersInstrumentStockSharpEnum>().Select(x => (int)x)];
 
         bool _notSet = req.MarkersFilter?.Contains(null) == true;
-        IEnumerable<int> _woq = req.MarkersFilter?.Where(x => x is not null).Select(x => (int)x.Value);
+        IEnumerable<int>? _woq = req.MarkersFilter?.Where(x => x is not null).Select(x => (int)x!.Value);
 
-        int[] markersFilterShow = _woq is null || !_woq.Any()
+        int[]? markersFilterShow = _woq is null || !_woq.Any()
             ? null
             : [.. _woq.Select(x => (int)x)];
 
-        int[] markersFilterSkip = markersFilterShow is null || markersFilterShow.Length == 0 || markersFilterShow.Length == _allMArkers.Length
+        int[]? markersFilterSkip = markersFilterShow is null || markersFilterShow.Length == 0 || markersFilterShow.Length == _allMArkers.Length
            ? null
            : [.. _allMArkers.Where(x => !markersFilterShow.Contains(x))];
 
@@ -237,15 +238,15 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (!string.IsNullOrWhiteSpace(req.FindQuery))
         {
             req.FindQuery = req.FindQuery.ToUpper();
-            q = q.Where(x => EF.Functions.Like(x.IdRemoteNormalizedUpper, $"%{req.FindQuery}%") || EF.Functions.Like(x.NameNormalizedUpper, $"%{req.FindQuery}%"));
+            q = q.Where(x => x.IdRemoteNormalizedUpper != null && EF.Functions.Like(x.IdRemoteNormalizedUpper, $"%{req.FindQuery}%") || (x.NameNormalizedUpper != null && EF.Functions.Like(x.NameNormalizedUpper, $"%{req.FindQuery}%")));
         }
 
         List<InstrumentStockSharpModelDB> _data = await q
             .Include(x => x.Markers)
             .Include(x => x.Board)
-            .ThenInclude(x => x.Exchange)
+            .ThenInclude(x => x!.Exchange)
             .OrderBy(x => x.Name)
-            .ThenBy(x => x.Board.Code)
+            .ThenBy(x => x.Board!.Code)
             .Skip(req.PageSize * req.PageNum)
             .Take(req.PageSize)
             .ToListAsync(cancellationToken: cancellationToken);
@@ -464,7 +465,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         IQueryable<BoardStockSharpModelDB> q = context.Boards.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(req.Code))
-            q = q.Where(x => EF.Functions.Like(x.Code, $"%{req.Code}%"));
+            q = q.Where(x => x.Code != null && EF.Functions.Like(x.Code, $"%{req.Code}%"));
 
         if (_exc is not null)
             q = q.Where(x => x.ExchangeId == _exc.Id);
@@ -517,7 +518,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         IQueryable<PortfolioTradeModelDB> q = ids is null || ids.Length == 0
             ? context.Portfolios.AsQueryable()
             : context.Portfolios.Where(x => ids.Contains(x.Id));
-        List<PortfolioTradeModelDB> data = await q.Include(x => x.Board).ThenInclude(x => x.Exchange).ToListAsync(cancellationToken: cancellationToken);
+        List<PortfolioTradeModelDB> data = await q.Include(x => x.Board).ThenInclude(x => x!.Exchange).ToListAsync(cancellationToken: cancellationToken);
 
         return new()
         {

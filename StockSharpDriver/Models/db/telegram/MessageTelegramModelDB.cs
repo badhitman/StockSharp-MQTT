@@ -146,7 +146,7 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Optional. For text messages, the actual text of the message, 0-4096 characters
     /// </summary>
-    public string Text { get; set; }
+    public string? Text { get; set; }
 
     /// <summary>
     /// Optional. For text messages, the actual text of the message, 0-4096 characters
