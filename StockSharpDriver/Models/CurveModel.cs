@@ -20,11 +20,11 @@ public class CurveModel : CurveBaseModel
     /// <summary>
     /// Load Curve form database
     /// </summary>
-    public string GetCurveFromDb(string DbName, Connector trader, List<BoardStockSharpViewModel> boards, List<string> bigPriceDifferences, ref IEventsStockSharp eventTrans)
+    public string? GetCurveFromDb(string DbName, Connector trader, List<BoardStockSharpViewModel> boards, List<string> bigPriceDifferences, ref IEventsStockSharp eventTrans)
     {
         string secName;
         decimal secPrice;
-        Security security;
+        Security? security;
         int j, tableSize;
 
         BondList.Clear();
@@ -58,13 +58,20 @@ public class CurveModel : CurveBaseModel
 
             bool checkBoard(ExchangeBoard reqEx)
             {
-                return boards.Any(board => 
+                return boards.Any(board =>
                 {
-                    ExchangeStockSharpModel _ge = board.GetExchange();
-                    return 
-                        reqEx.Code == board.Code && 
-                        reqEx.Exchange.Name == _ge.Name && 
-                        (int?)reqEx.Exchange.CountryCode == _ge.CountryCode; 
+                    if (reqEx.Code != board.Code)
+                        return false;
+
+                    ExchangeStockSharpModel? _ge = board.GetExchange();
+                    if (reqEx.Exchange is null && _ge is null)
+                        return true;
+                    if (reqEx.Exchange is null || _ge is null)
+                        return false;
+
+                    return
+                        reqEx.Exchange.Name == _ge.Name &&
+                        (int?)reqEx.Exchange.CountryCode == _ge.CountryCode;
                 });
             }
 
@@ -103,8 +110,8 @@ public class CurveModel : CurveBaseModel
                     if (security is not null)
                     {
                         secPrice = Convert.ToDecimal(reader.GetValue(j));
-
-                        if (Math.Abs(GetNode(new InstrumentTradeStockSharpModel().Bind(security)).ModelPrice - secPrice) >= 0.2m)
+                        SBond? _gn = GetNode(new InstrumentTradeStockSharpModel().Bind(security));
+                        if (_gn is not null && Math.Abs(_gn.ModelPrice - secPrice) >= 0.2m)
                         {
                             if (!bigPriceDifferences.Contains(secName))
                             {
@@ -141,7 +148,7 @@ public class CurveModel : CurveBaseModel
 
     public void AddNode(SBond bondSec, decimal price)
     {
-        SBond tmpBond = BondList.Find(s => s.UnderlyingSecurity == bondSec.UnderlyingSecurity);
+        SBond? tmpBond = BondList.Find(s => s.UnderlyingSecurity == bondSec.UnderlyingSecurity);
 
         if (tmpBond != null)
             tmpBond.ModelPrice = price;
@@ -154,5 +161,5 @@ public class CurveModel : CurveBaseModel
     }
 
     //Returns node which corresponds to security
-    public SBond GetNode(InstrumentTradeStockSharpModel sec) => BondList.Find(s => s.UnderlyingSecurity.Code == sec.Code);
+    public SBond? GetNode(InstrumentTradeStockSharpModel sec) => BondList.Find(s => s.UnderlyingSecurity.Code == sec.Code);
 }

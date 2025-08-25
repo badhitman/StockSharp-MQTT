@@ -17,22 +17,22 @@ public class ChatTelegramModelDB : ChatTelegramViewModel
     /// <summary>
     /// Optional. Title, for supergroups, channels and group chats
     /// </summary>
-    public string NormalizedTitleUpper { get; set; }
+    public string? NormalizedTitleUpper { get; set; }
 
     /// <summary>
     /// Optional. Username, for private chats, supergroups and channels if available
     /// </summary>
-    public string NormalizedUsernameUpper { get; set; }
+    public string? NormalizedUsernameUpper { get; set; }
 
     /// <summary>
     /// Optional. First name of the other party in a private chat
     /// </summary>
-    public string NormalizedFirstNameUpper { get; set; }
+    public string? NormalizedFirstNameUpper { get; set; }
 
     /// <summary>
     /// Optional. Last name of the other party in a private chat
     /// </summary>
-    public string NormalizedLastNameUpper { get; set; }
+    public string? NormalizedLastNameUpper { get; set; }
 
 
     /// <summary>
@@ -43,17 +43,17 @@ public class ChatTelegramModelDB : ChatTelegramViewModel
     /// <summary>
     /// ChatPhoto
     /// </summary>
-    public ChatPhotoTelegramModelDB ChatPhoto { get; set; }
+    public ChatPhotoTelegramModelDB? ChatPhoto { get; set; }
 
     /// <summary>
     /// Messages
     /// </summary>
-    public List<MessageTelegramModelDB> Messages { get; set; }
+    public List<MessageTelegramModelDB>? Messages { get; set; }
 
     /// <summary>
     /// ChatsJoins
     /// </summary>
-    public List<JoinUserChatModelDB> UsersJoins { get; set; }
+    public List<JoinUserChatModelDB>? UsersJoins { get; set; }
 
     /// <inheritdoc/>
     public override string ToString()

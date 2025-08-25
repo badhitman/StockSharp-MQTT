@@ -12,7 +12,7 @@ public class DocumentThumbnailTelegramModelDB : PhotoSizeTelegramModel
     /// <summary>
     /// Document
     /// </summary>
-    public DocumentTelegramModelDB DocumentOwner { get; set; }
+    public DocumentTelegramModelDB? DocumentOwner { get; set; }
     /// <summary>
     /// Document
     /// </summary>

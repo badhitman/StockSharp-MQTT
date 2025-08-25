@@ -28,5 +28,5 @@ public class LockUniqueTokenModelDB
     /// Token
     /// </summary>
     [Required]
-    public  string Token { get; set; }
+    public string? Token { get; set; }
 }

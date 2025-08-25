@@ -12,7 +12,7 @@ public class VideoThumbnailTelegramModelDB : PhotoSizeTelegramModel
     /// <summary>
     /// AudioOwner
     /// </summary>
-    public VideoTelegramModelDB VideoOwner { get; set; }
+    public VideoTelegramModelDB? VideoOwner { get; set; }
     /// <summary>
     /// AudioOwner
     /// </summary>

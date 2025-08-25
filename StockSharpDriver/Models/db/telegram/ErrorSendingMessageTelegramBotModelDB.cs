@@ -25,7 +25,7 @@ public class ErrorSendingMessageTelegramBotModelDB : IdSwitchableModel
     /// <summary>
     /// Имя типа исключения
     /// </summary>
-    public string ExceptionTypeName { get; set; }
+    public string? ExceptionTypeName { get; set; }
 
     /// <summary>
     /// Если сообщение является ответом, идентификатор исходного сообщения
@@ -43,7 +43,7 @@ public class ErrorSendingMessageTelegramBotModelDB : IdSwitchableModel
     /// <summary>
     /// Message (error)
     /// </summary>
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>
     /// Подпись (от кого сообщение). Если null, то подписи не будет
@@ -54,7 +54,7 @@ public class ErrorSendingMessageTelegramBotModelDB : IdSwitchableModel
     /// Имя режима парсинга сообщений Telegram (default: Html). Пример: Html, Markdown, MarkdownV2
     /// <a href="https://core.telegram.org/bots/api#formatting-options"/>
     /// </summary>
-    public string ParseModeName { get; set; }
+    public string? ParseModeName { get; set; }
 
     /// <summary>
     /// Признак того, что ошибка возникла не в процессе отправки, а в процессе изменения существующего сообщения Telegram

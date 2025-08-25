@@ -18,7 +18,7 @@ public class RubricInstrumentStockSharpModelDB
     public int Id { get; set; }
 
     /// <inheritdoc/>
-    public InstrumentStockSharpModelDB Instrument { get; set; }
+    public InstrumentStockSharpModelDB? Instrument { get; set; }
 
     /// <inheritdoc/>
     public int InstrumentId { get; set; }

@@ -13,12 +13,12 @@ namespace SharedLib;
 public class PortfolioTradeModelDB : PortfolioStockSharpViewModel, IBaseStockSharpModel
 {
     /// <inheritdoc/>
-    public new BoardStockSharpModelDB Board { get; set; }
+    public new BoardStockSharpModelDB? Board { get; set; }
     /// <inheritdoc/>
     public int? BoardId { get; set; }
 
     /// <inheritdoc/>
-    public List<OrderStockSharpModelDB> Orders { get; set; }
+    public List<OrderStockSharpModelDB>? Orders { get; set; }
 
     /// <inheritdoc/>
     public void SetUpdate(PortfolioStockSharpModel req)

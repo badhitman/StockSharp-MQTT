@@ -12,7 +12,7 @@ public class AudioThumbnailTelegramModelDB : PhotoSizeTelegramModel
     /// <summary>
     /// AudioOwner
     /// </summary>
-    public AudioTelegramModelDB AudioOwner { get; set; }
+    public AudioTelegramModelDB? AudioOwner { get; set; }
     /// <summary>
     /// AudioOwner
     /// </summary>

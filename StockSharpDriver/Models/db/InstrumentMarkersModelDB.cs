@@ -13,7 +13,7 @@ namespace SharedLib;
 public class InstrumentMarkersModelDB : MarkerInstrumentStockSharpViewModel
 {
     /// <inheritdoc/>
-    public InstrumentStockSharpModelDB Instrument { get; set; }
+    public InstrumentStockSharpModelDB? Instrument { get; set; }
 
     /// <inheritdoc/>
     public int InstrumentId { get; set; }

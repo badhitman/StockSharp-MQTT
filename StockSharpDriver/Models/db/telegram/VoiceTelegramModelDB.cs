@@ -20,5 +20,5 @@ public class VoiceTelegramModelDB : FileBaseTelegramModel
     /// <summary>
     /// Optional. MIME type of the file as defined by sender
     /// </summary>
-    public string MimeType { get; set; }
+    public string? MimeType { get; set; }
 }

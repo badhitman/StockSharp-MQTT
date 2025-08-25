@@ -15,21 +15,21 @@ namespace SharedLib;
 public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, IBaseStockSharpModel
 {
     /// <inheritdoc/>
-    public new BoardStockSharpModelDB Board { get; set; }
+    public new BoardStockSharpModelDB? Board { get; set; }
     /// <inheritdoc/>
     public int BoardId { get; set; }
 
     /// <inheritdoc/>
-    public string NameNormalizedUpper { get; set; }
+    public string? NameNormalizedUpper { get; set; }
 
     /// <inheritdoc/>
-    public string IdRemoteNormalizedUpper { get; set; }
+    public string? IdRemoteNormalizedUpper { get; set; }
 
     /// <inheritdoc/>
-    public new List<InstrumentMarkersModelDB> Markers { get; set; }
+    public new List<InstrumentMarkersModelDB>? Markers { get; set; }
 
     /// <inheritdoc/>
-    public List<CashFlowModelDB> CashFlows { get; set; }
+    public List<CashFlowModelDB>? CashFlows { get; set; }
 
     /// <inheritdoc/>
     public void SetUpdate(InstrumentTradeStockSharpModel req, bool nameUpdate = false)
@@ -41,7 +41,7 @@ public class InstrumentStockSharpModelDB : InstrumentTradeStockSharpViewModel, I
         }
 
         IdRemote = req.IdRemote;
-        IdRemoteNormalizedUpper = req.IdRemote.ToUpper();
+        IdRemoteNormalizedUpper = req.IdRemote?.ToUpper();
 
         LastUpdatedAtUTC = DateTime.UtcNow;
         ExpiryDate = req.ExpiryDate;

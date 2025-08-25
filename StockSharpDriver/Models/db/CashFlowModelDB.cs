@@ -10,5 +10,5 @@ namespace SharedLib;
 public class CashFlowModelDB : CashFlowViewModel
 {
     /// <inheritdoc/>
-    public InstrumentStockSharpModelDB Instrument { get; set; }
+    public InstrumentStockSharpModelDB? Instrument { get; set; }
 }

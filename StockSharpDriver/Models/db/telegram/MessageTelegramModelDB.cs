@@ -37,7 +37,7 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Optional. Sender, empty for messages sent to channels
     /// </summary>
-    public UserTelegramModelDB From { get; set; }
+    public UserTelegramModelDB? From { get; set; }
 
     /// <summary>
     /// Optional. Sender, empty for messages sent to channels
@@ -50,7 +50,7 @@ public class MessageTelegramModelDB
     /// The supergroup itself for messages from anonymous group administrators. The linked channel for messages
     /// automatically forwarded to the discussion group
     /// </summary>
-    public ChatTelegramModelDB Chat { get; set; }
+    public ChatTelegramModelDB? Chat { get; set; }
 
     /// <summary>
     /// Optional. Sender of the message, sent on behalf of a chat. The channel itself for channel messages.
@@ -91,13 +91,13 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Optional. For messages forwarded from channels, signature of the post author if present
     /// </summary>
-    public string ForwardSignature { get; set; }
+    public string? ForwardSignature { get; set; }
 
     /// <summary>
     /// Optional. Sender's name for messages forwarded from users who disallow adding a link to their account in
     /// forwarded messages
     /// </summary>
-    public string ForwardSenderName { get; set; }
+    public string? ForwardSenderName { get; set; }
 
     /// <summary>
     /// Optional. For forwarded messages, date the original message was sent
@@ -119,7 +119,7 @@ public class MessageTelegramModelDB
     /// Ответ на сообщение
     /// </summary>
     [NotMapped]
-    public MessageTelegramModelDB ReplyToMessage { get; set; }
+    public MessageTelegramModelDB? ReplyToMessage { get; set; }
 
     /// <summary>
     /// Optional. Bot through which the message was sent <see cref="UserTelegramModelDB"/>
@@ -135,13 +135,13 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Optional. The unique identifier of a media message group this message belongs to
     /// </summary>
-    public string MediaGroupId { get; set; }
+    public string? MediaGroupId { get; set; }
 
     /// <summary>
     /// Optional. Signature of the post author for messages in channels, or the custom title of an anonymous
     /// group administrator
     /// </summary>
-    public string AuthorSignature { get; set; }
+    public string? AuthorSignature { get; set; }
 
     /// <summary>
     /// Optional. For text messages, the actual text of the message, 0-4096 characters
@@ -151,7 +151,7 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Optional. For text messages, the actual text of the message, 0-4096 characters
     /// </summary>
-    public string NormalizedTextUpper { get; set; }
+    public string? NormalizedTextUpper { get; set; }
 
     /// <summary>
     /// CreatedAtUtc
@@ -161,7 +161,7 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Optional. Message is a photo, available sizes of the photo
     /// </summary>
-    public List<PhotoMessageTelegramModelDB> Photo { get; set; }
+    public List<PhotoMessageTelegramModelDB>? Photo { get; set; }
 
 
     /// <summary>
@@ -171,13 +171,13 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Audio
     /// </summary>
-    public AudioTelegramModelDB Audio { get; set; }
+    public AudioTelegramModelDB? Audio { get; set; }
 
 
     /// <summary>
     /// Video
     /// </summary>
-    public VideoTelegramModelDB Video { get; set; }
+    public VideoTelegramModelDB? Video { get; set; }
     /// <summary>
     /// Video
     /// </summary>
@@ -187,7 +187,7 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Document
     /// </summary>
-    public DocumentTelegramModelDB Document { get; set; }
+    public DocumentTelegramModelDB? Document { get; set; }
     /// <summary>
     /// Document
     /// </summary>
@@ -197,7 +197,7 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Voice
     /// </summary>
-    public VoiceTelegramModelDB Voice { get; set; }
+    public VoiceTelegramModelDB? Voice { get; set; }
     /// <summary>
     /// Voice
     /// </summary>
@@ -206,7 +206,7 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Contact
     /// </summary>
-    public ContactTelegramModelDB Contact { get; set; }
+    public ContactTelegramModelDB? Contact { get; set; }
     /// <summary>
     /// Contact
     /// </summary>
@@ -215,22 +215,22 @@ public class MessageTelegramModelDB
     /// <summary>
     /// Optional. Caption for the animation, audio, document, photo, video or voice, 0-1024 characters
     /// </summary>
-    public string Caption { get; set; }
+    public string? Caption { get; set; }
 
     /// <summary>
     /// Optional. Caption for the animation, audio, document, photo, video or voice, 0-1024 characters
     /// </summary>
-    public string NormalizedCaptionUpper { get; set; }
+    public string? NormalizedCaptionUpper { get; set; }
 
     /// <summary>
     /// SenderChat
     /// </summary>
     [NotMapped]
-    public ChatTelegramModelDB SenderChat { get; set; }
+    public ChatTelegramModelDB? SenderChat { get; set; }
 
     /// <summary>
     /// ForwardFrom
     /// </summary>
     [NotMapped]
-    public UserTelegramModelDB ForwardFrom { get; set; }
+    public UserTelegramModelDB? ForwardFrom { get; set; }
 }

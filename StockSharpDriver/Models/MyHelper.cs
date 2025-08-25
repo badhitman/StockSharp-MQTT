@@ -118,9 +118,9 @@ public static class MyHelper
                 return sec.ShrinkPrice(modelPrice + lowLimit);
 
             if (depth.Bids[k].Price == modelPrice + lowLimit)
-                return sec.ShrinkPrice(modelPrice + lowLimit + (decimal)sec.PriceStep);
+                return sec.ShrinkPrice(modelPrice + lowLimit + (sec.PriceStep ?? 0));
 
-            return sec.ShrinkPrice(depth.Bids[k].Price + (decimal)sec.PriceStep);
+            return sec.ShrinkPrice(depth.Bids[k].Price + (sec.PriceStep ?? 0));
         }
         else
         {
@@ -142,9 +142,9 @@ public static class MyHelper
                 return sec.ShrinkPrice(modelPrice + lowLimit);
 
             if (depth.Asks[k].Price == modelPrice + lowLimit)
-                return sec.ShrinkPrice(modelPrice + lowLimit - (decimal)sec.PriceStep);
+                return sec.ShrinkPrice(modelPrice + lowLimit - (sec.PriceStep ?? 0));
 
-            return sec.ShrinkPrice(depth.Asks[k].Price - (decimal)sec.PriceStep);
+            return sec.ShrinkPrice(depth.Asks[k].Price - (sec.PriceStep ?? 0));
         }
     }
 }

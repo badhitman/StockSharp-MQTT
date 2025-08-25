@@ -15,12 +15,12 @@ namespace SharedLib;
 public class RubricModelDB : RubricStandardModel
 {
     /// <inheritdoc/>
-    public new List<RubricModelDB> NestedRubrics { get; set; }
+    public new List<RubricModelDB>? NestedRubrics { get; set; }
 
     /// <summary>
     /// Владелец (вышестоящая рубрика)
     /// </summary>
-    public new RubricModelDB Parent { get; set; }
+    public new RubricModelDB? Parent { get; set; }
 
 
     /// <inheritdoc/>

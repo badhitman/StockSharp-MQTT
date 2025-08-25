@@ -14,6 +14,8 @@ using StockSharp.Messages;
 using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace StockSharpDriver;
 
@@ -184,6 +186,18 @@ public class DriverStockSharpService(
                   }, cancellationToken),
         ]);
 
+        if (string.IsNullOrWhiteSpace(ProgramDataPath))
+        {
+            res.AddError($"set: {nameof(ProgramDataPath)} for load Curve data!");
+            return res;
+        }
+
+        if (!Directory.Exists(ProgramDataPath))
+        {
+            res.AddError($"Directory ({nameof(ProgramDataPath)}): {ProgramDataPath} not Exists");
+            return res;
+        }
+
         if (Boards.Count == 0)
         {
             res.AddError($"Board is null");
@@ -263,7 +277,7 @@ public class DriverStockSharpService(
                 }
                 else
                 {
-                    if (_instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+                    if (_instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
                     {
                         if ((SBnd.Maturity - curDate).Days < 300)
                         {
@@ -385,7 +399,7 @@ public class DriverStockSharpService(
         if (!bl.Any())
             return ResponseBaseModel.CreateError("BondList - not any");
         ResponseBaseModel response = new();
-        bl.ForEach(securityHandleAction);
+
         void securityHandleAction(Security security)
         {
             DashboardTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
@@ -428,9 +442,11 @@ public class DriverStockSharpService(
             if (currentStrategy.IsSmall)
                 SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
 
-            if (tryFindInstrument[0].Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+            if (tryFindInstrument[0].Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
                 SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         }
+        bl.ForEach(securityHandleAction);
+
         if (!response.Success())
         {
             ClearStrategy();
@@ -584,7 +600,7 @@ public class DriverStockSharpService(
             Security? currentSecurity = currentSecurities.FirstOrDefault(x =>
             x.Code == currentStrategy.Code &&
             (int?)x.Currency == currentStrategy.Currency &&
-            x.Board.Code == currentStrategy.Board.Code);
+            x.Board.Code == currentStrategy.Board?.Code);
 
             if (currentSecurity is null)
             {
@@ -610,14 +626,14 @@ public class DriverStockSharpService(
                 if (IsSmall)
                     SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
 
-                if (!instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+                if (!instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
                     SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
             }
             else
             {
                 SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", lowLimit, highLimit, quoteStrategyVolume, quoteStrategyVolume, 0m));
 
-                if (!instrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+                if (!instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
                     SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", highLimit, lowLimit + highLimit, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
             }
 
@@ -628,7 +644,7 @@ public class DriverStockSharpService(
             else
             {
                 _logger.LogError($"sub is not null");
-                await eventTrans.ToastClientShow(new ToastShowClientModel() { HeadTitle = "error", TypeMessage = MessagesTypesEnum.Error, MessageText = "sub is not null" }, cancellationToken);
+                return ResponseBaseModel.CreateError("sub is not null");
             }
         }
         throw new NotImplementedException();
@@ -760,7 +776,7 @@ public class DriverStockSharpService(
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
         ResponseBaseModel res = new();
-        adapters.ForEach(x =>
+        adapters.ForEach(async x =>
         {
             try
             {
@@ -799,7 +815,7 @@ public class DriverStockSharpService(
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Ошибка добавления адаптера");
+                _logger.LogError(ex, $"Ошибка инициализации адаптера");
                 res.Messages.InjectException(ex);
             }
         });
@@ -1055,6 +1071,7 @@ public class DriverStockSharpService(
         if (Curve is null)
         {
             _logger.LogError("Curve is null");
+            eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OrderBookReceivedConnectorMan)}]", MessageText = "Curve is null", TypeMessage = MessagesTypesEnum.Error });
             return;
         }
 
@@ -1093,7 +1110,7 @@ public class DriverStockSharpService(
         SecurityPosition SbPos = SBondPositionsList.First(sp => sp.Sec.Equals(sec));
 
         InstrumentTradeStockSharpViewModel? currentInstrument = resInstruments.Response
-            .FirstOrDefault(x => x.Code == sec.Code && x.Currency == (int?)sec.Currency && x.Board.Code == sec.Board.Code);
+            .FirstOrDefault(x => x.Code == sec.Code && x.Currency == (int?)sec.Currency && x.Board?.Code == sec.Board.Code);
 
         if (currentInstrument is null)
         {
@@ -1111,7 +1128,7 @@ public class DriverStockSharpService(
             eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
-        bool isMarketMaker = currentInstrument.Markers.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker);
+        bool isMarketMaker = currentInstrument.Markers?.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker) == true;
         if (SbPos is not null && sec is not null)
         {
             if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && depth.Bids is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
@@ -1330,7 +1347,7 @@ public class DriverStockSharpService(
         }
     }
 
-    private void OrderBookReceivedConnector2(Subscription subscription, IOrderBookMessage depth)
+    private async Task OrderBookReceivedConnector2(Subscription subscription, IOrderBookMessage depth)
     {
         decimal ofrVolume;
 
@@ -1362,16 +1379,26 @@ public class DriverStockSharpService(
 
         if (Curve is null)
         {
+            await eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OrderBookReceivedConnector2)}]", MessageText = "Curve is null", TypeMessage = MessagesTypesEnum.Error });
             _logger.LogError("Curve is null");
             return;
         }
 
-        if (bBid.Value.Price > Curve.GetNode(_sec).ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
+        SBond? _secNode = Curve.GetNode(_sec);
+
+        if (_secNode is null)
+        {
+            await eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OrderBookReceivedConnector2)}]", MessageText = "CurveBondNode is null", TypeMessage = MessagesTypesEnum.Error });
+            _logger.LogError("CurveBondNode is null");
+            return;
+        }
+
+        if (bBid.Value.Price > _secNode.ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
         {
             ofrVolume = 20000;
-            if (bBid.Value.Price > Curve.GetNode(_sec).ModelPrice + 2 * SbPos.HighLimit)
+            if (bBid.Value.Price > _secNode.ModelPrice + 2 * SbPos.HighLimit)
                 ofrVolume = 30000;
-            if (bBid.Value.Price > Curve.GetNode(_sec).ModelPrice + 3 * SbPos.HighLimit)
+            if (bBid.Value.Price > _secNode.ModelPrice + 3 * SbPos.HighLimit)
                 ofrVolume = 50000;
 
             if (bBid.Value.Volume < ofrVolume)
@@ -1400,7 +1427,7 @@ public class DriverStockSharpService(
             //    conLink.Connector.OrderBookReceived -= OrderBookReceivedConnector2;
             //    //
         }
-        else if (bAsk.Value.Price < Curve.GetNode(_sec).ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
+        else if (bAsk.Value.Price < _secNode.ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
         {
             //    ofrVolume = 20000;
             //    if (bAsk.Value.Price < OfzCurve.GetNode(sec).ModelPrice - 2 * SbPos.HighLimit)

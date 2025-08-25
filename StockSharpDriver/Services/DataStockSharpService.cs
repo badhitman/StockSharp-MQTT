@@ -268,8 +268,8 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     /// <inheritdoc/>
     public async Task<TResponseModel<List<InstrumentTradeStockSharpViewModel>>> ReadTradeInstrumentsAsync(CancellationToken cancellationToken = default)
     {
-        int[] _boardsFilter = default;
-        MarkersInstrumentStockSharpEnum?[] _markersFilter = default;
+        int[]? _boardsFilter = default;
+        MarkersInstrumentStockSharpEnum?[]? _markersFilter = default;
         await Task.WhenAll([
             Task.Run(async () => { _markersFilter = await storageRepo.ReadAsync<MarkersInstrumentStockSharpEnum?[]>(GlobalStaticCloudStorageMetadata.MarkersDashboard); }, cancellationToken),
             Task.Run(async () => { _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard); }, cancellationToken)]);
@@ -348,14 +348,15 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             if (await context.RubricsInstruments.AnyAsync(x => x.RubricId == req.RubricId && x.InstrumentId == req.InstrumentId, cancellationToken: cancellationToken))
                 return ResponseBaseModel.CreateInfo($"Инструмент уже находится в рубрике");
 
-            RubricInstrumentStockSharpModelDB _otherDb = await context.RubricsInstruments
+            RubricInstrumentStockSharpModelDB? _otherDb = await context.RubricsInstruments
                 .FirstOrDefaultAsync(x => x.RubricId != req.RubricId && x.InstrumentId == req.InstrumentId, cancellationToken: cancellationToken);
 
             if (_otherDb is not null)
             {
                 PropertiesStorageContext storeCtx = await cloudParametersDbFactory.CreateDbContextAsync(cancellationToken);
-                RubricModelDB rubricDb = await storeCtx.Rubrics.FirstOrDefaultAsync(x => x.Id == _otherDb.RubricId, cancellationToken: cancellationToken);
-                return ResponseBaseModel.CreateError($"Instrument abuse: #{rubricDb.Id} {rubricDb.Name}");
+                RubricModelDB? rubricDb = await storeCtx.Rubrics.FirstOrDefaultAsync(x => x.Id == _otherDb.RubricId, cancellationToken: cancellationToken);
+                if (rubricDb is not null)
+                    return ResponseBaseModel.CreateError($"Instrument abuse: #{rubricDb.Id} {rubricDb.Name}");
             }
 
             try
@@ -435,7 +436,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
 
     #region board`s
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[]? ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<BoardStockSharpModelDB> q = ids is null || ids.Length == 0
@@ -456,7 +457,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     public async Task<TResponseModel<List<BoardStockSharpViewModel>>> FindBoardsAsync(BoardStockSharpModel req, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
-        ExchangeStockSharpModelDB _exc = req.Exchange is null
+        ExchangeStockSharpModelDB? _exc = req.Exchange is null
             ? null
             : await context.Exchanges.SingleAsync(x => x.Name == req.Exchange.Name && x.CountryCode == req.Exchange.CountryCode, cancellationToken: cancellationToken);//req.Exchange
 
@@ -480,7 +481,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     #endregion
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<ExchangeStockSharpModel>>> GetExchangesAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<ExchangeStockSharpModel>>> GetExchangesAsync(int[]? ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<ExchangeStockSharpModelDB> q = ids is null || ids.Length == 0
@@ -495,7 +496,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<OrderStockSharpModel>>> GetOrdersAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<OrderStockSharpModel>>> GetOrdersAsync(int[]? ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<OrderStockSharpModelDB> q = ids is null || ids.Length == 0
@@ -510,7 +511,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<PortfolioStockSharpViewModel>>> GetPortfoliosAsync(int[] ids = null, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<PortfolioStockSharpViewModel>>> GetPortfoliosAsync(int[]? ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<PortfolioTradeModelDB> q = ids is null || ids.Length == 0

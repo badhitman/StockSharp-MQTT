@@ -15,7 +15,7 @@ public class ExchangeStockSharpModelDB : ExchangeStockSharpViewModel
     /// <summary>
     /// Boards
     /// </summary>
-    public List<BoardStockSharpModelDB> Boards { get; set; }
+    public List<BoardStockSharpModelDB>? Boards { get; set; }
 
     /// <inheritdoc/>
     public void SetUpdate(ExchangeStockSharpModel req)

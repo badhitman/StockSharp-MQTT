@@ -22,7 +22,7 @@ public class JoinUserChatModelDB
     /// <summary>
     /// User
     /// </summary>
-    public UserTelegramModelDB User { get; set; }
+    public UserTelegramModelDB? User { get; set; }
     /// <summary>
     /// User
     /// </summary>
@@ -31,7 +31,7 @@ public class JoinUserChatModelDB
     /// <summary>
     /// Chat
     /// </summary>
-    public ChatTelegramModelDB Chat { get; set; }
+    public ChatTelegramModelDB? Chat { get; set; }
     /// <summary>
     /// Chat
     /// </summary>
