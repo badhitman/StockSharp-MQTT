@@ -14,8 +14,6 @@ using StockSharp.Messages;
 using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace StockSharpDriver;
 
@@ -206,7 +204,7 @@ public class DriverStockSharpService(
 
         SBond? SBnd;
         DateTime curDate;
-        decimal BndPrice;
+        decimal BndPrice = 0;
 
         List<Security> currBonds = SecuritiesBonds(false);
         if (!currBonds.Any())
@@ -236,7 +234,9 @@ public class DriverStockSharpService(
             DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
 
             SBnd = Curve.GetNode(_sec);
-            BndPrice = SBnd.ModelPrice;
+
+            if (SBnd is not null)
+                BndPrice = SBnd.ModelPrice;
 
             _strat.BasePrice = BndPrice;
             _strat.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
@@ -776,8 +776,14 @@ public class DriverStockSharpService(
         List<FixMessageAdapterModelDB> adapters = adRes.Response;
 
         ResponseBaseModel res = new();
-        adapters.ForEach(async x =>
+        adapters.ForEach(x =>
         {
+            if (string.IsNullOrWhiteSpace(x.Address))
+            {
+                res.AddError($"set address for adapter#{x.Id}");
+                return;
+            }
+
             try
             {
                 IPEndPoint _cep = GlobalToolsStandard.CreateIPEndPoint(x.Address);
@@ -815,7 +821,7 @@ public class DriverStockSharpService(
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Ошибка инициализации адаптера");
+                _logger.LogError(ex, $"Ошибка инициализации адаптера ~{JsonConvert.SerializeObject(x)}");
                 res.Messages.InjectException(ex);
             }
         });
@@ -911,9 +917,14 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> OrderRegisterAsync(CreateOrderRequestModel req, CancellationToken cancellationToken = default)
     {
+        if (req.Portfolio is null)
+            return Task.FromResult(ResponseBaseModel.CreateError("Portfolio not set"));
+        if (req.Instrument is null)
+            return Task.FromResult(ResponseBaseModel.CreateError("Instrument not set"));
+
         ExchangeBoard? board = req.Instrument.Board is null
             ? null
-            : conLink.Connector.ExchangeBoards.FirstOrDefault(x => x.Code == req.Instrument.Board.Code && (x.Exchange.Name == req.Instrument.Board.Exchange.Name || x.Exchange.CountryCode.ToString() == req.Instrument.Board.Exchange.CountryCode.ToString()));
+            : conLink.Connector.ExchangeBoards.FirstOrDefault(x => x.Code == req.Instrument.Board.Code && (x.Exchange.Name == req.Instrument.Board.Exchange?.Name || x.Exchange.CountryCode.ToString() == req.Instrument.Board.Exchange?.CountryCode.ToString()));
 
         Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == req.Instrument.Code && x.Board.Code == board?.Code && x.Board.Exchange.CountryCode == board.Exchange.CountryCode);
         if (currentSec is null)
@@ -1128,6 +1139,15 @@ public class DriverStockSharpService(
             eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
             return;
         }
+        SBond? secCurceNode = Curve.GetNode(_sec);
+        if (secCurceNode is null)
+        {
+            _msg = $"Curve.GetNode - is null";
+            _logger.LogError(_msg);
+            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            return;
+        }
+
         bool isMarketMaker = currentInstrument.Markers?.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker) == true;
         if (SbPos is not null && sec is not null)
         {
@@ -1137,7 +1157,7 @@ public class DriverStockSharpService(
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, depth, secCurceNode.ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
                     if (price > 0)
                     {
                         Order ord = new()
@@ -1170,7 +1190,7 @@ public class DriverStockSharpService(
                         }
                     }
 
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, secCurceNode.ModelPrice + SbPos.Offset, -SbPos.LowLimit, -SbPos.HighLimit, 2.101m * SbPos.BidVolume);
 
                     if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.BidVolume)))
                     {
@@ -1210,7 +1230,7 @@ public class DriverStockSharpService(
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
-                    price = MyHelper.GetBestConditionPrice(sec, depth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, depth, secCurceNode.ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
                     if (price > 0)
                     {
                         Order ord = new()
@@ -1244,7 +1264,7 @@ public class DriverStockSharpService(
                         }
                     }
 
-                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, Curve.GetNode(_sec).ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
+                    price = MyHelper.GetBestConditionPrice(sec, tmpDepth, secCurceNode.ModelPrice + SbPos.Offset, SbPos.LowLimit, SbPos.HighLimit, 2.101m * SbPos.OfferVolume);
 
                     if ((price > 0) && ((price != tmpOrder.Price) || (tmpOrder.Balance != SbPos.OfferVolume)))
                     {

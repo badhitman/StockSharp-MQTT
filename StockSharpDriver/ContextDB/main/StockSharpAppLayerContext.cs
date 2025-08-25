@@ -52,29 +52,29 @@ public abstract partial class StockSharpAppLayerContext : DbContext
     }
 
     /// <inheritdoc/>
-    public DbSet<FixMessageAdapterModelDB> Adapters { get; set; }
+    public DbSet<FixMessageAdapterModelDB> Adapters { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<PortfolioTradeModelDB> Portfolios { get; set; }
+    public DbSet<PortfolioTradeModelDB> Portfolios { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<ExchangeStockSharpModelDB> Exchanges { get; set; }
+    public DbSet<ExchangeStockSharpModelDB> Exchanges { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<BoardStockSharpModelDB> Boards { get; set; }
+    public DbSet<BoardStockSharpModelDB> Boards { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<InstrumentStockSharpModelDB> Instruments { get; set; }
+    public DbSet<InstrumentStockSharpModelDB> Instruments { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<RubricInstrumentStockSharpModelDB> RubricsInstruments { get; set; }
+    public DbSet<RubricInstrumentStockSharpModelDB> RubricsInstruments { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<InstrumentMarkersModelDB> InstrumentsMarkers { get; set; }
+    public DbSet<InstrumentMarkersModelDB> InstrumentsMarkers { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<CashFlowModelDB> CashFlows { get; set; }
+    public DbSet<CashFlowModelDB> CashFlows { get; set; } = default!;
 
     /// <inheritdoc/>
-    public DbSet<OrderStockSharpModelDB> Orders { get; set; }
+    public DbSet<OrderStockSharpModelDB> Orders { get; set; } = default!;
 }

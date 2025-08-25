@@ -13,13 +13,13 @@ public static class BindsStockSharpModelsExtensionsViews
 {
     public static InstrumentTradeStockSharpViewModel Bind(this InstrumentTradeStockSharpViewModel main, InstrumentStockSharpModelDB inc)
     {
-        main.Markers = [..inc.Markers.Select(x=> new MarkerInstrumentStockSharpViewModel()
+        main.Markers = inc.Markers is null ? null : [..inc.Markers.Select(x=> new MarkerInstrumentStockSharpViewModel()
         {
              Id = x.Id,
              MarkerDescriptor = x.MarkerDescriptor,
         })];
 
-        main.Board = (BoardStockSharpViewModel)(inc.Board is null ? null : Bind(new BoardStockSharpViewModel(), inc.Board));
+        main.Board = (BoardStockSharpViewModel?)(inc.Board is null ? null : Bind(new BoardStockSharpViewModel(), inc.Board));
         main.Id = inc.Id;
         main.LastUpdatedAtUTC = inc.LastUpdatedAtUTC;
         main.CreatedAtUTC = inc.CreatedAtUTC;

@@ -164,7 +164,7 @@ public static class BindsStockSharpModelsExtensions
         main.LastChangeTime = inc.LastChangeTime;
         main.LocalTime = inc.LocalTime;
         main.Description = inc.Description;
-        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value));
+        main.Currency = inc.Currency is null ? null : (CurrenciesTypesEnum)Enum.Parse(typeof(CurrenciesTypesEnum), Enum.GetName(inc.Currency.Value)!);
         main.ExpirationDate = inc.ExpirationDate;
         main.ClientCode = inc.ClientCode;
         main.Portfolio = inc.Portfolio is null ? null : new PortfolioStockSharpModel().Bind(inc.Portfolio);
@@ -173,8 +173,8 @@ public static class BindsStockSharpModelsExtensions
 
         if (inc.LimitType is not null)
         {
-            string _gn = Enum.GetName(inc.LimitType.Value);
-            if (_gn != null)
+            string? _gn = Enum.GetName(inc.LimitType.Value);
+            if (!string.IsNullOrWhiteSpace(_gn))
                 main.LimitType = inc.LimitType is null ? null : (TPlusLimitsEnum)Enum.Parse(typeof(TPlusLimitsEnum), _gn);
         }
 

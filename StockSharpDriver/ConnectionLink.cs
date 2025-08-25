@@ -12,8 +12,8 @@ public class ConnectionLink
     public delegate void ConnectHandler();
     public delegate void DisconnectHandler();
 
-    public event ConnectHandler ConnectNotify;
-    public event DisconnectHandler DisconnectNotify;
+    public event ConnectHandler? ConnectNotify;
+    public event DisconnectHandler? DisconnectNotify;
 
     public Connector Connector { get; set; } = new();
 

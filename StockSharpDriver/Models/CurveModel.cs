@@ -20,7 +20,7 @@ public class CurveModel : CurveBaseModel
     /// <summary>
     /// Load Curve form database
     /// </summary>
-    public string? GetCurveFromDb(string DbName, Connector trader, List<BoardStockSharpViewModel> boards, List<string> bigPriceDifferences, ref IEventsStockSharp eventTrans)
+    public string? GetCurveFromDb(string DbName, Connector trader, List<BoardStockSharpViewModel> boards, List<string>? bigPriceDifferences, ref IEventsStockSharp eventTrans)
     {
         string secName;
         decimal secPrice;
@@ -113,7 +113,7 @@ public class CurveModel : CurveBaseModel
                         SBond? _gn = GetNode(new InstrumentTradeStockSharpModel().Bind(security));
                         if (_gn is not null && Math.Abs(_gn.ModelPrice - secPrice) >= 0.2m)
                         {
-                            if (!bigPriceDifferences.Contains(secName))
+                            if (bigPriceDifferences?.Contains(secName) != true)
                             {
                                 BondList.Clear();
 
