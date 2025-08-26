@@ -228,22 +228,21 @@ public class DriverStockSharpService(
         List<Task> tasksMaster = [], tasksSlave = [];
         currBonds.ForEach(security =>
         {
-            string bndName = security.Code.Substring(2, 5);
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
             InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
-            DashboardTradeStockSharpModel _strat = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
+            DashboardTradeStockSharpModel tradeDashboard = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
 
             SBnd = Curve.GetNode(_sec);
 
             if (SBnd is not null)
                 BndPrice = SBnd.ModelPrice;
 
-            _strat.BasePrice = BndPrice;
-            _strat.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
-            _strat.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
-            _strat.WorkingVolume = (long)quoteStrategyVolume;
-            _strat.SmallOffset = 0;
-            _strat.Offset = 0;
+            tradeDashboard.BasePrice = BndPrice;
+            tradeDashboard.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
+            tradeDashboard.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
+            tradeDashboard.WorkingVolume = (long)quoteStrategyVolume;
+            tradeDashboard.SmallOffset = 0;
+            tradeDashboard.Offset = 0;
 
             SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
 
@@ -252,28 +251,28 @@ public class DriverStockSharpService(
                 decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
                 if (yield > 0)  //Regular bonds
                 {
-                    _strat.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
+                    tradeDashboard.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
 
-                    if (_strat.LowLimit < 9)
-                        _strat.LowLimit = 9;
-                    if (_strat.LowLimit > lowLimit * 100)
-                        _strat.LowLimit = (int)(lowLimit * 100);
+                    if (tradeDashboard.LowLimit < 9)
+                        tradeDashboard.LowLimit = 9;
+                    if (tradeDashboard.LowLimit > lowLimit * 100)
+                        tradeDashboard.LowLimit = (int)(lowLimit * 100);
 
-                    _strat.HightLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
+                    tradeDashboard.HightLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
 
-                    if (_strat.HightLimit < 11)
-                        _strat.HightLimit = 11;
-                    if (_strat.HightLimit > highLimit * 100)
-                        _strat.HightLimit = (int)(highLimit * 100);
+                    if (tradeDashboard.HightLimit < 11)
+                        tradeDashboard.HightLimit = 11;
+                    if (tradeDashboard.HightLimit > highLimit * 100)
+                        tradeDashboard.HightLimit = (int)(highLimit * 100);
 
                     if ((SBnd.Maturity - curDate).Days < 400)
-                        _strat.WorkingVolume = quoteStrategyVolume;
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
                     else if ((SBnd.Maturity - curDate).Days < 1100)
-                        _strat.WorkingVolume = quoteStrategyVolume;
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
                     else if ((SBnd.Maturity - curDate).Days < 1500)
-                        _strat.WorkingVolume = quoteStrategyVolume;
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
                     else
-                        _strat.WorkingVolume = quoteStrategyVolume;
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
                 }
                 else
                 {
@@ -281,48 +280,48 @@ public class DriverStockSharpService(
                     {
                         if ((SBnd.Maturity - curDate).Days < 300)
                         {
-                            _strat.WorkingVolume = 1000;
-                            _strat.LowLimit = (int)(lowLimit * 100);
-                            _strat.HightLimit = (int)(highLimit * 100);
+                            tradeDashboard.WorkingVolume = 1000;
+                            tradeDashboard.LowLimit = (int)(lowLimit * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit * 100);
                         }
                         else
                         {
-                            _strat.WorkingVolume = 1000;
-                            _strat.LowLimit = (int)(lowLimit * 2 * 100);
-                            _strat.HightLimit = (int)(highLimit * 2 * 100);
+                            tradeDashboard.WorkingVolume = 1000;
+                            tradeDashboard.LowLimit = (int)(lowLimit * 2 * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit * 2 * 100);
                         }
                     }
                     else
                     {
                         if ((SBnd.Maturity - curDate).Days < 500)
                         {
-                            _strat.WorkingVolume = 2000;
-                            _strat.LowLimit = (int)(lowLimit / 2 * 100);
-                            _strat.HightLimit = (int)(highLimit / 2 * 100);
+                            tradeDashboard.WorkingVolume = 2000;
+                            tradeDashboard.LowLimit = (int)(lowLimit / 2 * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit / 2 * 100);
                         }
                         else if ((SBnd.Maturity - curDate).Days < 2000)
                         {
-                            _strat.WorkingVolume = 2000;
-                            _strat.LowLimit = (int)(lowLimit / 1.5m * 100);
-                            _strat.HightLimit = (int)(highLimit / 1.5m * 100);
+                            tradeDashboard.WorkingVolume = 2000;
+                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
                         }
                         else
                         {
-                            _strat.WorkingVolume = 2000;
-                            _strat.LowLimit = (int)(lowLimit / 1.5m * 100);
-                            _strat.HightLimit = (int)(highLimit / 1.5m * 100);
+                            tradeDashboard.WorkingVolume = 2000;
+                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
                         }
                     }
                 }
             }
             else
             {
-                _strat.LowLimit = (int)(lowLimit * 100);
-                _strat.HightLimit = (int)(highLimit * 100);
+                tradeDashboard.LowLimit = (int)(lowLimit * 100);
+                tradeDashboard.HightLimit = (int)(highLimit * 100);
             }
 
-            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(_strat, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(_strat.Id), true); }));
-            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(_strat); }));
+            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
+            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
         });
 
         if (tasksMaster.Count != 0)
@@ -334,6 +333,60 @@ public class DriverStockSharpService(
 
         res.AddInfo("Data loaded!!!");
         return res;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
+    {
+        static decimal Calculation(decimal L, OperatorsEnum op, decimal R)
+        {
+            return op switch
+            {
+                OperatorsEnum.Multiplication => L * R,
+                OperatorsEnum.Dividing => L / R,
+                OperatorsEnum.Plus => L + R,
+                OperatorsEnum.Minus => L - R,
+                _ => throw new NotImplementedException(),
+            };
+        }
+
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        if (dataParse.Count == 0)
+            return ResponseBaseModel.CreateError("Dashboard - not set");
+
+        ResponseBaseModel res = new();
+        List<Task> tasksMaster = [], tasksSlave = [];
+        List<Security> sbs = SecuritiesBonds(true);
+        sbs.ForEach(security =>
+        {
+            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
+            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
+            DashboardTradeStockSharpModel tradeDashboard = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
+
+            tradeDashboard.LowLimit = Calculation(tradeDashboard.LowLimit, req.Operator, req.Operand);
+            tradeDashboard.HightLimit = Calculation(tradeDashboard.HightLimit, req.Operator, req.Operand);
+
+            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
+            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
+        });
+
+        if (tasksMaster.Count != 0)
+        {
+            res.AddInfo($"Updated items (strategies): {tasksMaster.Count}");
+            await Task.WhenAll(tasksMaster);
+            await Task.WhenAll(tasksSlave);
+        }
+
+        lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
+        highLimit = Calculation(highLimit, req.Operator, req.Operand);
+
+        return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
     }
 
 
@@ -640,53 +693,6 @@ public class DriverStockSharpService(
             }
         }
         return ResponseBaseModel.CreateInfo($"done: reset for {resInstruments.Response.Count} instruments");
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
-    {
-        static decimal Calculation(decimal L, OperatorsEnum op, decimal R)
-        {
-            return op switch
-            {
-                OperatorsEnum.Multiplication => L * R,
-                OperatorsEnum.Dividing => L / R,
-                OperatorsEnum.Plus => L + R,
-                OperatorsEnum.Minus => L - R,
-                _ => throw new NotImplementedException(),
-            };
-        }
-
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-
-        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-            return ResponseBaseModel.CreateError($"The instruments are not configured.");
-
-        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
-        if (dataParse.Count == 0)
-            return ResponseBaseModel.CreateError("Dashboard - not set");
-
-
-        List<Security> sbs = SecuritiesBonds(true);
-        sbs.ForEach(security =>
-        {
-            //string bndName = security.Code.Substring(2, 5);
-            //DecimalUpDown decUpD = (DecimalUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "Price_" + bndName);
-
-            //if (!decUpD is null)
-            //{
-            //    IntegerUpDown LowLimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "LowLimit_" + bndName);
-            //    IntegerUpDown Highlimit = (IntegerUpDown)LogicalTreeHelper.FindLogicalNode(MyProgram, "HighLimit_" + bndName);
-            //    LowLimit.Value = LowLimit.Value / 2;
-            //    Highlimit.Value = Highlimit.Value / 2;
-            //}
-        });
-
-        lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
-        highLimit = Calculation(highLimit, req.Operator, req.Operand);
-
-        return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
     }
 
 
@@ -1352,9 +1358,10 @@ public class DriverStockSharpService(
                     OderBookList.Add(sec, orderBM);
             }
         }
+        OnProcessOutOfRangeCheck(subscription, orderBM);
     }
 
-    private async Task OrderBookReceivedConnector2(Subscription subscription, IOrderBookMessage depth)
+    void OnProcessOutOfRangeCheck(Subscription subscription, IOrderBookMessage depth)
     {
         decimal ofrVolume;
 
@@ -1386,7 +1393,7 @@ public class DriverStockSharpService(
 
         if (Curve is null)
         {
-            await eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OrderBookReceivedConnector2)}]", MessageText = "Curve is null", TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]", MessageText = "Curve is null", TypeMessage = MessagesTypesEnum.Error });
             _logger.LogError("Curve is null");
             return;
         }
@@ -1395,7 +1402,7 @@ public class DriverStockSharpService(
 
         if (_secNode is null)
         {
-            await eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OrderBookReceivedConnector2)}]", MessageText = "CurveBondNode is null", TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]", MessageText = "CurveBondNode is null", TypeMessage = MessagesTypesEnum.Error });
             _logger.LogError("CurveBondNode is null");
             return;
         }
@@ -1516,9 +1523,8 @@ public class DriverStockSharpService(
 
     void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
     {
-        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
+        //_logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
     }
-    #endregion
     #endregion
 
     void UnregisterEvents()
@@ -1550,4 +1556,5 @@ public class DriverStockSharpService(
         conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
         conLink.Connector.SecurityReceived += SecurityReceivedHandle;
     }
+    #endregion
 }

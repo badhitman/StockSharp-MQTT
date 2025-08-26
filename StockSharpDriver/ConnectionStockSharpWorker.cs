@@ -2,10 +2,11 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using StockSharp.BusinessEntities;
-using StockSharp.Algo;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SharedLib;
+using StockSharp.Algo;
+using StockSharp.BusinessEntities;
 
 namespace StockSharpDriver;
 
@@ -385,7 +386,32 @@ public class ConnectionStockSharpWorker(
     }
     void LogHandle(Ecng.Logging.LogMessage senderLog)
     {
-        _logger.LogTrace($"Call > `{nameof(LogHandle)}`: {senderLog}");
+        switch (senderLog.Level)
+        {
+            case Ecng.Logging.LogLevels.Debug:
+                _logger.LogDebug(senderLog.ToString());
+                break;
+            case Ecng.Logging.LogLevels.Inherit:
+                _logger.LogInformation(senderLog.ToString());
+                break;
+            case Ecng.Logging.LogLevels.Verbose:
+                _logger.LogCritical(senderLog.ToString());
+                break;
+            case Ecng.Logging.LogLevels.Info:
+                _logger.LogInformation(senderLog.ToString());
+                break;
+            case Ecng.Logging.LogLevels.Warning:
+                _logger.LogWarning(senderLog.ToString());
+                break;
+            case Ecng.Logging.LogLevels.Error:
+                _logger.LogError(senderLog.ToString());
+                break;
+            case Ecng.Logging.LogLevels.Off:
+                _logger.LogTrace(senderLog.ToString());
+                break;
+        }
+
+        _logger.LogTrace($"Call > `{nameof(LogHandle)}`: {senderLog.ToString()}");
     }
     void CurrentTimeChangedHandle(TimeSpan sender)
     {
