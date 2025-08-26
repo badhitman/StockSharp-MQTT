@@ -391,11 +391,11 @@ public class ConnectionStockSharpWorker(
         //NLog.LogLevel logLevel = NLog.LogLevel.Info;
         switch (senderLog.Level)
         {
-            case Ecng.Logging.LogLevels.Debug or Ecng.Logging.LogLevels.Verbose:
+            case Ecng.Logging.LogLevels.Debug:
                 //logLevel = NLog.LogLevel.Debug;
                 _logger.LogDebug(senderLog.ToString());
                 break;
-            case Ecng.Logging.LogLevels.Inherit or Ecng.Logging.LogLevels.Info:
+            case Ecng.Logging.LogLevels.Info or Ecng.Logging.LogLevels.Verbose or Ecng.Logging.LogLevels.Inherit:
                 //logLevel = NLog.LogLevel.Info;
                 _logger.LogInformation(senderLog.ToString());
                 break;
