@@ -642,53 +642,6 @@ public class DriverStockSharpService(
         return ResponseBaseModel.CreateInfo($"done: reset for {resInstruments.Response.Count} instruments");
     }
 
-    async Task<List<DashboardTradeStockSharpModel>> ReadDashboard(int?[] instrumentsIds, CancellationToken cancellationToken = default)
-    {
-        FindStorageBaseModel _findParametersQuery = new()
-        {
-            ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
-            PropertyName = $"{GlobalStaticConstantsRoutes.Routes.TRADE_CONTROLLER_NAME}-{GlobalStaticConstantsRoutes.Routes.STRATEGY_CONTROLLER_NAME}",
-            OwnersPrimaryKeys = instrumentsIds,
-        };
-
-        FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
-
-        if (findStorageRows.Length == 0)
-            return [];
-
-        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x => x.PrefixPropertyName == GlobalStaticConstantsRoutes.Routes.BROKER_CONTROLLER_NAME)
-            .GroupBy(x => x.OwnerPrimaryKey)
-            .Where(x => x.Key.HasValue)
-            .AsQueryable();
-
-        return [.. _q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)];
-    }
-
-
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
-    {
-        if (Curve is null)
-            return Task.FromResult(ResponseBaseModel.CreateWarning("OfzCurve is null"));
-
-        _logger.LogWarning($"Curve changed: {req.YieldChange}");
-
-        Curve.BondList.ForEach(bnd =>
-        {
-            SBond? SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
-
-            if (SBnd is not null)
-            {
-                decimal yield = SBnd.GetYieldForPrice(Curve.CurveDate, bnd.ModelPrice / 100);
-                if (yield > 0) //Regular bonds
-                {
-                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(Curve.CurveDate, yield + req.YieldChange / 10000, true), 2);
-                }
-            }
-        });
-        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(ShiftCurve)} changed: {req.YieldChange}"));
-    }
-
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
     {
@@ -734,6 +687,53 @@ public class DriverStockSharpService(
         highLimit = Calculation(highLimit, req.Operator, req.Operand);
 
         return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
+    }
+
+
+    /// <inheritdoc/>
+    public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
+    {
+        if (Curve is null)
+            return Task.FromResult(ResponseBaseModel.CreateWarning("OfzCurve is null"));
+
+        _logger.LogWarning($"Curve changed: {req.YieldChange}");
+
+        Curve.BondList.ForEach(bnd =>
+        {
+            SBond? SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
+
+            if (SBnd is not null)
+            {
+                decimal yield = SBnd.GetYieldForPrice(Curve.CurveDate, bnd.ModelPrice / 100);
+                if (yield > 0)
+                {
+                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(Curve.CurveDate, yield + req.YieldChange / 10000, true), 2);
+                }
+            }
+        });
+        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(ShiftCurve)} changed: {req.YieldChange}"));
+    }
+
+    async Task<List<DashboardTradeStockSharpModel>> ReadDashboard(int?[] instrumentsIds, CancellationToken cancellationToken = default)
+    {
+        FindStorageBaseModel _findParametersQuery = new()
+        {
+            ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
+            PropertyName = $"{GlobalStaticConstantsRoutes.Routes.TRADE_CONTROLLER_NAME}-{GlobalStaticConstantsRoutes.Routes.STRATEGY_CONTROLLER_NAME}",
+            OwnersPrimaryKeys = instrumentsIds,
+        };
+
+        FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
+
+        if (findStorageRows.Length == 0)
+            return [];
+
+        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x => x.PrefixPropertyName == GlobalStaticConstantsRoutes.Routes.BROKER_CONTROLLER_NAME)
+            .GroupBy(x => x.OwnerPrimaryKey)
+            .Where(x => x.Key.HasValue)
+            .AsQueryable();
+
+        return [.. _q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)];
     }
 
     /// <inheritdoc/>
