@@ -21,13 +21,13 @@ namespace StockSharpDriver;
 /// DriverStockSharpService 
 /// </summary>
 public class DriverStockSharpService(
-    ILogger<DriverStockSharpService> _logger,
-    IManageStockSharpService manageRepo,
-    IDataStockSharpService dataRepo,
-    IParametersStorage storageRepo,
-    IEventsStockSharp eventTrans,
-    IMemoryCache memoryCache,
-    ConnectionLink conLink) : IDriverStockSharpService
+                ILogger<DriverStockSharpService> _logger,
+                IManageStockSharpService manageRepo,
+                IDataStockSharpService dataRepo,
+                IParametersStorage storageRepo,
+                IEventsStockSharp eventTrans,
+                IMemoryCache memoryCache,
+                ConnectionLink conLink) : IDriverStockSharpService
 {
     #region prop`s
     CurveModel? Curve = null;
@@ -1523,7 +1523,7 @@ public class DriverStockSharpService(
 
     void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
     {
-        //_logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
+        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
     }
     #endregion
 

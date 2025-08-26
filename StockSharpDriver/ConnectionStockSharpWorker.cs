@@ -430,7 +430,6 @@ public class ConnectionStockSharpWorker(
     void NewMessageHandle(StockSharp.Messages.Message msg)
     {
         _logger.LogTrace($"Call > `{nameof(NewMessageHandle)}`: {JsonConvert.SerializeObject(msg, GlobalStaticConstants.JsonSerializerSettings)}");
-        eventTrans.ToastClientShow(new() { HeadTitle = nameof(NewMessageHandle), MessageText = msg., TypeMessage = MessagesTypesEnum.Info });
     }
     void SubscriptionReceivedHandle(Subscription subscription, object sender)
     {
