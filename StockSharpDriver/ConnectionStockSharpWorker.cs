@@ -4,6 +4,7 @@
 
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using NLog;
 using SharedLib;
 using StockSharp.Algo;
 using StockSharp.BusinessEntities;
@@ -386,32 +387,34 @@ public class ConnectionStockSharpWorker(
     }
     void LogHandle(Ecng.Logging.LogMessage senderLog)
     {
+        //Logger _myLogger = LogManager.GetLogger($"StockSharp-{nameof(LogHandle)}");
+        //NLog.LogLevel logLevel = NLog.LogLevel.Info;
         switch (senderLog.Level)
         {
-            case Ecng.Logging.LogLevels.Debug:
+            case Ecng.Logging.LogLevels.Debug or Ecng.Logging.LogLevels.Verbose:
+                //logLevel = NLog.LogLevel.Debug;
                 _logger.LogDebug(senderLog.ToString());
                 break;
-            case Ecng.Logging.LogLevels.Inherit:
-                _logger.LogInformation(senderLog.ToString());
-                break;
-            case Ecng.Logging.LogLevels.Verbose:
-                _logger.LogCritical(senderLog.ToString());
-                break;
-            case Ecng.Logging.LogLevels.Info:
+            case Ecng.Logging.LogLevels.Inherit or Ecng.Logging.LogLevels.Info:
+                //logLevel = NLog.LogLevel.Info;
                 _logger.LogInformation(senderLog.ToString());
                 break;
             case Ecng.Logging.LogLevels.Warning:
+                //logLevel = NLog.LogLevel.Warn;
                 _logger.LogWarning(senderLog.ToString());
                 break;
             case Ecng.Logging.LogLevels.Error:
+                //logLevel = NLog.LogLevel.Error;
                 _logger.LogError(senderLog.ToString());
                 break;
             case Ecng.Logging.LogLevels.Off:
+                //logLevel = NLog.LogLevel.Trace;
                 _logger.LogTrace(senderLog.ToString());
                 break;
         }
+        //LogEventInfo logEvent = new(logLevel, $"StockSharp-{nameof(LogHandle)}", senderLog.ToString());
 
-        _logger.LogTrace($"Call > `{nameof(LogHandle)}`: {senderLog.ToString()}");
+        //_myLogger.Log(GetType(), logEvent);
     }
     void CurrentTimeChangedHandle(TimeSpan sender)
     {
