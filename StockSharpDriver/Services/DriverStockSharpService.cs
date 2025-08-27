@@ -4,6 +4,7 @@
 
 using Ecng.Collections;
 using Ecng.Common;
+using Ecng.Logging;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using SharedLib;
@@ -77,7 +78,8 @@ public class DriverStockSharpService(
     string? ClientCodeStockSharp;
     string? SecurityCriteriaCodeFilter;
     string? BoardCriteriaCodeFilter;
-    readonly List<Subscription> DepthSubscriptions = [];
+
+    readonly List<Subscription> MarketDepthSubscriptions = [];
 
     decimal
        quoteSmallStrategyBidVolume = 2000,
@@ -400,8 +402,11 @@ public class DriverStockSharpService(
         ClearStrategy();
 
         ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(ProgramDataPath))
+        if (string.IsNullOrWhiteSpace(ProgramDataPath))
             return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
+
+        if (!Directory.Exists(ProgramDataPath))
+            return ResponseBaseModel.CreateError($"Directory [{nameof(ProgramDataPath)}] - not exists");
 
         if (Boards is null || Boards.Count == 0)
             return ResponseBaseModel.CreateError("Board - not set");
@@ -506,16 +511,16 @@ public class DriverStockSharpService(
             return response;
         }
 
-        lock (DepthSubscriptions)
+        lock (MarketDepthSubscriptions)
         {
-            DepthSubscriptions.Clear();
+            MarketDepthSubscriptions.Clear();
             bl.ForEach(RegisterMarketDepth);
         }
         void RegisterMarketDepth(Security security)
         {
             Subscription depthSubscription = new(DataType.MarketDepth, security);
             conLink.Connector.Subscribe(depthSubscription);
-            DepthSubscriptions.Add(depthSubscription);
+            MarketDepthSubscriptions.Add(depthSubscription);
         }
         conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
 
@@ -530,13 +535,149 @@ public class DriverStockSharpService(
         lock (_ordersForQuoteSellReregister)
             _ordersForQuoteSellReregister.Clear();
 
+        fileWatcher.Path = ProgramDataPath;
+        fileWatcher.NotifyFilter = NotifyFilters.LastWrite;
+        fileWatcher.Filter = "RedArrowData.db";
+        fileWatcher.Changed += OnDatabaseChanged;
+        fileWatcher.EnableRaisingEvents = true;
+
         return ResponseBaseModel.CreateInfo("Ok");
     }
+
+    void OnDatabaseChanged(object source, FileSystemEventArgs a)
+    {
+        string msg = $"call > {nameof(OnDatabaseChanged)}: {a.Name}", headTitle = $"{fileWatcher.GetType().Name}.{nameof(fileWatcher.Changed)}";
+        _logger.LogWarning(msg);
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = headTitle,
+            TypeMessage = MessagesTypesEnum.Info,
+            MessageText = msg
+        });
+
+        if (Curve is null)
+        {
+            msg = $"Curve is null";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(ProgramDataPath))
+        {
+            msg = $"string.IsNullOrWhiteSpace(ProgramDataPath)";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+        if (!Directory.Exists(ProgramDataPath))
+        {
+            msg = $"!Directory.Exists('{ProgramDataPath}')";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+        if (Boards is null || Boards.Count == 0)
+        {
+            msg = $"Boards is null || Boards.Count == 0";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+
+        try
+        {
+            string? _res = Curve.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, Boards, null, ref eventTrans);
+            if (!string.IsNullOrWhiteSpace(_res))
+            {
+                msg = $"Curve.GetCurveFromDb is null";
+                _logger.LogError(msg);
+                eventTrans.ToastClientShow(new()
+                {
+                    HeadTitle = headTitle,
+                    TypeMessage = MessagesTypesEnum.Error,
+                    MessageText = msg
+                });
+                return;
+            }
+            if (Curve.BondList.Count == 0)
+            {
+                msg = $"Curve.BondList.Count == 0";
+                _logger.LogError(msg);
+                eventTrans.ToastClientShow(new()
+                {
+                    HeadTitle = headTitle,
+                    TypeMessage = MessagesTypesEnum.Error,
+                    MessageText = msg
+                });
+                return;
+            }
+            List<Security> secS = SecuritiesBonds(false);
+            secS.ForEach(security =>
+                {
+                    if (OderBookList.ContainsKey(security))
+                    {
+                        Subscription? sub = conLink.Connector
+                        .FindSubscriptions(security, DataType.MarketDepth)
+                        .FirstOrDefault(s => s.SubscriptionMessage.To == null && s.State.IsActive());
+
+                        if (sub is null)
+                        {
+                            msg = $"Active subscription [{nameof(DataType.MarketDepth)}] not found for security '{security}'";
+                            _logger.LogError(msg);
+                            eventTrans.ToastClientShow(new()
+                            {
+                                HeadTitle = headTitle,
+                                TypeMessage = MessagesTypesEnum.Error,
+                                MessageText = msg
+                            });
+                            return;
+                        }
+
+                        OrderBookReceivedHandle(sub, OderBookList[security]);
+                    }
+                });
+
+            conLink.Connector.AddWarningLog("Curve changed");
+        }
+        catch (Exception ex)
+        {
+            msg = $"Error of OnDatabaseChanged for Curve";
+            _logger.LogError(ex, msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = $"{msg}: {ex.Message}"
+            });
+        }
+    }
+
 
     /// <inheritdoc/>
     public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
     {
         ClearStrategy();
+        fileWatcher.Changed -= OnDatabaseChanged;
         return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
     }
 
@@ -1007,7 +1148,12 @@ public class DriverStockSharpService(
             foreach (Order order in orders)
             {
                 conLink.Connector.CancelOrder(order);
-                eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` without strategy", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                eventTrans.ToastClientShow(new()
+                {
+                    HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` without strategy",
+                    MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume),
+                    TypeMessage = MessagesTypesEnum.Warning
+                });
             }
         }
         else
@@ -1017,17 +1163,22 @@ public class DriverStockSharpService(
                 if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
                     conLink.Connector.CancelOrder(order);
 
-                eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` with strategy '{strategy}'", MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                eventTrans.ToastClientShow(new()
+                {
+                    HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` with strategy '{strategy}'",
+                    MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume),
+                    TypeMessage = MessagesTypesEnum.Warning
+                });
             }
         }
     }
 
     void ClearStrategy()
     {
-        lock (DepthSubscriptions)
+        lock (MarketDepthSubscriptions)
         {
-            DepthSubscriptions.ForEach(conLink.Connector.UnSubscribe);
-            DepthSubscriptions.Clear();
+            MarketDepthSubscriptions.ForEach(conLink.Connector.UnSubscribe);
+            MarketDepthSubscriptions.Clear();
         }
 
         if (SecurityCriteriaCodeFilterSubscription is not null)
@@ -1075,10 +1226,14 @@ public class DriverStockSharpService(
         if (Curve is null)
         {
             _logger.LogError("Curve is null");
-            eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OrderBookReceivedConnectorMan)}]", MessageText = "Curve is null", TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = $"err [{nameof(OrderBookReceivedConnectorMan)}]",
+                MessageText = "Curve is null",
+                TypeMessage = MessagesTypesEnum.Error
+            });
             return;
         }
-
 
         TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = dataRepo.InstrumentsSelectAsync(new()
         {
@@ -1090,7 +1245,12 @@ public class DriverStockSharpService(
         {
             _msg = $"The instruments are not configured.";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(OrderBookReceivedConnectorMan),
+                MessageText = _msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
             return;
         }
         List<DashboardTradeStockSharpModel> dataParse = ReadDashboard([.. resInstruments.Response.Select(x => x.Id)]).Result;
@@ -1100,7 +1260,12 @@ public class DriverStockSharpService(
             _msg = "Dashboard - not set";
 
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(OrderBookReceivedConnectorMan),
+                MessageText = _msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
             return;
         }
 
@@ -1120,7 +1285,12 @@ public class DriverStockSharpService(
         {
             _msg = $"Instrument not found - {JsonConvert.SerializeObject(sec, Formatting.Indented)}";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(OrderBookReceivedConnectorMan),
+                MessageText = _msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
             return;
         }
 
@@ -1129,7 +1299,12 @@ public class DriverStockSharpService(
         {
             _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(OrderBookReceivedConnectorMan),
+                MessageText = _msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
             return;
         }
         SBond? secCurceNode = Curve.GetNode(_sec);
@@ -1137,7 +1312,12 @@ public class DriverStockSharpService(
         {
             _msg = $"Curve.GetNode - is null";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(OrderBookReceivedConnectorMan), MessageText = _msg, TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(OrderBookReceivedConnectorMan),
+                MessageText = _msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
             return;
         }
 
@@ -1165,7 +1345,12 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         conLink.Connector.RegisterOrder(ord);
-                        eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` there is no orders in MarketDepth", MessageText = string.Format("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume), TypeMessage = MessagesTypesEnum.Warning });
+                        eventTrans.ToastClientShow(new()
+                        {
+                            HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` there is no orders in MarketDepth",
+                            MessageText = string.Format("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume),
+                            TypeMessage = MessagesTypesEnum.Warning
+                        });
                     }
                 }
                 else
@@ -1199,17 +1384,32 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         _ordersForQuoteBuyReregister.Add(tmpOrder.Security.Code, newOrder);
-                        eventTrans.ToastClientShow(new() { HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` with orders (x {Orders.Count()}) in MarketDepth", MessageText = string.Format("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                        eventTrans.ToastClientShow(new()
+                        {
+                            HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` with orders (x {Orders.Count()}) in MarketDepth",
+                            MessageText = string.Format("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume),
+                            TypeMessage = MessagesTypesEnum.Warning
+                        });
                         conLink.Connector.CancelOrder(tmpOrder);
                     }
 
                     Orders.Skip(1).ForEach(s =>
                     {
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Skip order", MessageText = string.Format("Order buy duplication!"), TypeMessage = MessagesTypesEnum.Warning });
+                        eventTrans.ToastClientShow(new()
+                        {
+                            HeadTitle = "Skip order",
+                            MessageText = string.Format("Order buy duplication!"),
+                            TypeMessage = MessagesTypesEnum.Warning
+                        });
                         if (s.Id != tmpOrder.Id)
                         {
-                            eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Duplicate buy order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
-                            //                                                       s.Security, s.Price, s.Volume);
+                            eventTrans.ToastClientShow(new()
+                            {
+                                HeadTitle = "Warning",
+                                MessageText = string.Format("Duplicate buy order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume),
+                                TypeMessage = MessagesTypesEnum.Warning
+                            });
+
                             conLink.Connector.CancelOrder(s);
                         }
                     });
@@ -1239,7 +1439,12 @@ public class DriverStockSharpService(
                         };
 
                         conLink.Connector.RegisterOrder(ord);
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume), TypeMessage = MessagesTypesEnum.Warning });
+                        eventTrans.ToastClientShow(new()
+                        {
+                            HeadTitle = "Warning",
+                            MessageText = string.Format("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume),
+                            TypeMessage = MessagesTypesEnum.Warning
+                        });
                     }
                 }
                 else
@@ -1273,16 +1478,31 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         _ordersForQuoteSellReregister.Add(tmpOrder.Security.Code, newOrder);
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                        eventTrans.ToastClientShow(new()
+                        {
+                            HeadTitle = "Warning",
+                            MessageText = string.Format(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume),
+                            TypeMessage = MessagesTypesEnum.Warning
+                        });
                         conLink.Connector.CancelOrder(tmpOrder);
                     }
 
                     Orders.Skip(1).ForEach(s =>
                     {
-                        eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order sell duplication!"), TypeMessage = MessagesTypesEnum.Warning });
+                        eventTrans.ToastClientShow(new()
+                        {
+                            HeadTitle = "Warning",
+                            MessageText = string.Format("Order sell duplication!"),
+                            TypeMessage = MessagesTypesEnum.Warning
+                        });
                         if (s.Id != tmpOrder.Id)
                         {
-                            eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Duplicate sell order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume), TypeMessage = MessagesTypesEnum.Warning });
+                            eventTrans.ToastClientShow(new()
+                            {
+                                HeadTitle = "Warning",
+                                MessageText = string.Format("Duplicate sell order cancelled: ins ={0}, price = {1}, volume = {2}", s.Security, s.Price, s.Volume),
+                                TypeMessage = MessagesTypesEnum.Warning
+                            });
                             conLink.Connector.CancelOrder(s);
                         }
                     });
@@ -1293,16 +1513,29 @@ public class DriverStockSharpService(
 
     void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
     {
-        _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
-        lock (DepthSubscriptions)
-            if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
-                return;
+        _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}; | Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
+        //lock (DepthSubscriptions)
+        //    if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
+        //        return;
 
-        eventTrans.ToastClientShow(new() { HeadTitle = nameof(MarketDepthOrderBookHandle), TypeMessage = MessagesTypesEnum.Info, MessageText = $"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}" });
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(MarketDepthOrderBookHandle),
+            TypeMessage = MessagesTypesEnum.Info,
+            MessageText = $"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}; | Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}"
+        });
 
-        // Обработка стакана
-        Console.WriteLine($"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}");
-        Console.WriteLine($"Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
+        /*
+         Security sec = ConnectorTrader.Securities.First(s => s.ToSecurityId() == depth.SecurityId);
+
+        if ((BondList is not null) && BondList.Contains(sec))
+        {
+            if (OderBookList.ContainsKey(sec))
+                OderBookList[sec] = depth;
+            else
+                OderBookList.Add(sec, depth);
+        }
+         */
     }
 
     void SecurityReceivedHandle(Subscription subscription, Security security)
@@ -1346,7 +1579,12 @@ public class DriverStockSharpService(
 
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
-        eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.OrderBookReceived), TypeMessage = MessagesTypesEnum.Info, MessageText = orderBM.SecurityId.ToString() });
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.OrderBookReceived),
+            TypeMessage = MessagesTypesEnum.Info,
+            MessageText = orderBM.SecurityId.ToString()
+        });
         Security sec = conLink.Connector.Securities.First(s => s.ToSecurityId() == orderBM.SecurityId);
         lock (OderBookList)
         {
@@ -1393,7 +1631,12 @@ public class DriverStockSharpService(
 
         if (Curve is null)
         {
-            eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]", MessageText = "Curve is null", TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]",
+                MessageText = "Curve is null",
+                TypeMessage = MessagesTypesEnum.Error
+            });
             _logger.LogError("Curve is null");
             return;
         }
@@ -1402,7 +1645,12 @@ public class DriverStockSharpService(
 
         if (_secNode is null)
         {
-            eventTrans.ToastClientShow(new() { HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]", MessageText = "CurveBondNode is null", TypeMessage = MessagesTypesEnum.Error });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]",
+                MessageText = "CurveBondNode is null",
+                TypeMessage = MessagesTypesEnum.Error
+            });
             _logger.LogError("CurveBondNode is null");
             return;
         }
@@ -1434,7 +1682,12 @@ public class DriverStockSharpService(
             //};
 
             //    conLink.Connector.RegisterOrder(ord);
-            // eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume), TypeMessage = MessagesTypesEnum.Warning });
+            // eventTrans.ToastClientShow(new()
+            // {
+            //      HeadTitle = "Warning",
+            //      MessageText = string.Format("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume),
+            //      TypeMessage = MessagesTypesEnum.Warning
+            // });
 
             //    // New logic???
             //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
@@ -1468,7 +1721,12 @@ public class DriverStockSharpService(
             //    };
 
             //    conLink.Connector.RegisterOrder(ord);
-            // eventTrans.ToastClientShow(new() { HeadTitle = "Warning", MessageText = string.Format("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume), TypeMessage = MessagesTypesEnum.Warning });
+            // eventTrans.ToastClientShow(new()
+            // {
+            //      HeadTitle = "Warning",
+            //      MessageText = string.Format("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume),
+            //      TypeMessage = MessagesTypesEnum.Warning
+            // });
 
             //    // New logic???
             //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
@@ -1482,7 +1740,12 @@ public class DriverStockSharpService(
         if (ex is not null)
         {
             _msg = $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`";
-            eventTrans.ToastClientShow(new() { HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult), TypeMessage = MessagesTypesEnum.Error, MessageText = _msg });
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult),
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = $"{_msg}\n{ex.Message}"
+            });
             _logger.LogError(ex, _msg);
         }
         else
@@ -1513,12 +1776,12 @@ public class DriverStockSharpService(
 
     void Level1ReceivedHandle(Subscription subscription, Level1ChangeMessage levelCh)
     {
-        //_logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
+        _logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
     }
 
     void DataTypeReceivedHandle(Subscription subscription, DataType argDt)
     {
-        //_logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
+        _logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
     }
 
     void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
