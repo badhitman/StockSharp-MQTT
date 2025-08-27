@@ -31,7 +31,7 @@ public class DriverStockSharpService(
                 ConnectionLink conLink) : IDriverStockSharpService
 {
     #region prop`s
-    CurveModel? Curve = null;
+    Curve? Curve = null;
 
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
     Subscription? SecurityCriteriaCodeFilterSubscription;
@@ -215,7 +215,7 @@ public class DriverStockSharpService(
             return res;
         }
         DateTime _gnvd = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
-        Curve = new CurveModel(_gnvd);
+        Curve = new Curve(_gnvd);
         res.Response = Curve.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, Boards, req.BigPriceDifferences, ref eventTrans);
         if (!string.IsNullOrWhiteSpace(res.Response))
             return res;
@@ -1087,49 +1087,6 @@ public class DriverStockSharpService(
         return Task.FromResult(ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию"));
     }
 
-    /// <inheritdoc/>
-    public Task<OrderRegisterRequestResponseModel> OrderRegisterRequestAsync(OrderRegisterRequestModel req, CancellationToken cancellationToken = default)
-    {
-        OrderRegisterRequestResponseModel res = new();
-        if (string.IsNullOrWhiteSpace(req.ConfirmRequestToken))
-        {
-            req.ConfirmRequestToken = Guid.NewGuid().ToString();
-            memoryCache.Set(req.ConfirmRequestToken, req, new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(10)));
-            res.AddWarning("Запрос требуется подтвердить!");
-            return Task.FromResult(res);
-        }
-        else
-        {
-            memoryCache.TryGetValue(req.ConfirmRequestToken, out OrderRegisterRequestModel savedReq);
-            if (savedReq is null)
-            {
-                req.ConfirmRequestToken = Guid.NewGuid().ToString();
-                memoryCache.Set(req.ConfirmRequestToken, req, new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(30)));
-                res.AddWarning("Подтверждение просрочено. Повторите попытку! ");
-                return Task.FromResult(res);
-            }
-            else
-                memoryCache.Remove(req.ConfirmRequestToken);
-        }
-
-
-        Order _order = new()
-        {
-            Price = req.Price,
-            ClientCode = req.ClientCode,
-            Comment = "Manual",
-            Volume = req.Volume,
-            Side = req.Direction == SidesEnum.Buy ? Sides.Buy : Sides.Sell,
-            //Security = conLink.Connector.Securities.FirstOrDefault(s => (s.Code == secCode) && (s.Board == ExchangeBoard.MicexTqob)),
-            //Portfolio = conLink.Connector.Portfolios.FirstOrDefault(p => p.Name == PortName),
-            //IsMarketMaker = OfzCodes.Contains(req.SecCode),
-        };
-
-        conLink.Connector.RegisterOrder(_order);
-
-        throw new NotImplementedException();
-    }
-
     public Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
     {
         UnregisterEvents();
@@ -1139,7 +1096,7 @@ public class DriverStockSharpService(
         return Task.FromResult(ResponseBaseModel.CreateSuccess("Connection terminated"));
     }
 
-    void DeleteAllQuotesByStrategy(string strategy)
+    async void DeleteAllQuotesByStrategy(string strategy)
     {
         IEnumerable<Order> orders = AllOrders.Where(s => s.State == OrderStates.Active);
 
@@ -1148,7 +1105,7 @@ public class DriverStockSharpService(
             foreach (Order order in orders)
             {
                 conLink.Connector.CancelOrder(order);
-                eventTrans.ToastClientShow(new()
+                await eventTrans.ToastClientShow(new()
                 {
                     HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` without strategy",
                     MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume),
@@ -1163,7 +1120,7 @@ public class DriverStockSharpService(
                 if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
                     conLink.Connector.CancelOrder(order);
 
-                eventTrans.ToastClientShow(new()
+                await eventTrans.ToastClientShow(new()
                 {
                     HeadTitle = $"`{nameof(DeleteAllQuotesByStrategy)}` with strategy '{strategy}'",
                     MessageText = string.Format("Order cancelled: ins ={0}, price = {1}, volume = {2}", order.Security, order.Price, order.Volume),
@@ -1221,12 +1178,12 @@ public class DriverStockSharpService(
 
     #region events
     /// <inheritdoc/>
-    void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
+    async void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
     {
         if (Curve is null)
         {
             _logger.LogError("Curve is null");
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = $"err [{nameof(OrderBookReceivedConnectorMan)}]",
                 MessageText = "Curve is null",
@@ -1245,7 +1202,7 @@ public class DriverStockSharpService(
         {
             _msg = $"The instruments are not configured.";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(OrderBookReceivedConnectorMan),
                 MessageText = _msg,
@@ -1260,7 +1217,7 @@ public class DriverStockSharpService(
             _msg = "Dashboard - not set";
 
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(OrderBookReceivedConnectorMan),
                 MessageText = _msg,
@@ -1285,7 +1242,7 @@ public class DriverStockSharpService(
         {
             _msg = $"Instrument not found - {JsonConvert.SerializeObject(sec, Formatting.Indented)}";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(OrderBookReceivedConnectorMan),
                 MessageText = _msg,
@@ -1299,7 +1256,7 @@ public class DriverStockSharpService(
         {
             _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(OrderBookReceivedConnectorMan),
                 MessageText = _msg,
@@ -1312,7 +1269,7 @@ public class DriverStockSharpService(
         {
             _msg = $"Curve.GetNode - is null";
             _logger.LogError(_msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(OrderBookReceivedConnectorMan),
                 MessageText = _msg,
@@ -1345,7 +1302,7 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         conLink.Connector.RegisterOrder(ord);
-                        eventTrans.ToastClientShow(new()
+                        await eventTrans.ToastClientShow(new()
                         {
                             HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` there is no orders in MarketDepth",
                             MessageText = string.Format("Order buy registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.BidVolume),
@@ -1384,7 +1341,7 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         _ordersForQuoteBuyReregister.Add(tmpOrder.Security.Code, newOrder);
-                        eventTrans.ToastClientShow(new()
+                        await eventTrans.ToastClientShow(new()
                         {
                             HeadTitle = $"`{nameof(OrderBookReceivedConnectorMan)}` with orders (x {Orders.Count()}) in MarketDepth",
                             MessageText = string.Format("Order buy cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume),
@@ -1439,7 +1396,7 @@ public class DriverStockSharpService(
                         };
 
                         conLink.Connector.RegisterOrder(ord);
-                        eventTrans.ToastClientShow(new()
+                        await eventTrans.ToastClientShow(new()
                         {
                             HeadTitle = "Warning",
                             MessageText = string.Format("Order sell registered new: ins ={0}, price = {1}, volume = {2}", sec, price, SbPos.OfferVolume),
@@ -1478,10 +1435,10 @@ public class DriverStockSharpService(
                             ClientCode = ClientCodeStockSharp,
                         };
                         _ordersForQuoteSellReregister.Add(tmpOrder.Security.Code, newOrder);
-                        eventTrans.ToastClientShow(new()
+                        await eventTrans.ToastClientShow(new()
                         {
                             HeadTitle = "Warning",
-                            MessageText = string.Format(" Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume),
+                            MessageText = string.Format("Order sell cancelled for reregister: ins ={0}, price = {1}, volume = {2}", sec, tmpOrder.Price, tmpOrder.Volume),
                             TypeMessage = MessagesTypesEnum.Warning
                         });
                         conLink.Connector.CancelOrder(tmpOrder);
@@ -1511,31 +1468,30 @@ public class DriverStockSharpService(
         }
     }
 
-    void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
+    async void MarketDepthOrderBookHandle(Subscription subscription, IOrderBookMessage depth)
     {
         _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}; | Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
-        //lock (DepthSubscriptions)
-        //    if (!DepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
-        //        return;
 
-        eventTrans.ToastClientShow(new()
+        lock (MarketDepthSubscriptions)
+            if (!MarketDepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
+                return;
+
+        await eventTrans.ToastClientShow(new()
         {
             HeadTitle = nameof(MarketDepthOrderBookHandle),
             TypeMessage = MessagesTypesEnum.Info,
             MessageText = $"Стакан: {depth.SecurityId}, Время: {depth.ServerTime}; | Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}"
         });
 
-        /*
-         Security sec = ConnectorTrader.Securities.First(s => s.ToSecurityId() == depth.SecurityId);
-
-        if ((BondList is not null) && BondList.Contains(sec))
+        Security sec = conLink.Connector.Securities.First(s => s.ToSecurityId() == depth.SecurityId);
+        List<Security> BondList = SecuritiesBonds(true);
+        if (BondList.Contains(sec))
         {
             if (OderBookList.ContainsKey(sec))
                 OderBookList[sec] = depth;
             else
                 OderBookList.Add(sec, depth);
         }
-         */
     }
 
     void SecurityReceivedHandle(Subscription subscription, Security security)
@@ -1551,9 +1507,9 @@ public class DriverStockSharpService(
         }
     }
 
-    void OrderReceivedHandle(Subscription subscription, Order order)
+    async void OrderReceivedHandle(Subscription subscription, Order order)
     {
-        eventTrans.ToastClientShow(new()
+        await eventTrans.ToastClientShow(new()
         {
             HeadTitle = nameof(conLink.Connector.OrderReceived),
             TypeMessage = MessagesTypesEnum.Success,
@@ -1571,12 +1527,12 @@ public class DriverStockSharpService(
         }
     }
 
-    void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
+    async void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
         lock (myTrades)
             myTrades.Add(tr);
 
-        eventTrans.ToastClientShow(new()
+        await eventTrans.ToastClientShow(new()
         {
             HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
             TypeMessage = MessagesTypesEnum.Success,
@@ -1584,9 +1540,9 @@ public class DriverStockSharpService(
         });
     }
 
-    void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
+    async void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
     {
-        eventTrans.ToastClientShow(new()
+        await eventTrans.ToastClientShow(new()
         {
             HeadTitle = nameof(conLink.Connector.OrderBookReceived),
             TypeMessage = MessagesTypesEnum.Info,
@@ -1606,7 +1562,7 @@ public class DriverStockSharpService(
         OnProcessOutOfRangeCheck(subscription, orderBM);
     }
 
-    void OnProcessOutOfRangeCheck(Subscription subscription, IOrderBookMessage depth)
+    async void OnProcessOutOfRangeCheck(Subscription subscription, IOrderBookMessage depth)
     {
         decimal ofrVolume;
 
@@ -1639,7 +1595,7 @@ public class DriverStockSharpService(
         if (Curve is null)
         {
             msg = "Curve is null";
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 MessageText = msg,
@@ -1654,7 +1610,7 @@ public class DriverStockSharpService(
         if (_secNode is null)
         {
             msg = "CurveBondNode is null";
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 MessageText = msg,
@@ -1669,7 +1625,7 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
         {
             msg = "The instruments are not configured.";
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 MessageText = msg,
@@ -1682,7 +1638,7 @@ public class DriverStockSharpService(
         if (currInstrument is null)
         {
             msg = $"Security [{sec}] not configured in trade strategy";
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 MessageText = msg,
@@ -1697,7 +1653,7 @@ public class DriverStockSharpService(
         if (dataParse.Count == 0)
         {
             msg = "Dashboard - not set";
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 MessageText = msg,
@@ -1736,7 +1692,7 @@ public class DriverStockSharpService(
 
             conLink.Connector.RegisterOrder(ord);
             conLink.Connector.AddWarningLog(string.Format("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume));
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(OnProcessOutOfRangeCheck),
                 MessageText = $"OfR Detected! {sec.Id}",
@@ -1771,7 +1727,7 @@ public class DriverStockSharpService(
 
             conLink.Connector.RegisterOrder(ord);
             conLink.Connector.AddWarningLog("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(OnProcessOutOfRangeCheck),
                 MessageText = string.Format("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume),
@@ -1780,13 +1736,13 @@ public class DriverStockSharpService(
         }
     }
 
-    void LookupSecuritiesResultHandle(SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
+    async void LookupSecuritiesResultHandle(SecurityLookupMessage slm, IEnumerable<Security> securities, Exception ex)
     {
         string _msg;
         if (ex is not null)
         {
             _msg = $"Call > `{nameof(conLink.Connector.LookupSecuritiesResult)}`";
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = nameof(conLink.Connector.LookupSecuritiesResult),
                 TypeMessage = MessagesTypesEnum.Error,

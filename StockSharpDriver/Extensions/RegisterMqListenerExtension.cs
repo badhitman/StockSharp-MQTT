@@ -73,7 +73,6 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<ResetAllStrategiesStockSharpDriverReceive, ResetStrategyRequestBaseModel, ResponseBaseModel>()
             .RegisterMqListener<ShiftCurveStockSharpDriverReceive, ShiftCurveRequestModel, ResponseBaseModel>()
             .RegisterMqListener<StrategyStopStockSharpDriverReceive, StrategyStopRequestModel, ResponseBaseModel>()
-            .RegisterMqListener<OrderRegisterRequestStockSharpDriverReceive, OrderRegisterRequestModel, OrderRegisterRequestResponseModel>()
             .RegisterMqListener<InstrumentUpdateReceive, InstrumentTradeStockSharpViewModel, ResponseBaseModel>()
             .RegisterMqListener<InstrumentsSelectStockSharpDriverReceive, InstrumentsRequestModel, TPaginationResponseModel<InstrumentTradeStockSharpViewModel>>()
             .RegisterMqListener<ReadTradeInstrumentsStockSharpDriverReceive, object, TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()

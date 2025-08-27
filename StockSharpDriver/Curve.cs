@@ -10,9 +10,9 @@ namespace StockSharpDriver;
 /// <summary>
 /// Класс для работы с кривой
 /// </summary>
-public class CurveModel : CurveBaseModel
+public class Curve : CurveBaseModel
 {
-    public CurveModel(DateTime date)
+    public Curve(DateTime date)
     {
         CurveDate = date;
     }

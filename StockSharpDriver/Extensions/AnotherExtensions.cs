@@ -6,7 +6,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class AnotherExtensions
 {
-    public static decimal CalcFairPriceFromCurve(this SFut sFut, CurveModel crv)
+    public static decimal CalcFairPriceFromCurve(this SFut sFut, Curve crv)
     {
         sFut.ModelPrice = sFut.ConversionFactors.Keys.Select(s =>
         {
