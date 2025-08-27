@@ -1556,7 +1556,7 @@ public class DriverStockSharpService(
         eventTrans.ToastClientShow(new()
         {
             HeadTitle = nameof(conLink.Connector.OrderReceived),
-            TypeMessage = MessagesTypesEnum.Info,
+            TypeMessage = MessagesTypesEnum.Success,
             MessageText = $"{nameof(order.Security)}:{order.Security.Id}; {nameof(order.Price)}:{order.Price}; {nameof(order.Volume)}:{order.Volume};"
         });
 
@@ -1575,6 +1575,13 @@ public class DriverStockSharpService(
     {
         lock (myTrades)
             myTrades.Add(tr);
+
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
+            TypeMessage = MessagesTypesEnum.Success,
+            MessageText = tr.ToString()
+        });
     }
 
     void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
@@ -1671,8 +1678,21 @@ public class DriverStockSharpService(
             _logger.LogError(msg);
             return;
         }
+        InstrumentTradeStockSharpViewModel? currInstrument = resInstruments.Response.FirstOrDefault(x => x.IdRemote == sec.Id);
+        if (currInstrument is null)
+        {
+            msg = $"Security [{sec}] not configured in trade strategy";
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                MessageText = msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
+            _logger.LogError(msg);
+            return;
+        }
 
-        List<DashboardTradeStockSharpModel> dataParse = ReadDashboard([.. resInstruments.Response.Select(x => x.Id)]).Result;
+        List<DashboardTradeStockSharpModel> dataParse = ReadDashboard([currInstrument.Id]).Result;
 
         if (dataParse.Count == 0)
         {
@@ -1686,6 +1706,7 @@ public class DriverStockSharpService(
             _logger.LogError(msg);
             return;
         }
+        bool? _IsMarketMaker = currInstrument.Markers?.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker);
 
         if (bBid.Value.Price > _secNode.ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
         {
@@ -1708,61 +1729,54 @@ public class DriverStockSharpService(
                 Price = bBid.Value.Price,
                 Side = Sides.Sell,
                 Comment = "OfRStrategy",
-                IsMarketMaker = _sec.ma,
+                IsMarketMaker = _IsMarketMaker,
                 Volume = ofrVolume,
                 ClientCode = ClientCodeStockSharp,
             };
 
-            //    conLink.Connector.RegisterOrder(ord);
-            // eventTrans.ToastClientShow(new()
-            // {
-            //      HeadTitle = "Warning",
-            //      MessageText = string.Format("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume),
-            //      TypeMessage = MessagesTypesEnum.Warning
-            // });
-
-            //    // New logic???
-            //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
-            //    conLink.Connector.OrderBookReceived -= OrderBookReceivedConnector2;
-            //    //
+            conLink.Connector.RegisterOrder(ord);
+            conLink.Connector.AddWarningLog(string.Format("Order sell registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume));
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(OnProcessOutOfRangeCheck),
+                MessageText = $"OfR Detected! {sec.Id}",
+                TypeMessage = MessagesTypesEnum.Success
+            });
         }
         else if (bAsk.Value.Price < _secNode.ModelPrice - SbPos.LowLimit - SbPos.HighLimit)
         {
-            //    ofrVolume = 20000;
-            //    if (bAsk.Value.Price < OfzCurve.GetNode(sec).ModelPrice - 2 * SbPos.HighLimit)
-            //        ofrVolume = 30000;
-            //    if (bAsk.Value.Price < OfzCurve.GetNode(sec).ModelPrice - 3 * SbPos.HighLimit)
-            //        ofrVolume = 50000;
+            ofrVolume = 20000;
+            if (bAsk.Value.Price < _secNode.ModelPrice - 2 * SbPos.HighLimit)
+                ofrVolume = 30000;
+            if (bAsk.Value.Price < _secNode.ModelPrice - 3 * SbPos.HighLimit)
+                ofrVolume = 50000;
 
-            //    if (bAsk.Value.Volume < ofrVolume)
-            //        ofrVolume = bAsk.Value.Volume;
+            if (bAsk.Value.Volume < ofrVolume)
+                ofrVolume = bAsk.Value.Volume;
 
-            //    DeleteAllQuotesByStrategy("Quote");
-            //    DeleteAllQuotesByStrategy("Size");
+            DeleteAllQuotesByStrategy("Quote");
+            DeleteAllQuotesByStrategy("Size");
 
-            //    Order ord = new()
-            //    {
-            //        Security = sec,
-            //        Portfolio = MyPortf,
-            //        Price = bAsk.Value.Price,
-            //        Side = Sides.Buy,
-            //        Comment = "OfRStrategy",
-            //        IsMarketMaker = OfzCodes.Contains(sec.Code),
-            //        Volume = ofrVolume,
-            //        ClientCode = ClientCodeStockSharp,
-            //    };
+            Order ord = new()
+            {
+                Security = sec,
+                Portfolio = SelectedPortfolio,
+                Price = bAsk.Value.Price,
+                Side = Sides.Buy,
+                Comment = "OfRStrategy",
+                IsMarketMaker = _IsMarketMaker,
+                Volume = ofrVolume,
+                ClientCode = ClientCodeStockSharp,
+            };
 
-            //    conLink.Connector.RegisterOrder(ord);
-            // eventTrans.ToastClientShow(new()
-            // {
-            //      HeadTitle = "Warning",
-            //      MessageText = string.Format("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume),
-            //      TypeMessage = MessagesTypesEnum.Warning
-            // });
-
-            //    // New logic???
-            //    this.GuiAsync(() => System.Windows.MessageBox.Show(this, "OfR Detected! " + sec.Code));
-            //    conLink.Connector.OrderBookReceived -= OrderBookReceivedConnector2;
+            conLink.Connector.RegisterOrder(ord);
+            conLink.Connector.AddWarningLog("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(OnProcessOutOfRangeCheck),
+                MessageText = string.Format("Order buy registered for OfRStrategy: ins ={0}, price = {1}, volume = {2}", sec, ord.Price, ord.Volume),
+                TypeMessage = MessagesTypesEnum.Success
+            });
         }
     }
 
