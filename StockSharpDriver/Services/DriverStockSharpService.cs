@@ -1620,7 +1620,7 @@ public class DriverStockSharpService(
         IEnumerable<Order> Orders = [.. AllOrders
             .Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && s.Comment.ContainsIgnoreCase("Ofr"))];
 
-        if (!Orders.IsEmpty() && (Orders.Count() > 4))
+        if (!Orders.Any() && (Orders.Count() > 4))
             return;
 
         QuoteChange? bBid = depth.GetBestBid();
@@ -1628,16 +1628,17 @@ public class DriverStockSharpService(
 
         if (bBid is null || bAsk is null)
             return;
-
+        string headTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]", msg;
         if (Curve is null)
         {
+            msg = "Curve is null";
             eventTrans.ToastClientShow(new()
             {
-                HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]",
-                MessageText = "Curve is null",
+                HeadTitle = headTitle,
+                MessageText = msg,
                 TypeMessage = MessagesTypesEnum.Error
             });
-            _logger.LogError("Curve is null");
+            _logger.LogError(msg);
             return;
         }
 
@@ -1645,13 +1646,44 @@ public class DriverStockSharpService(
 
         if (_secNode is null)
         {
+            msg = "CurveBondNode is null";
             eventTrans.ToastClientShow(new()
             {
-                HeadTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]",
-                MessageText = "CurveBondNode is null",
+                HeadTitle = headTitle,
+                MessageText = msg,
                 TypeMessage = MessagesTypesEnum.Error
             });
-            _logger.LogError("CurveBondNode is null");
+            _logger.LogError(msg);
+            return;
+        }
+
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = dataRepo.ReadTradeInstrumentsAsync().Result;
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+        {
+            msg = "The instruments are not configured.";
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                MessageText = msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
+            _logger.LogError(msg);
+            return;
+        }
+
+        List<DashboardTradeStockSharpModel> dataParse = ReadDashboard([.. resInstruments.Response.Select(x => x.Id)]).Result;
+
+        if (dataParse.Count == 0)
+        {
+            msg = "Dashboard - not set";
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                MessageText = msg,
+                TypeMessage = MessagesTypesEnum.Error
+            });
+            _logger.LogError(msg);
             return;
         }
 
@@ -1669,17 +1701,17 @@ public class DriverStockSharpService(
             DeleteAllQuotesByStrategy("Quote");
             DeleteAllQuotesByStrategy("Size");
 
-            //Order ord = new()
-            //{
-            //    Security = sec,
-            //    Portfolio = SelectedPortfolio,
-            //    Price = bBid.Value.Price,
-            //    Side = Sides.Sell,
-            //    Comment = "OfRStrategy",
-            //    IsMarketMaker = OfzCodes.Contains(sec.Code),
-            //    Volume = ofrVolume,
-            //    ClientCode = ClientCodeStockSharp,
-            //};
+            Order ord = new()
+            {
+                Security = sec,
+                Portfolio = SelectedPortfolio,
+                Price = bBid.Value.Price,
+                Side = Sides.Sell,
+                Comment = "OfRStrategy",
+                IsMarketMaker = _sec.ma,
+                Volume = ofrVolume,
+                ClientCode = ClientCodeStockSharp,
+            };
 
             //    conLink.Connector.RegisterOrder(ord);
             // eventTrans.ToastClientShow(new()
