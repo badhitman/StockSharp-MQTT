@@ -1108,13 +1108,20 @@ public class DriverStockSharpService(
         return ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию");
     }
 
-    public Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
     {
         UnregisterEvents();
         conLink.Connector.Dispose();
         conLink.Connector = new();
         RegisterEvents();
-        return Task.FromResult(ResponseBaseModel.CreateSuccess("Connection terminated"));
+
+        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = conLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
+        }, cancellationToken);
+
+        return ResponseBaseModel.CreateSuccess("Connection terminated");
     }
 
     async void DeleteAllQuotesByStrategy(string strategy)

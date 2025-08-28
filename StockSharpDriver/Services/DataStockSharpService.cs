@@ -13,6 +13,7 @@ namespace StockSharpDriver;
 /// </summary>
 public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory,
     IParametersStorage storageRepo,
+    //IMemoryCache memoryCache,
     IDbContextFactory<PropertiesStorageContext> cloudParametersDbFactory) : IDataStockSharpService
 {
     #region CashFlow
