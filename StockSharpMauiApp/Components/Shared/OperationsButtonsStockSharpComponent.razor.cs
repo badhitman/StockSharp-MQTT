@@ -35,7 +35,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
     decimal price, volume;
     SidesEnum side;
     OrderTypesEnum selectedOrderType;
-    int selectedPortfolio;
+    int selectedPortfolioId;
 
     List<PortfolioStockSharpViewModel>? portfoliosAll;
 
@@ -53,7 +53,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
             Side = side,
 
             OrderType = selectedOrderType,
-            PortfolioId = selectedPortfolio
+            PortfolioId = selectedPortfolioId
         };
         await SetBusyAsync();
         ResponseBaseModel res = await DriverRepo.OrderRegisterAsync(req);
@@ -175,6 +175,10 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         await SetBusyAsync();
         TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
         portfoliosAll = res.Response;
+
+        if (portfoliosAll is not null && portfoliosAll.Count != 0)
+            selectedPortfolioId = portfoliosAll.First().Id;
+
         SnackBarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
     }
