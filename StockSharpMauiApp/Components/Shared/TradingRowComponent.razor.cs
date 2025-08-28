@@ -35,7 +35,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
 
     DashboardTradeStockSharpModel? RestoreStrategy;
 
-    OperationsButtonsStockSharpComponent? opButRef;
+    OperationsButtonsStockSharpComponent? OperationsButtonsRef;
 
 
     public DashboardTradeStockSharpModel StrategyTrade => DashboardTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, LowLimit, HightLimit);
@@ -168,7 +168,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
             AboutConnection.Update(req);
 
         StateHasChangedCall();
-        opButRef?.AvailableSet(Available);
+        OperationsButtonsRef?.AvailableSet(Available);
     }
 
     protected override async Task OnInitializedAsync()
@@ -217,7 +217,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
             SetFields();
             StateHasChangedCall();
             InvokeAsync(async () => { await JsRuntimeRepo.InvokeVoidAsync("TradeInstrumentStrategy.ButtonSplash", model.Id); });
-            opButRef?.AvailableSet(Available);
+            OperationsButtonsRef?.AvailableSet(Available);
         }
     }
 
@@ -278,6 +278,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     {
         Instrument.Reload(sender);
         StateHasChangedCall();
+        OperationsButtonsRef?.AvailableSet(Available);
     }
 
     public override void Dispose()

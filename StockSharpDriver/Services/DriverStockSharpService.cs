@@ -721,7 +721,7 @@ public class DriverStockSharpService(
 
         InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
 
-        decimal 
+        decimal
             WorkVol = currentStrategy.WorkingVolume,
             SmallBidVol = currentStrategy.SmallBidVolume,
             SmallOfferVol = currentStrategy.SmallOfferVolume,
@@ -1049,24 +1049,45 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public Task<ResponseBaseModel> OrderRegisterAsync(CreateOrderRequestModel req, CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> OrderRegisterAsync(CreateOrderRequestModel req, CancellationToken cancellationToken = default)
     {
-        if (req.Portfolio is null)
-            return Task.FromResult(ResponseBaseModel.CreateError("Portfolio not set"));
-        if (req.Instrument is null)
-            return Task.FromResult(ResponseBaseModel.CreateError("Instrument not set"));
+        if (req.PortfolioId <= 0)
+            return ResponseBaseModel.CreateError("Portfolio not set");
+        if (req.InstrumentId <= 0)
+            return ResponseBaseModel.CreateError("Instrument not set");
 
-        ExchangeBoard? board = req.Instrument.Board is null
-            ? null
-            : conLink.Connector.ExchangeBoards.FirstOrDefault(x => x.Code == req.Instrument.Board.Code && (x.Exchange.Name == req.Instrument.Board.Exchange?.Name || x.Exchange.CountryCode.ToString() == req.Instrument.Board.Exchange?.CountryCode.ToString()));
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstrument = default!;
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resStrategies = default!;
+        TResponseModel<List<PortfolioStockSharpViewModel>> resPortfolio = default!;
 
-        Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == req.Instrument.Code && x.Board.Code == board?.Code && x.Board.Exchange.CountryCode == board.Exchange.CountryCode);
+        await Task.WhenAll([
+            Task.Run(async () => resStrategies = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken)),
+            Task.Run(async () =>  resInstrument = await dataRepo.GetInstrumentsAsync([req.InstrumentId],cancellationToken)),
+            Task.Run(async () =>  resPortfolio = await dataRepo.GetPortfoliosAsync([req.PortfolioId],cancellationToken))
+        ]);
+
+        if (resPortfolio.Response is null || resPortfolio.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The portfolio #{req.PortfolioId} are not found.");
+
+        if (resInstrument.Response is null || resInstrument.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instrument #{req.InstrumentId} are not found.");
+
+        if (resStrategies.Response is null || resStrategies.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        InstrumentTradeStockSharpViewModel instrumentDb = resInstrument.Response[0];
+        PortfolioStockSharpViewModel portfolioDb = resPortfolio.Response[0];
+
+        if (resStrategies.Response.Any(x => x.Id == req.InstrumentId))
+            return ResponseBaseModel.CreateError($"The instrument [{instrumentDb}] are not set with strategy.");
+
+        Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == instrumentDb.Code && x.Board.Code == instrumentDb.Board!.Code && (int?)x.Board.Exchange.CountryCode == instrumentDb.Board.Exchange?.CountryCode);
         if (currentSec is null)
-            return Task.FromResult(ResponseBaseModel.CreateError($"Инструмент не найден: {req.Instrument}"));
+            return ResponseBaseModel.CreateError($"Инструмент не найден (aka Security): {instrumentDb}");
 
-        Portfolio? selectedPortfolio = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.Portfolio.ClientCode && x.Name == req.Portfolio.Name);
+        Portfolio? selectedPortfolio = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == portfolioDb.ClientCode && x.Name == portfolioDb.Name);
         if (selectedPortfolio is null)
-            return Task.FromResult(ResponseBaseModel.CreateError($"Портфель не найден: {req.Portfolio}"));
+            return ResponseBaseModel.CreateError($"Портфель не найден: {portfolioDb}");
 
         Order order = new()
         {
@@ -1077,14 +1098,14 @@ public class DriverStockSharpService(
             Security = currentSec,
             Side = (Sides)Enum.Parse(typeof(Sides), Enum.GetName(req.Side)!),
             IsManual = req.IsManual,
-            IsMarketMaker = req.IsMarketMaker,
-            IsSystem = req.IsSystem,
+            IsMarketMaker = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker),
+            IsSystem = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsSystem),
             Comment = req.Comment,
             ClientCode = ClientCodeStockSharp
         };
 
         conLink.Connector.RegisterOrder(order);
-        return Task.FromResult(ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию"));
+        return ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию");
     }
 
     public Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)

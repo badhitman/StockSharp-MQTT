@@ -6,7 +6,6 @@ using BlazorLib;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SharedLib;
-using System.Diagnostics.Metrics;
 
 namespace StockSharpMauiApp.Components.Shared;
 
@@ -14,6 +13,12 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 {
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
+
+    [Inject]
+    IDriverStockSharpService DriverRepo { get; set; } = default!;
+
+    [Inject]
+    IDataStockSharpService DataRepo { get; set; } = default!;
 
 
     [Parameter, EditorRequired]
@@ -28,12 +33,33 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
     decimal price, volume;
     SidesEnum side;
-    // $"Do you really want to {(side == SidesEnum.Buy ? "BUY" : "SELL")} {volume.ToString("#")} {RestoreStrategy?.Name} bonds @ {price.ToString("#.##")}"
-    string AboutOrder => "Do you really want to " + (side == SidesEnum.Buy ? "BUY" : "SELL") + " " + volume.ToString("#") + " " + RestoreStrategy?.Name + " bonds @ " + price.ToString("#.##");
+    OrderTypesEnum selectedOrderType;
+    int selectedPortfolio;
+
+    List<PortfolioStockSharpViewModel>? portfoliosAll;
 
     private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
-    private void Submit() => _visible = false;
+    async Task Submit()
+    {
+        CreateOrderRequestModel req = new()
+        {
+            Comment = "Manual",
+            InstrumentId = InstrumentId,
+            IsManual = true,
+            Price = price,
+            Volume = volume,
+            Side = side,
+
+            OrderType = selectedOrderType,
+            PortfolioId = selectedPortfolio
+        };
+        await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.OrderRegisterAsync(req);
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
+        _visible = false;
+        await SetBusyAsync(false);
+    }
 
     async Task Buy()
     {
@@ -141,9 +167,14 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         StateHasChangedCall();
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        await base.OnInitializedAsync();
         _available = Available;
+        await SetBusyAsync();
+        TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
+        portfoliosAll = res.Response;
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
+        await SetBusyAsync(false);
     }
 }

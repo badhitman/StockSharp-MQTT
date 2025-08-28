@@ -35,7 +35,7 @@ else
     <MudTd DataLabel="Price" Class="@($"trade-instrument-{Instrument.Id}-row")"><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
     <MudTd DataLabel="Volume"><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
     <MudTd Class="@_opClass" DataLabel="Actions">
-        <OperationsButtonsStockSharpComponent Available=Available InstrumentId=Instrument.Id @ref=opButRef />
+        <OperationsButtonsStockSharpComponent Available=Available InstrumentId=Instrument.Id @ref=OperationsButtonsRef />
     </MudTd>
     <MudTd DataLabel="SBV" Class="@($"trade-instrument-{Instrument.Id}-row")">
         <input @bind-value="SmallBidVolume" type="number" class="form-control form-control-sm" @bind-value:event="oninput">
@@ -54,12 +54,6 @@ else
     </MudTd>
     <MudTd DataLabel="Confines" Class="@($"trade-instrument-{Instrument.Id}-row")">
         <div class="input-group input-group-sm">
-            @* <div class="input-group-text">
-                <label class="form-check-label me-1">
-                    alt
-                </label>
-                <input @bind="IsAlter" class="form-check-input mt-0" type="checkbox" title="alter">
-            </div> *@
             <div class="input-group-text">
                 <label class="form-check-label me-1">
                     is small
