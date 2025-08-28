@@ -1,0 +1,31 @@
+﻿@using BlazorLib
+
+@inherits BlazorBusyComponentBaseModel
+
+<div class="btn-group btn-group-sm" role="group">
+    <button disabled="@(!_available)" type="button" class="btn btn-outline-warning" @onclick=Buy>buy</button>
+    <button disabled="@(!_available)" type="button" class="btn btn-outline-primary" @onclick=Sell>sell</button>
+    <button disabled="@(!_available)" type="button" class="btn btn-outline-warning" title="Bid" @onclick=Bid>B</button>
+    <button disabled="@(!_available)" type="button" class="btn btn-outline-primary" title="Ask" @onclick=Ask>A</button>
+</div>
+
+<MudDialog @bind-Visible="_visible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-3" /> New order registration
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <figure>
+            <blockquote class="blockquote">
+                <p>@($"Do you really want to {(side == SidesEnum.Buy ? "BUY" : "SELL")}?") <strong title="Volume order">@(volume.ToString("#"))</strong></p>
+            </blockquote>
+            <figcaption class="blockquote-footer">
+                @RestoreStrategy?.Name. Bonds: <cite title="price order">@(price.ToString("#.##"))</cite>
+            </figcaption>
+        </figure>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Class="px-10">Create new order</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -2,10 +2,9 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using BlazorLib;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using BlazorLib;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
@@ -34,8 +33,14 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     public required TradingAreaComponent Parent { get; set; }
 
 
+    DashboardTradeStockSharpModel? RestoreStrategy;
+
+    OperationsButtonsStockSharpComponent? opButRef;
+
+
     public DashboardTradeStockSharpModel StrategyTrade => DashboardTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, LowLimit, HightLimit);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
+
 
     decimal _lowLimit;
     /// <inheritdoc/>
@@ -163,9 +168,8 @@ public partial class TradingRowComponent : StockSharpAboutComponent
             AboutConnection.Update(req);
 
         StateHasChangedCall();
+        opButRef?.AvailableSet(Available);
     }
-
-    DashboardTradeStockSharpModel? RestoreStrategy;
 
     protected override async Task OnInitializedAsync()
     {
@@ -185,7 +189,6 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         await base.OnInitializedAsync();
 
         await DashboardRepo.RegisterAction($"{GlobalStaticConstantsTransmission.TransmissionQueues.DashboardTradeUpdateStockSharpNotifyReceive}:{Instrument.Id}", DashboardTradeUpdateHandle);
-
     }
 
     void SetFields()
@@ -214,6 +217,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
             SetFields();
             StateHasChangedCall();
             InvokeAsync(async () => { await JsRuntimeRepo.InvokeVoidAsync("TradeInstrumentStrategy.ButtonSplash", model.Id); });
+            opButRef?.AvailableSet(Available);
         }
     }
 

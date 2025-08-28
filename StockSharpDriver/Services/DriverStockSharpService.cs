@@ -721,21 +721,22 @@ public class DriverStockSharpService(
 
         InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
 
-        decimal WorkVol = currentStrategy.WorkingVolume;
-        decimal SmallBidVol = currentStrategy.SmallBidVolume;
-        decimal SmallOfferVol = currentStrategy.SmallOfferVolume;
-        decimal LowLimit = currentStrategy.LowLimit;
-        decimal Highlimit = currentStrategy.HightLimit;
-        decimal SmallOffset = currentStrategy.SmallOffset;
-        decimal Offset = currentStrategy.Offset;
-        bool IsSmall = currentStrategy.IsSmall;
+        decimal 
+            WorkVol = currentStrategy.WorkingVolume,
+            SmallBidVol = currentStrategy.SmallBidVolume,
+            SmallOfferVol = currentStrategy.SmallOfferVolume,
+            LowLimit = currentStrategy.LowLimit,
+            Highlimit = currentStrategy.HightLimit,
+            SmallOffset = currentStrategy.SmallOffset,
+            Offset = currentStrategy.Offset;
 
+        bool IsSmall = currentStrategy.IsSmall;
         SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
 
         if (IsSmall)
             SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (decimal)(Highlimit - (decimal)0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
 
-        int[] _dsc = [(int)MarkersInstrumentStockSharpEnum.IsNew];
+        //int[] _dsc = [(int)MarkersInstrumentStockSharpEnum.IsNew];
 
         SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (decimal)(Highlimit + (decimal)0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
 
