@@ -27,6 +27,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
     [Parameter, EditorRequired]
     public int InstrumentId { get; set; }
 
+
     DashboardTradeStockSharpModel? RestoreStrategy;
     public bool _available;
     bool _visible;
