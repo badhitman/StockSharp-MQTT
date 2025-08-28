@@ -27,7 +27,7 @@ public class DriverStockSharpService(
                 IDataStockSharpService dataRepo,
                 IParametersStorage storageRepo,
                 IEventsStockSharp eventTrans,
-                IMemoryCache memoryCache,
+                //IMemoryCache memoryCache,
                 ConnectionLink conLink) : IDriverStockSharpService
 {
     #region prop`s
@@ -390,7 +390,6 @@ public class DriverStockSharpService(
 
         return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
     }
-
 
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
