@@ -2,8 +2,8 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using BlazorLib;
 using Microsoft.AspNetCore.Components;
+using BlazorLib;
 using MudBlazor;
 using SharedLib;
 
@@ -55,10 +55,14 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
             OrderType = selectedOrderType,
             PortfolioId = selectedPortfolioId
         };
+        
         await SetBusyAsync();
         ResponseBaseModel res = await DriverRepo.OrderRegisterAsync(req);
         SnackBarRepo.ShowMessagesResponse(res.Messages);
-        _visible = false;
+        
+        if (res.Success())
+            _visible = false;
+
         await SetBusyAsync(false);
     }
 
@@ -132,7 +136,10 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
             volume = 30000;
 
         if (price * volume == 0)
+        {
+            SnackBarRepo.Warn("price * volume == 0");
             return;
+        }
 
         _visible = true;
     }
@@ -157,7 +164,10 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
             volume = 30000;
 
         if (price * volume == 0)
+        {
+            SnackBarRepo.Warn("price * volume == 0");
             return;
+        }
 
         _visible = true;
     }
