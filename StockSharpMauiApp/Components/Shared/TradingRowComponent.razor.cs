@@ -160,6 +160,14 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         }
     }
 
+    async Task ResetTrade()
+    {
+        await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.ResetStrategy(new() { InstrumentId = Instrument.Id });
+        await SetBusyAsync(false);
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
+    }
+
     public void UpdateConnectionNotificationHandle(AboutConnectResponseModel req)
     {
         if (AboutConnection is null)

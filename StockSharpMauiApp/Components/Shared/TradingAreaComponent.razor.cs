@@ -2,6 +2,7 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using BlazorLib;
 using BlazorLib.Components.StockSharp;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -48,6 +49,14 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
             _quoteSizeVolume = value;
             InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteSizeVolume, GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, true, false); });
         }
+    }
+
+    async Task Reset()
+    {
+        await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.ResetAllStrategies(new() { Size = QuoteSizeVolume, Volume = QuoteVolume });
+        await SetBusyAsync(false);
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
     }
 
     readonly List<InstrumentTradeStockSharpViewModel> instruments = [];
