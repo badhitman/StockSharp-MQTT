@@ -18,7 +18,7 @@
     <DialogContent>
         <figure>
             <blockquote class="blockquote">
-                <p>Volume: <strong title="Volume order">@(volume.ToString("#"))</strong></p>
+                <p>@RestoreStrategy?.Code: <strong title="Volume order">@(volume.ToString("#"))</strong> vol.</p>
             </blockquote>
             <figcaption class="blockquote-footer" style="font-size: 1em;">
                 @RestoreStrategy?.Name. Bonds: <cite title="price order" style="font-size: 1.5em;" class="text-primary">@(price.ToString("#.##"))</cite>
