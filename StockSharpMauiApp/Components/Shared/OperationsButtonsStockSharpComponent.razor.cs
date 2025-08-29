@@ -34,12 +34,51 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
     decimal price, volume;
     SidesEnum side;
-    OrderTypesEnum selectedOrderType;
-    int selectedPortfolioId;
+
+    OrderTypesEnum _selectedOrderType;
+    OrderTypesEnum SelectedOrderType
+    {
+        get => _selectedOrderType;
+        set
+        {
+            _selectedOrderType = value;
+        }
+    }
+
+    int _selectedPortfolioId;
+    int SelectedPortfolioId
+    {
+        get => _selectedPortfolioId;
+        set
+        {
+            _selectedPortfolioId = value;
+        }
+    }
 
     List<PortfolioStockSharpViewModel>? portfoliosAll;
 
     private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
+
+    public void AvailableSet(bool available)
+    {
+        _available = available;
+        StateHasChangedCall();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _available = Available;
+        await SetBusyAsync();
+        TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
+        portfoliosAll = res.Response;
+
+        if (portfoliosAll is not null && portfoliosAll.Count != 0)
+            SelectedPortfolioId = portfoliosAll.First().Id;
+
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
+        await SetBusyAsync(false);
+    }
 
     async Task Submit()
     {
@@ -52,14 +91,14 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
             Volume = volume,
             Side = side,
 
-            OrderType = selectedOrderType,
-            PortfolioId = selectedPortfolioId
+            OrderType = SelectedOrderType,
+            PortfolioId = SelectedPortfolioId
         };
-        
+
         await SetBusyAsync();
         ResponseBaseModel res = await DriverRepo.OrderRegisterAsync(req);
         SnackBarRepo.ShowMessagesResponse(res.Messages);
-        
+
         if (res.Success())
             _visible = false;
 
@@ -170,26 +209,5 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         }
 
         _visible = true;
-    }
-
-    public void AvailableSet(bool available)
-    {
-        _available = available;
-        StateHasChangedCall();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        _available = Available;
-        await SetBusyAsync();
-        TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
-        portfoliosAll = res.Response;
-
-        if (portfoliosAll is not null && portfoliosAll.Count != 0)
-            selectedPortfolioId = portfoliosAll.First().Id;
-
-        SnackBarRepo.ShowMessagesResponse(res.Messages);
-        await SetBusyAsync(false);
     }
 }

@@ -24,7 +24,7 @@
                 @RestoreStrategy?.Name. Bonds: <cite title="price order" style="font-size: 1.5em;" class="text-primary">@(price.ToString("#.##"))</cite>
             </figcaption>
         </figure>
-        <MudSelect @bind-Value="selectedOrderType"
+        <MudSelect @bind-Value="SelectedOrderType"
                    Variant="Variant.Outlined"
                    Label="Order type"
                    Dense Modal>
@@ -35,15 +35,15 @@
         </MudSelect>
         @if (portfoliosAll is not null)
         {
-            <MudSelect @bind-Value="selectedPortfolioId"
+            <MudSelect @bind-Value="SelectedPortfolioId"
                        Variant="Variant.Outlined"
                        Label="Order type"
-                       Disabled="@(selectedPortfolioId == 0)"
+                       Disabled="@(SelectedPortfolioId == 0)"
                        Dense Modal>
                 @foreach (PortfolioStockSharpViewModel _p in portfoliosAll)
                 {
                     <MudSelectItem Disabled="@(@_p.State == PortfolioStatesEnum.Blocked)" title="@_p.DepoName" Value="_p.Id">
-                        @($"{_p.Name}{(_p.Currency is null ? "" : $" '{(CurrenciesTypesEnum?)_p.Currency}'")}")
+                        @($"{_p.Name}{(_p.Currency is null ? "" : $" [{(CurrenciesTypesEnum?)_p.Currency}]")}")
                     </MudSelectItem>
                 }
             </MudSelect>
@@ -52,7 +52,7 @@
     <DialogActions>
         <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="() => _visible = false" Class="px-10">Cancel</MudButton>
         <MudButton Variant="Variant.Filled"
-                   Disabled="@(selectedPortfolioId == 0)"
+                   Disabled="@(SelectedPortfolioId == 0)"
                    Color="Color.Primary"
                    OnClick="Submit"
                    Class="px-10">Create new order</MudButton>
