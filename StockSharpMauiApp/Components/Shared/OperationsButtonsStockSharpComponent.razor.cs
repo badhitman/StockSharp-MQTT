@@ -42,6 +42,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         set
         {
             _selectedOrderType = value;
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(value, GlobalStaticCloudStorageMetadata.DashboardTradeOrderType, true); });
         }
     }
 
@@ -52,6 +53,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         set
         {
             _selectedPortfolioId = value;
+            InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(value, GlobalStaticCloudStorageMetadata.DashboardTradePortfolio, true); });
         }
     }
 
@@ -70,13 +72,28 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         await base.OnInitializedAsync();
         _available = Available;
         await SetBusyAsync();
-        TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
-        portfoliosAll = res.Response;
 
-        if (portfoliosAll is not null && portfoliosAll.Count != 0)
+        await Task.WhenAll([
+            Task.Run(async () => {
+                TResponseModel<int> tradePortfolio = await StorageRepo.ReadParameterAsync<int>(GlobalStaticCloudStorageMetadata.DashboardTradePortfolio);
+                if(tradePortfolio.Success() && tradePortfolio.Response != default)
+                    _selectedPortfolioId = tradePortfolio.Response;
+            }),
+            Task.Run(async () => {
+                TResponseModel<OrderTypesEnum?> orderType = await StorageRepo.ReadParameterAsync<OrderTypesEnum?>(GlobalStaticCloudStorageMetadata.DashboardTradeOrderType);
+                if(orderType.Success() && orderType.Response is not null)
+                    _selectedOrderType = orderType.Response.Value;
+            }),
+            Task.Run(async () => {
+                TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
+                portfoliosAll = res.Response;
+                SnackBarRepo.ShowMessagesResponse(res.Messages);
+            }),
+            ]);
+
+        if (portfoliosAll is not null && portfoliosAll.Count != 0 && (SelectedPortfolioId == default || !portfoliosAll.Any(x => x.Id == SelectedPortfolioId)))
             SelectedPortfolioId = portfoliosAll.First().Id;
 
-        SnackBarRepo.ShowMessagesResponse(res.Messages);
         await SetBusyAsync(false);
     }
 
