@@ -28,7 +28,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
-
+    
     decimal _quoteVolume;
     decimal QuoteVolume
     {
