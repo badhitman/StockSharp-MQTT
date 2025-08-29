@@ -43,7 +43,7 @@
                 @foreach (PortfolioStockSharpViewModel _p in portfoliosAll)
                 {
                     <MudSelectItem Disabled="@(@_p.State == PortfolioStatesEnum.Blocked)" title="@_p.DepoName" Value="_p.Id">
-                        @($"{_p.Name}{(_p.Currency is null ? "" : $" [{(CurrenciesTypesEnum?)_p.Currency}]")}")
+                        @_p.ToString()
                     </MudSelectItem>
                 }
             </MudSelect>
