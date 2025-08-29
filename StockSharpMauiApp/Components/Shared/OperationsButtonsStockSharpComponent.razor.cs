@@ -89,7 +89,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
                 portfoliosAll = res.Response;
                 SnackBarRepo.ShowMessagesResponse(res.Messages);
             }),
-            ]);
+        ]);
 
         if (portfoliosAll is not null && portfoliosAll.Count != 0 && (SelectedPortfolioId == default || !portfoliosAll.Any(x => x.Id == SelectedPortfolioId)))
             SelectedPortfolioId = portfoliosAll.First().Id;

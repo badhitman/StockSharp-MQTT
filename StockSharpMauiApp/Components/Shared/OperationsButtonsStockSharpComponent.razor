@@ -37,7 +37,7 @@
         {
             <MudSelect @bind-Value="SelectedPortfolioId"
                        Variant="Variant.Outlined"
-                       Label="Order type"
+                       Label="Portfolio"
                        Disabled="@(SelectedPortfolioId == 0)"
                        Dense Modal>
                 @foreach (PortfolioStockSharpViewModel _p in portfoliosAll)
