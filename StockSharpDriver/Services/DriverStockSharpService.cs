@@ -57,6 +57,7 @@ public class DriverStockSharpService(
     readonly Dictionary<Security, IOrderBookMessage> OderBookList = [];
     readonly FileSystemWatcher fileWatcher = new();
 
+    #region LastConnectedAt
     readonly object _lockLastConnectedAt = new();
     DateTime _lastConnectedAt = DateTime.MinValue;
     DateTime LastConnectedAt
@@ -72,11 +73,13 @@ public class DriverStockSharpService(
                 _lastConnectedAt = value;
         }
     }
+    #endregion
 
-    string? ProgramDataPath;
-    string? ClientCodeStockSharp;
-    string? SecurityCriteriaCodeFilter;
-    string? BoardCriteriaCodeFilter;
+    string?
+        ProgramDataPath,
+        ClientCodeStockSharp,
+        SecurityCriteriaCodeFilter,
+        BoardCriteriaCodeFilter;
 
     decimal
        quoteSmallStrategyBidVolume = 2000,
@@ -96,6 +99,7 @@ public class DriverStockSharpService(
     readonly decimal
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
+
     bool StrategyStarted => BoardsCurrent is not null && BoardsCurrent.Count != 0 && StrategyTrades is not null && StrategyTrades.Count != 0;
 
     List<Security> SecuritiesBonds(bool ofStrategy)
@@ -529,135 +533,6 @@ public class DriverStockSharpService(
 
         return ResponseBaseModel.CreateInfo("Ok");
     }
-
-    void OnDatabaseChanged(object source, FileSystemEventArgs a)
-    {
-        string msg = $"call > {nameof(OnDatabaseChanged)}: {a.Name}", headTitle = $"{fileWatcher.GetType().Name}.{nameof(fileWatcher.Changed)}";
-        _logger.LogWarning(msg);
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = headTitle,
-            TypeMessage = MessagesTypesEnum.Info,
-            MessageText = msg
-        });
-
-        if (CurveCurrent is null)
-        {
-            msg = $"Curve is null";
-            _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
-            {
-                HeadTitle = headTitle,
-                TypeMessage = MessagesTypesEnum.Error,
-                MessageText = msg
-            });
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(ProgramDataPath))
-        {
-            msg = $"string.IsNullOrWhiteSpace(ProgramDataPath)";
-            _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
-            {
-                HeadTitle = headTitle,
-                TypeMessage = MessagesTypesEnum.Error,
-                MessageText = msg
-            });
-            return;
-        }
-        if (!Directory.Exists(ProgramDataPath))
-        {
-            msg = $"!Directory.Exists('{ProgramDataPath}')";
-            _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
-            {
-                HeadTitle = headTitle,
-                TypeMessage = MessagesTypesEnum.Error,
-                MessageText = msg
-            });
-            return;
-        }
-        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
-        {
-            msg = $"Boards is null || Boards.Count == 0";
-            _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
-            {
-                HeadTitle = headTitle,
-                TypeMessage = MessagesTypesEnum.Error,
-                MessageText = msg
-            });
-            return;
-        }
-
-        try
-        {
-            string? _res = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, null, ref eventTrans);
-            if (!string.IsNullOrWhiteSpace(_res))
-            {
-                msg = $"Curve.GetCurveFromDb is null";
-                _logger.LogError(msg);
-                eventTrans.ToastClientShow(new()
-                {
-                    HeadTitle = headTitle,
-                    TypeMessage = MessagesTypesEnum.Error,
-                    MessageText = msg
-                });
-                return;
-            }
-            if (CurveCurrent.BondList.Count == 0)
-            {
-                msg = $"Curve.BondList.Count == 0";
-                _logger.LogError(msg);
-                eventTrans.ToastClientShow(new()
-                {
-                    HeadTitle = headTitle,
-                    TypeMessage = MessagesTypesEnum.Error,
-                    MessageText = msg
-                });
-                return;
-            }
-            List<Security> secS = SecuritiesBonds(false);
-            secS.ForEach(security =>
-                {
-                    if (OderBookList.ContainsKey(security))
-                    {
-                        Subscription? sub = conLink.Connector
-                        .FindSubscriptions(security, DataType.MarketDepth)
-                        .FirstOrDefault(s => s.SubscriptionMessage.To == null && s.State.IsActive());
-
-                        if (sub is null)
-                        {
-                            msg = $"Active subscription [{nameof(DataType.MarketDepth)}] not found for security '{security}'";
-                            _logger.LogError(msg);
-                            eventTrans.ToastClientShow(new()
-                            {
-                                HeadTitle = headTitle,
-                                TypeMessage = MessagesTypesEnum.Error,
-                                MessageText = msg
-                            });
-                            return;
-                        }
-
-                        OrderBookReceivedHandle(sub, OderBookList[security]);
-                    }
-                });
-
-            conLink.Connector.AddWarningLog("Curve changed");
-        }
-        catch (Exception ex)
-        {
-            msg = $"Error of OnDatabaseChanged for Curve";
-            _logger.LogError(ex, msg);
-            eventTrans.ToastClientShow(new()
-            {
-                HeadTitle = headTitle,
-                TypeMessage = MessagesTypesEnum.Error,
-                MessageText = $"{msg}: {ex.Message}"
-            });
-        }
-    }
-
 
     /// <inheritdoc/>
     public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
@@ -1142,6 +1017,134 @@ public class DriverStockSharpService(
                     TypeMessage = MessagesTypesEnum.Warning
                 });
             }
+        }
+    }
+
+    void OnDatabaseChanged(object source, FileSystemEventArgs a)
+    {
+        string msg = $"call > {nameof(OnDatabaseChanged)}: {a.Name}", headTitle = $"{fileWatcher.GetType().Name}.{nameof(fileWatcher.Changed)}";
+        _logger.LogWarning(msg);
+        eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = headTitle,
+            TypeMessage = MessagesTypesEnum.Info,
+            MessageText = msg
+        });
+
+        if (CurveCurrent is null)
+        {
+            msg = $"Curve is null";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(ProgramDataPath))
+        {
+            msg = $"string.IsNullOrWhiteSpace(ProgramDataPath)";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+        if (!Directory.Exists(ProgramDataPath))
+        {
+            msg = $"!Directory.Exists('{ProgramDataPath}')";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
+        {
+            msg = $"Boards is null || Boards.Count == 0";
+            _logger.LogError(msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = msg
+            });
+            return;
+        }
+
+        try
+        {
+            string? _res = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, null, ref eventTrans);
+            if (!string.IsNullOrWhiteSpace(_res))
+            {
+                msg = $"Curve.GetCurveFromDb is null";
+                _logger.LogError(msg);
+                eventTrans.ToastClientShow(new()
+                {
+                    HeadTitle = headTitle,
+                    TypeMessage = MessagesTypesEnum.Error,
+                    MessageText = msg
+                });
+                return;
+            }
+            if (CurveCurrent.BondList.Count == 0)
+            {
+                msg = $"Curve.BondList.Count == 0";
+                _logger.LogError(msg);
+                eventTrans.ToastClientShow(new()
+                {
+                    HeadTitle = headTitle,
+                    TypeMessage = MessagesTypesEnum.Error,
+                    MessageText = msg
+                });
+                return;
+            }
+            List<Security> secS = SecuritiesBonds(false);
+            secS.ForEach(security =>
+                {
+                    if (OderBookList.ContainsKey(security))
+                    {
+                        Subscription? sub = conLink.Connector
+                        .FindSubscriptions(security, DataType.MarketDepth)
+                        .FirstOrDefault(s => s.SubscriptionMessage.To == null && s.State.IsActive());
+
+                        if (sub is null)
+                        {
+                            msg = $"Active subscription [{nameof(DataType.MarketDepth)}] not found for security '{security}'";
+                            _logger.LogError(msg);
+                            eventTrans.ToastClientShow(new()
+                            {
+                                HeadTitle = headTitle,
+                                TypeMessage = MessagesTypesEnum.Error,
+                                MessageText = msg
+                            });
+                            return;
+                        }
+
+                        OrderBookReceivedHandle(sub, OderBookList[security]);
+                    }
+                });
+
+            conLink.Connector.AddWarningLog("Curve changed");
+        }
+        catch (Exception ex)
+        {
+            msg = $"Error of OnDatabaseChanged for Curve";
+            _logger.LogError(ex, msg);
+            eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = headTitle,
+                TypeMessage = MessagesTypesEnum.Error,
+                MessageText = $"{msg}: {ex.Message}"
+            });
         }
     }
 
