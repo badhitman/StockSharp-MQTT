@@ -31,31 +31,30 @@ public class DriverStockSharpService(
                 ConnectionLink conLink) : IDriverStockSharpService
 {
     #region prop`s
-    Curve? Curve = null;
+    Curve? CurveCurrent;
+    Portfolio? PortfolioCurrent;
+    List<BoardStockSharpViewModel>? BoardsCurrent;
 
-    readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookup = [];
     Subscription? SecurityCriteriaCodeFilterSubscription;
-
-    List<BoardStockSharpViewModel>? Boards;
-    Portfolio? SelectedPortfolio;
-
-    readonly List<MyTrade> myTrades = [];
+    readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookups = [];
 
     readonly List<DashboardTradeStockSharpModel> StrategyTrades = [];
-    readonly List<FixMessageAdapterModelDB> Adapters = [];
-
-    readonly List<SBond> SBondList = [];
-
     readonly List<Security> AllSecurities = [];
-
+    readonly List<MyTrade> myTrades = [];
+    readonly List<SBond> SBondList = [];
+    readonly List<long?> TradesList = [];
+    readonly List<Order> AllOrders = [];
+    readonly List<Subscription> MarketDepthSubscriptions = [];
     readonly List<SecurityPosition>
         SBondPositionsList = [],
         SBondSizePositionsList = [],
         SBondSmallPositionsList = [];
 
-    static readonly List<long?> list = [];
-    readonly List<long?> TradesList = list;
+    readonly Dictionary<string, Order>
+        _ordersForQuoteBuyReregister = [],
+        _ordersForQuoteSellReregister = [];
 
+    readonly Dictionary<Security, IOrderBookMessage> OderBookList = [];
     readonly FileSystemWatcher fileWatcher = new();
 
     readonly object _lockLastConnectedAt = new();
@@ -79,8 +78,6 @@ public class DriverStockSharpService(
     string? SecurityCriteriaCodeFilter;
     string? BoardCriteriaCodeFilter;
 
-    readonly List<Subscription> MarketDepthSubscriptions = [];
-
     decimal
        quoteSmallStrategyBidVolume = 2000,
        quoteSmallStrategyOfferVolume = 2000,
@@ -92,14 +89,6 @@ public class DriverStockSharpService(
         bondSmallPositionTraded,
         bondOutOfRangePositionTraded;
 
-    readonly List<Order> AllOrders = [];
-
-    readonly Dictionary<string, Order>
-        _ordersForQuoteBuyReregister = [],
-        _ordersForQuoteSellReregister = [];
-
-    readonly Dictionary<Security, IOrderBookMessage> OderBookList = [];
-
     decimal
         lowLimit = 0.19m,
         highLimit = 0.25m;
@@ -107,10 +96,7 @@ public class DriverStockSharpService(
     readonly decimal
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
-    #endregion
-
-    bool StrategyStarted => Boards is not null && Boards.Count != 0 && StrategyTrades is not null && StrategyTrades.Count != 0;
-
+    bool StrategyStarted => BoardsCurrent is not null && BoardsCurrent.Count != 0 && StrategyTrades is not null && StrategyTrades.Count != 0;
 
     List<Security> SecuritiesBonds(bool ofStrategy)
     {
@@ -128,12 +114,12 @@ public class DriverStockSharpService(
                     BoardStockSharpModel _bo = new BoardStockSharpModel().Bind(security.Board);
                     if (ofStrategy)
                     {
-                        if (StrategyTrades.Any(x => x.Code == security.Code) && (Boards is null || Boards.Count == 0 || Boards.Any(x => x.Equals(_bo))))
+                        if (StrategyTrades.Any(x => x.Code == security.Code) && (BoardsCurrent is null || BoardsCurrent.Count == 0 || BoardsCurrent.Any(x => x.Equals(_bo))))
                             res.Add(security);
                     }
                     else
                     {
-                        if (Boards is null || Boards.Count == 0 || Boards.Any(x => x.Equals(_bo)))
+                        if (BoardsCurrent is null || BoardsCurrent.Count == 0 || BoardsCurrent.Any(x => x.Equals(_bo)))
                             res.Add(security);
                     }
                 }
@@ -142,6 +128,7 @@ public class DriverStockSharpService(
 
         return res;
     }
+    #endregion
 
     /// <inheritdoc/>
     public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
@@ -181,7 +168,7 @@ public class DriverStockSharpService(
                     if(_boardsFilter is not null && _boardsFilter.Length != 0)
                     {
                         TResponseModel<List<BoardStockSharpViewModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
-                        Boards = boardDb.Response;
+                        BoardsCurrent = boardDb.Response;
                     }
                   }, cancellationToken),
         ]);
@@ -198,7 +185,7 @@ public class DriverStockSharpService(
             return res;
         }
 
-        if (Boards is null || Boards.Count == 0)
+        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
         {
             res.AddError($"Board is null");
             return res;
@@ -215,12 +202,12 @@ public class DriverStockSharpService(
             return res;
         }
         DateTime _gnvd = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
-        Curve = new Curve(_gnvd);
-        res.Response = Curve.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, Boards, req.BigPriceDifferences, ref eventTrans);
+        CurveCurrent = new Curve(_gnvd);
+        res.Response = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, req.BigPriceDifferences, ref eventTrans);
         if (!string.IsNullOrWhiteSpace(res.Response))
             return res;
 
-        if (Curve.BondList.Count == 0)
+        if (CurveCurrent.BondList.Count == 0)
         {
             res.AddError("OfzCurve.Length == 0");
             return res;
@@ -234,7 +221,7 @@ public class DriverStockSharpService(
             InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
             DashboardTradeStockSharpModel tradeDashboard = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
 
-            SBnd = Curve.GetNode(_sec);
+            SBnd = CurveCurrent.GetNode(_sec);
 
             if (SBnd is not null)
                 BndPrice = SBnd.ModelPrice;
@@ -407,15 +394,15 @@ public class DriverStockSharpService(
         if (!Directory.Exists(ProgramDataPath))
             return ResponseBaseModel.CreateError($"Directory [{nameof(ProgramDataPath)}] - not exists");
 
-        if (Boards is null || Boards.Count == 0)
+        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
             return ResponseBaseModel.CreateError("Board - not set");
 
         if (req.SelectedPortfolio is null)
             return ResponseBaseModel.CreateError("Portfolio - not set");
 
-        SelectedPortfolio = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.SelectedPortfolio.ClientCode);
+        PortfolioCurrent = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.SelectedPortfolio.ClientCode);
 
-        if (SelectedPortfolio is null)
+        if (PortfolioCurrent is null)
         {
             ClearStrategy();
             return ResponseBaseModel.CreateError($"Portfolio #{req.SelectedPortfolio.ClientCode} - not found");
@@ -523,7 +510,7 @@ public class DriverStockSharpService(
         }
         conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
 
-        if (Curve is null || Curve.BondList.Count == 0)
+        if (CurveCurrent is null || CurveCurrent.BondList.Count == 0)
         {
             ClearStrategy();
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
@@ -554,7 +541,7 @@ public class DriverStockSharpService(
             MessageText = msg
         });
 
-        if (Curve is null)
+        if (CurveCurrent is null)
         {
             msg = $"Curve is null";
             _logger.LogError(msg);
@@ -590,7 +577,7 @@ public class DriverStockSharpService(
             });
             return;
         }
-        if (Boards is null || Boards.Count == 0)
+        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
         {
             msg = $"Boards is null || Boards.Count == 0";
             _logger.LogError(msg);
@@ -605,7 +592,7 @@ public class DriverStockSharpService(
 
         try
         {
-            string? _res = Curve.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, Boards, null, ref eventTrans);
+            string? _res = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, null, ref eventTrans);
             if (!string.IsNullOrWhiteSpace(_res))
             {
                 msg = $"Curve.GetCurveFromDb is null";
@@ -618,7 +605,7 @@ public class DriverStockSharpService(
                 });
                 return;
             }
-            if (Curve.BondList.Count == 0)
+            if (CurveCurrent.BondList.Count == 0)
             {
                 msg = $"Curve.BondList.Count == 0";
                 _logger.LogError(msg);
@@ -840,21 +827,21 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
     {
-        if (Curve is null)
+        if (CurveCurrent is null)
             return Task.FromResult(ResponseBaseModel.CreateWarning("OfzCurve is null"));
 
         _logger.LogWarning($"Curve changed: {req.YieldChange}");
 
-        Curve.BondList.ForEach(bnd =>
+        CurveCurrent.BondList.ForEach(bnd =>
         {
             SBond? SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
 
             if (SBnd is not null)
             {
-                decimal yield = SBnd.GetYieldForPrice(Curve.CurveDate, bnd.ModelPrice / 100);
+                decimal yield = SBnd.GetYieldForPrice(CurveCurrent.CurveDate, bnd.ModelPrice / 100);
                 if (yield > 0)
                 {
-                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(Curve.CurveDate, yield + req.YieldChange / 10000, true), 2);
+                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(CurveCurrent.CurveDate, yield + req.YieldChange / 10000, true), 2);
                 }
             }
         });
@@ -886,7 +873,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken cancellationToken = default)
     {
-        Boards?.Clear();
+        BoardsCurrent?.Clear();
         if (SecuritiesBonds(false).Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
 
@@ -980,12 +967,12 @@ public class DriverStockSharpService(
 
         if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
         {
-            lock (SecuritiesCriteriaCodesFilterLookup)
+            lock (SecuritiesCriteriaCodesFilterLookups)
             {
-                SecuritiesCriteriaCodesFilterLookup.Clear();
+                SecuritiesCriteriaCodesFilterLookups.Clear();
                 foreach (string _sc in Regex.Split(SecurityCriteriaCodeFilter, @"\s+").Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct())
                 {
-                    SecuritiesCriteriaCodesFilterLookup.Add(new()
+                    SecuritiesCriteriaCodesFilterLookups.Add(new()
                     {
                         SecurityId = new SecurityId
                         {
@@ -994,7 +981,7 @@ public class DriverStockSharpService(
                         },
                         TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
                     });
-                    SecurityCriteriaCodeFilterSubscription = new(SecuritiesCriteriaCodesFilterLookup.Last());
+                    SecurityCriteriaCodeFilterSubscription = new(SecuritiesCriteriaCodesFilterLookups.Last());
                     conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscription);
                 }
             }
@@ -1016,8 +1003,8 @@ public class DriverStockSharpService(
         }
 
         SecurityCriteriaCodeFilter = "";
-        lock (SecuritiesCriteriaCodesFilterLookup)
-            SecuritiesCriteriaCodesFilterLookup.Clear();
+        lock (SecuritiesCriteriaCodesFilterLookups)
+            SecuritiesCriteriaCodesFilterLookups.Clear();
 
         UnregisterEvents();
         conLink.Connector.Disconnect();
@@ -1042,7 +1029,7 @@ public class DriverStockSharpService(
             SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilter,
             ClientCode = ClientCodeStockSharp,
             ProgramPath = ProgramDataPath,
-            Curve = Curve,
+            Curve = CurveCurrent,
         };
 
         return Task.FromResult(res);
@@ -1172,8 +1159,8 @@ public class DriverStockSharpService(
 
         conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
 
-        Boards?.Clear();
-        SelectedPortfolio = null;
+        BoardsCurrent?.Clear();
+        PortfolioCurrent = null;
         ClientCodeStockSharp = null;
         ProgramDataPath = null;
 
@@ -1208,7 +1195,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     async void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
     {
-        if (Curve is null)
+        if (CurveCurrent is null)
         {
             _logger.LogError("Curve is null");
             await eventTrans.ToastClientShow(new()
@@ -1292,7 +1279,7 @@ public class DriverStockSharpService(
             });
             return;
         }
-        SBond? secCurceNode = Curve.GetNode(_sec);
+        SBond? secCurceNode = CurveCurrent.GetNode(_sec);
         if (secCurceNode is null)
         {
             _msg = $"Curve.GetNode - is null";
@@ -1321,7 +1308,7 @@ public class DriverStockSharpService(
                         Order ord = new()
                         {
                             Security = sec,
-                            Portfolio = SelectedPortfolio,
+                            Portfolio = PortfolioCurrent,
                             Price = price,
                             Side = Sides.Buy,
                             Comment = "Quote",
@@ -1360,7 +1347,7 @@ public class DriverStockSharpService(
                         newOrder = new Order()
                         {
                             Security = sec,
-                            Portfolio = SelectedPortfolio,
+                            Portfolio = PortfolioCurrent,
                             Price = price,
                             Side = Sides.Buy,
                             Comment = "Quote",
@@ -1414,7 +1401,7 @@ public class DriverStockSharpService(
                         Order ord = new()
                         {
                             Security = sec,
-                            Portfolio = SelectedPortfolio,
+                            Portfolio = PortfolioCurrent,
                             Price = price,
                             Side = Sides.Sell,
                             Comment = "Quote",
@@ -1454,7 +1441,7 @@ public class DriverStockSharpService(
                         newOrder = new Order()
                         {
                             Security = sec,
-                            Portfolio = SelectedPortfolio,
+                            Portfolio = PortfolioCurrent,
                             Price = price,
                             Side = Sides.Sell,
                             Comment = "Quote",
@@ -1620,7 +1607,7 @@ public class DriverStockSharpService(
         if (bBid is null || bAsk is null)
             return;
         string headTitle = $"err [{nameof(OnProcessOutOfRangeCheck)}]", msg;
-        if (Curve is null)
+        if (CurveCurrent is null)
         {
             msg = "Curve is null";
             await eventTrans.ToastClientShow(new()
@@ -1633,7 +1620,7 @@ public class DriverStockSharpService(
             return;
         }
 
-        SBond? _secNode = Curve.GetNode(_sec);
+        SBond? _secNode = CurveCurrent.GetNode(_sec);
 
         if (_secNode is null)
         {
@@ -1709,7 +1696,7 @@ public class DriverStockSharpService(
             Order ord = new()
             {
                 Security = sec,
-                Portfolio = SelectedPortfolio,
+                Portfolio = PortfolioCurrent,
                 Price = bBid.Value.Price,
                 Side = Sides.Sell,
                 Comment = "OfRStrategy",
@@ -1744,7 +1731,7 @@ public class DriverStockSharpService(
             Order ord = new()
             {
                 Security = sec,
-                Portfolio = SelectedPortfolio,
+                Portfolio = PortfolioCurrent,
                 Price = bAsk.Value.Price,
                 Side = Sides.Buy,
                 Comment = "OfRStrategy",
