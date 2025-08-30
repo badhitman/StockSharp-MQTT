@@ -82,8 +82,7 @@
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(!CanStarted)" />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(!CanStopped)" />
                 <MudIconButton OnClick="DownloadBaseAsync"
-                               Disabled="!CanInitialLoad"
-                               title="Initial load RedArrowData.db"
+                               title="Curve: Initial load RedArrowData.db"
                                Color="Color.Primary"
                                Icon="@Icons.Material.Filled.FileDownload"
                                Variant="Variant.Outlined" />

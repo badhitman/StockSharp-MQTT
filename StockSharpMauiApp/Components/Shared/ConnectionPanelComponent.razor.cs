@@ -68,8 +68,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     bool CanStarted => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.Curve is not null && !AboutConnection.StrategyStarted;
     bool CanStopped => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.StrategyStarted;
-    bool CanInitialLoad => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && !AboutConnection.StrategyStarted;
-
+    
     bool CanConnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected;
     bool CanDisconnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected;
     readonly InitialLoadRequestModel reqDownloadBase = new() { BigPriceDifferences = [] };
