@@ -14,7 +14,17 @@
 else
 {
     <MudTd DataLabel="Bond" Class="@_opClass" title="@Instrument.Name">
-        <code class="me-2"><u>@Instrument.Code</u> @Instrument.Name</code>
+        <code class="me-2">
+            @if (NameInstrumentVisible)
+            {
+                <u class="me-2">@Instrument.Code</u>
+                <text>@Instrument.Name</text>
+            }
+            else
+            {
+                <text>@Instrument.Code</text>
+            }
+        </code>
         @if (Instrument.Markers is not null && Instrument.Markers.Count != 0)
         {
             foreach (MarkerInstrumentStockSharpViewModel _ie in Instrument.Markers)

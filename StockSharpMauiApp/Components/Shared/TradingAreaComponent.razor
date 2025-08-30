@@ -40,9 +40,9 @@ else
         </div>
     </MudStack>
 
-    <MudTable ServerData="ServerReload" Dense="true" Hover="true">
+    <MudTable ServerData="ServerReload" Dense Hover @ref=tableRef>
         <ToolBarContent>
-            <MudText Typo="Typo.h6">Trade strategy</MudText>
+            <MudText Typo="Typo.h6" Style="cursor:pointer;" @onclick=ToggleNameVisible>Trade strategy</MudText>
             <MudSpacer />
         </ToolBarContent>
         <ColGroup>
@@ -73,7 +73,7 @@ else
         </HeaderContent>
         <RowTemplate>
             <CascadingValue Value="this">
-                <TradingRowComponent Instrument="context" />
+                <TradingRowComponent Instrument="context" NameInstrumentVisible=visibleName />
             </CascadingValue>
         </RowTemplate>
         <NoRecordsContent>

@@ -27,7 +27,7 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
 
-    
+
     decimal _quoteVolume;
     decimal QuoteVolume
     {
@@ -48,6 +48,15 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
             _quoteSizeVolume = value;
             InvokeAsync(async () => { await StorageRepo.SaveParameterAsync(_quoteSizeVolume, GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, true, false); });
         }
+    }
+
+    MudTable<InstrumentTradeStockSharpViewModel>? tableRef;
+    bool visibleName;
+    async Task ToggleNameVisible()
+    {
+        visibleName = !visibleName;
+        if (tableRef is not null)
+            await tableRef.ReloadServerData();
     }
 
     async Task Reset()
