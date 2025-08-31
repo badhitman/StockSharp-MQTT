@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using Microsoft.Extensions.Caching.Memory;
 using System.Text.RegularExpressions;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
@@ -27,7 +26,6 @@ public class DriverStockSharpService(
                 IDataStockSharpService dataRepo,
                 IParametersStorage storageRepo,
                 IEventsStockSharp eventTrans,
-                //IMemoryCache memoryCache,
                 ConnectionLink conLink) : IDriverStockSharpService
 {
     #region prop`s
@@ -898,7 +896,7 @@ public class DriverStockSharpService(
             StrategyStarted = StrategyStarted,
             LowLimit = lowLimit,
             HighLimit = highLimit,
-            SecurityCriteriaCodeFilterStockSharp = SecurityCriteriaCodeFilter,
+            SecurityCriteriaCodeFilter = SecurityCriteriaCodeFilter,
             ClientCode = ClientCodeStockSharp,
             ProgramPath = ProgramDataPath,
             Curve = CurveCurrent,

@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using NLog.Extensions.Logging;
 using Telegram.Bot.Services;
 using StockSharpService;
+using HelpDeskService;
 using StorageService;
 using RemoteCallLib;
 using Telegram.Bot;
 using SharedLib;
 using DbcLib;
 using NLog;
-using HelpDeskService;
 
 namespace StockSharpDriver;
 
@@ -152,8 +152,7 @@ public class Program
                 #region MQ Transmission (remote methods call)
                 services
                     .AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName))
-
-                    ;
+                ;
                 //
                 services
                     .AddSingleton<IEventsStockSharp, EventsStockSharpTransmission>()

@@ -22,13 +22,13 @@ public static class MauiProgram
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddMudServices();
 
-        //        builder.Services.AddDbContextFactory<StockSharpAppContext>(opt =>
-        //        {
+        // builder.Services.AddDbContextFactory<StockSharpAppContext>(opt =>
+        // {
         //#if DEBUG
-        //            opt.EnableSensitiveDataLogging(true);
-        //            opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        //      opt.EnableSensitiveDataLogging(true);
+        //      opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
         //#endif
-        //        });
+        // });
 
         StockSharpClientConfigModel _conf = StockSharpClientConfigModel.BuildEmpty();
         builder.Services.AddSingleton(sp => _conf);
@@ -55,7 +55,6 @@ public static class MauiProgram
         builder.Services
                    .AddSingleton<IEventsStockSharp, EventsStockSharpTransmission>()
                ;
-        //
         builder.Services
             .RegisterEventNotify<UpdateConnectionHandleModel>()
             .RegisterEventNotify<PortfolioStockSharpViewModel>()
