@@ -8,6 +8,9 @@ using DbcLib;
 
 namespace StockSharpDriver;
 
+/// <summary>
+/// ManageStockSharpService
+/// </summary>
 public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> toolsDbFactory) : IManageStockSharpService
 {
     /// <inheritdoc/>

@@ -11,6 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class BindsStockSharpModelsExtensionsDB
 {
+    /// <inheritdoc/>
     public static InstrumentTradeStockSharpViewModel Build(this InstrumentTradeStockSharpViewModel main, InstrumentStockSharpModelDB inc)
     {
         main.Multiplier = inc.Multiplier;

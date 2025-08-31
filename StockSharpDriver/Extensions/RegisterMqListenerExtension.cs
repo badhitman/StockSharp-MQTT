@@ -57,6 +57,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<CashFlowListStockSharpReceive, int, TResponseModel<List<CashFlowViewModel>>>()
             .RegisterMqListener<CashFlowUpdateStockSharpReceive, CashFlowViewModel, ResponseBaseModel>()
             .RegisterMqListener<CashFlowDeleteStockSharpReceive, int, ResponseBaseModel>()
+            .RegisterMqListener<ReadDashboardStockSharpReceive, int[], List<DashboardTradeStockSharpModel>>()
             .RegisterMqListener<GenerateRegularCashFlowsStockSharpReceive, CashFlowStockSharpRequestModel, ResponseBaseModel>()
             .RegisterMqListener<GetInstrumentsForRubricStockSharpReceive, int, TResponseModel<List<InstrumentTradeStockSharpViewModel>>>()
             .RegisterMqListener<GetRubricsForInstrumentStockSharpReceive, int, TResponseModel<List<UniversalBaseModel>>>()

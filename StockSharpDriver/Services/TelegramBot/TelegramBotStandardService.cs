@@ -46,6 +46,7 @@ public class TelegramBotStandardService(ITelegramBotClient _botClient, ILogger<T
     }
 
 
+    /// <inheritdoc/>
     public async Task<TResponseModel<MessageComplexIdsModel>> SendTextMessageTelegramAsync(SendTextMessageTelegramBotModel message, CancellationToken token = default)
     {
 

@@ -12,6 +12,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class BindsStockSharpModelsExtensions
 {
+    /// <inheritdoc/>
     public static OrderStockSharpModel Bind(this OrderStockSharpModel main, Order inc)
     {
         main.Id = inc.Id;
@@ -148,6 +149,7 @@ public static class BindsStockSharpModelsExtensions
         return main;
     }
 
+    /// <inheritdoc/>
     public static PositionStockSharpModel Bind(this PositionStockSharpModel main, Position inc)
     {
         main.PortfolioName = inc.PortfolioName;

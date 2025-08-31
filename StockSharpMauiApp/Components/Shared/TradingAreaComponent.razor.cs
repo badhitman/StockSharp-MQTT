@@ -19,10 +19,10 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
     protected IDataStockSharpService DataRepo { get; set; } = default!;
 
     [Inject]
-    protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
+    IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
     [Inject]
-    IParametersStorageTransmission StorageRepo { get; set; } = default!;
+    protected IEventNotifyReceive<UpdateConnectionHandleModel> UpdateConnectionEventRepo { get; set; } = default!;
 
     [Inject]
     protected IEventNotifyReceive<InstrumentTradeStockSharpViewModel> InstrumentEventRepo { get; set; } = default!;
@@ -59,7 +59,40 @@ public partial class TradingAreaComponent : StockSharpAboutComponent
             await tableRef.ReloadServerData();
     }
 
-    async Task Reset()
+    /// <summary>
+    /// Shift <c>SBond.ModelPrice</c> <c>Curve.BondList</c>
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    /// SBond? SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
+    /// if (SBnd is not null)
+    /// {
+    ///     decimal yield = SBnd.GetYieldForPrice(CurveCurrent.CurveDate, bnd.ModelPrice / 100);
+    ///     if (yield > 0)
+    ///         bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(CurveCurrent.CurveDate, yield + req.YieldChange / 10000, true), 2);
+    /// }
+    /// </code>
+    /// </remarks>
+    async Task ShiftCurveChange(decimal yieldChange)
+    {
+        await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.ShiftCurve(new ShiftCurveRequestModel() { YieldChange = yieldChange });
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
+        await SetBusyAsync(false);
+    }
+
+    /// <summary>
+    /// Group adjustment of limits for trade strategy <code>LowLimit</code> <code>HighLimit</code>
+    /// </summary>
+    async Task LimitChange(OperatorsEnum operatorReq, decimal operandReq)
+    {
+        await SetBusyAsync();
+        ResponseBaseModel res = await DriverRepo.LimitsStrategiesUpdate(new LimitsStrategiesUpdateRequestModel() { Operand = operandReq, Operator = operatorReq });
+        SnackBarRepo.ShowMessagesResponse(res.Messages);
+        await SetBusyAsync(false);
+    }
+
+    async Task ResetAllTradeStrategiesInstruments()
     {
         await SetBusyAsync();
         ResponseBaseModel res = await DriverRepo.ResetAllStrategies(new() { Size = QuoteSizeVolume, Volume = QuoteVolume });

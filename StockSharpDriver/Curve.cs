@@ -12,6 +12,7 @@ namespace StockSharpDriver;
 /// </summary>
 public class Curve : CurveBaseModel
 {
+    /// <inheritdoc/>
     public Curve(DateTime date)
     {
         CurveDate = date;
@@ -146,6 +147,7 @@ public class Curve : CurveBaseModel
         return null;
     }
 
+    /// <inheritdoc/>
     public void AddNode(SBond bondSec, decimal price)
     {
         SBond? tmpBond = BondList.Find(s => s.UnderlyingSecurity == bondSec.UnderlyingSecurity);

@@ -7,8 +7,12 @@ using System.Data.SQLite;
 
 namespace StockSharpDriver;
 
+/// <summary>
+/// MyHelper
+/// </summary>
 public static class MyHelper
 {
+    /// <inheritdoc/>
     public static DateTime GetNextWorkingDay(DateTime date, int daynumber, string DbName)
     {
         DateTime dt = new();
@@ -70,6 +74,7 @@ public static class MyHelper
         return dt;
     }
 
+    /// <inheritdoc/>
     public static decimal GetBestConditionPrice(Security sec, IOrderBookMessage depth, decimal modelPrice, decimal lowLimit, decimal highLimit, decimal skipVolume)
     {
         QuoteChange? bBid = depth.GetBestBid();

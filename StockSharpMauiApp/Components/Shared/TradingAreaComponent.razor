@@ -27,16 +27,16 @@ else if (instruments.Count == 0)
 else
 {
     <MudStack Row="true" Class="mb-2">
-        <MudButton Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">x2</MudButton>
-        <MudButton Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">/2</MudButton>
-        <MudButton Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">S+</MudButton>
-        <MudButton Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">S-</MudButton>
+        <MudButton OnClick="async () => await LimitChange(OperatorsEnum.Multiplication, 2)" Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">x2</MudButton>
+        <MudButton OnClick="async () => await LimitChange(OperatorsEnum.Dividing, 2)" Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">/2</MudButton>
+        <MudButton OnClick="async () => await ShiftCurveChange(1)" Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">S+</MudButton>
+        <MudButton OnClick="async () => await ShiftCurveChange(-1)" Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">S-</MudButton>
         <MudSpacer />
         <div class="input-group">
             <span class="input-group-text">Quote</span>
             <input @bind-value="QuoteVolume" @bind-value:event="oninput" type="number" aria-label="Volume" placeholder="Volume" class="form-control">
             <input @bind-value="QuoteSizeVolume" @bind-value:event="oninput" type="number" aria-label="Size" placeholder="Size" class="form-control">
-            <button @onclick=Reset class="btn btn-outline-success bi bi-recycle" type="button" disabled="@(AboutConnection?.Curve is null)">Reset</button>
+            <button @onclick=ResetAllTradeStrategiesInstruments class="btn btn-outline-success bi bi-recycle" type="button" disabled="@(AboutConnection?.Curve is null)">Reset</button>
         </div>
     </MudStack>
 

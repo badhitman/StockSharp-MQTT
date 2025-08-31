@@ -723,7 +723,9 @@ public class DriverStockSharpService(
         return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(ShiftCurve)} changed: {req.YieldChange}"));
     }
 
-    async Task<List<DashboardTradeStockSharpModel>> ReadDashboard(int?[] instrumentsIds, CancellationToken cancellationToken = default)
+
+    /// <inheritdoc/>
+    public async Task<List<DashboardTradeStockSharpModel>> ReadDashboard(int[] instrumentsIds, CancellationToken cancellationToken = default)
     {
         FindStorageBaseModel _findParametersQuery = new()
         {
@@ -970,6 +972,7 @@ public class DriverStockSharpService(
         return ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию");
     }
 
+    /// <inheritdoc/>
     public async Task<ResponseBaseModel> Terminate(CancellationToken cancellationToken = default)
     {
         UnregisterEvents();

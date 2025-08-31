@@ -43,6 +43,7 @@ public abstract partial class StockSharpAppLayerContext : DbContext
         base.OnConfiguring(options);
     }
 
+    /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<FixMessageAdapterModelDB>().HasIndex(x => x.LastUpdatedAtUTC);

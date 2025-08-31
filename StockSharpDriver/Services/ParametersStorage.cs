@@ -156,7 +156,7 @@ public class ParametersStorage(
             .ToArrayAsync(cancellationToken: token);
 
         if (req.OwnersPrimaryKeys is not null && req.OwnersPrimaryKeys.Length != 0)
-            q = q.Where(x => req.OwnersPrimaryKeys.Contains(x.OwnerPrimaryKey));
+            q = q.Where(x => req.OwnersPrimaryKeys.Any(y => y == x.OwnerPrimaryKey));
 
         return [.. _dbd.Select(x => new FundedParametersModel<T>()
         {
@@ -384,7 +384,7 @@ public class ParametersStorage(
             q = q.Where(x => x.PropertyName == req.PropertyName);
 
         if (req.OwnersPrimaryKeys is not null && req.OwnersPrimaryKeys.Length != 0)
-            q = q.Where(x => req.OwnersPrimaryKeys.Contains(x.OwnerPrimaryKey));
+            q = q.Where(x => req.OwnersPrimaryKeys.Any(y => y == x.OwnerPrimaryKey));
 
         StorageCloudParameterModelDB[] prop_db = await q
             .ToArrayAsync(cancellationToken: token);

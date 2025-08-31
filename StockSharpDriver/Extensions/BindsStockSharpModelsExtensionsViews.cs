@@ -11,6 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class BindsStockSharpModelsExtensionsViews
 {
+    /// <inheritdoc/>
     public static InstrumentTradeStockSharpViewModel Bind(this InstrumentTradeStockSharpViewModel main, InstrumentStockSharpModelDB inc)
     {
         main.Markers = inc.Markers is null ? null : [..inc.Markers.Select(x=> new MarkerInstrumentStockSharpViewModel()
@@ -61,6 +62,7 @@ public static class BindsStockSharpModelsExtensionsViews
         return main;
     }
 
+    /// <inheritdoc/>
     public static BoardStockSharpModel Bind(this BoardStockSharpModel main, BoardStockSharpModelDB inc)
     {
         main.Code = inc.Code;
@@ -68,6 +70,7 @@ public static class BindsStockSharpModelsExtensionsViews
         return main;
     }
 
+    /// <inheritdoc/>
     public static ExchangeStockSharpModel Bind(this ExchangeStockSharpModel main, ExchangeStockSharpModelDB inc)
     {
         main.CountryCode = inc.CountryCode;

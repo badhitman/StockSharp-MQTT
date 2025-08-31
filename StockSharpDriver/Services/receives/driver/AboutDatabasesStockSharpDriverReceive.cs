@@ -6,6 +6,9 @@ using SharedLib;
 
 namespace Transmission.Receives.StockSharpDriver;
 
+/// <summary>
+/// AboutDatabasesStockSharpDriverReceive
+/// </summary>
 public class AboutDatabasesStockSharpDriverReceive(IManageStockSharpService ssRepo)
     : IMQTTReceive<object?, AboutDatabasesResponseModel?>
 {

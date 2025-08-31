@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SharedLib;
 
-[Index(nameof(LastUpdatedAtUTC)), Index(nameof(Id)), Index(nameof(StringId)), Index(nameof(BoardId)), Index(nameof(TransactionId)), Index(nameof(BrokerCode))]
 /// <inheritdoc/>
+[Index(nameof(LastUpdatedAtUTC)), Index(nameof(Id)), Index(nameof(StringId)), Index(nameof(BoardId)), Index(nameof(TransactionId)), Index(nameof(BrokerCode))]
 public class OrderStockSharpModelDB : OrderStockSharpViewModel, IBaseStockSharpModel
 {
     ///<inheritdoc/>
@@ -20,6 +20,7 @@ public class OrderStockSharpModelDB : OrderStockSharpViewModel, IBaseStockSharpM
     ///<inheritdoc/>
     public int PortfolioId { get; set; }
 
+    /// <inheritdoc/>
     public static OrderStockSharpModelDB Build(OrderStockSharpModel req, int instrumentId)
     {
         return new()

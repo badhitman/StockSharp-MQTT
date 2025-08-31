@@ -4,8 +4,12 @@ using SharedLib;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// AnotherExtensions
+/// </summary>
 public static class AnotherExtensions
 {
+    /// <inheritdoc/>
     public static decimal CalcFairPriceFromCurve(this SFut sFut, Curve crv)
     {
         sFut.ModelPrice = sFut.ConversionFactors.Keys.Select(s =>

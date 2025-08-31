@@ -56,6 +56,7 @@ public class RubricModelDB : RubricStandardModel
     public override int GetHashCode()
     => $"{ParentId} {SortIndex} {Name} {Id} {Description}".GetHashCode();
 
+    /// <inheritdoc/>
     public static RubricModelDB Build(RubricStandardModel sender)
     {
         return new()
