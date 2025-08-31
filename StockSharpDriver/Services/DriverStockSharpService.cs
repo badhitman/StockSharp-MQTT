@@ -87,11 +87,6 @@ public class DriverStockSharpService(
        quoteStrategyVolume = 1000,
        quoteSizeStrategyVolume = 2000;
 
-    decimal bondPositionTraded,
-        bondSizePositionTraded,
-        bondSmallPositionTraded,
-        bondOutOfRangePositionTraded;
-
     decimal
         lowLimit = 0.19m,
         highLimit = 0.25m;
@@ -1187,11 +1182,6 @@ public class DriverStockSharpService(
 
         lock (AllOrders)
             AllOrders.Clear();
-
-        bondPositionTraded = 0;
-        bondSizePositionTraded = 0;
-        bondSmallPositionTraded = 0;
-        bondOutOfRangePositionTraded = 0;
 
         lowLimit = 0.19m;
         highLimit = 0.25m;

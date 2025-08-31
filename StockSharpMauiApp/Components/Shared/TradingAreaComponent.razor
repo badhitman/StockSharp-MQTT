@@ -36,7 +36,13 @@ else
             <span class="input-group-text">Quote</span>
             <input @bind-value="QuoteVolume" @bind-value:event="oninput" type="number" aria-label="Volume" placeholder="Volume" class="form-control">
             <input @bind-value="QuoteSizeVolume" @bind-value:event="oninput" type="number" aria-label="Size" placeholder="Size" class="form-control">
-            <button @onclick=ResetAllTradeStrategiesInstruments class="btn btn-outline-success bi bi-recycle" type="button" disabled="@(AboutConnection?.Curve is null)">Reset</button>
+            <button @onclick=ResetAllTradeStrategiesInstruments
+                    class="btn btn-outline-success bi bi-recycle"
+                    type="button"
+                    title="Reset all strategies"
+                    disabled="@(AboutConnection?.Curve is null)">
+                Reset
+            </button>
         </div>
     </MudStack>
 
