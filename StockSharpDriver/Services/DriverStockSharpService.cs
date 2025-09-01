@@ -239,7 +239,7 @@ public class DriverStockSharpService(
             if (SBnd is not null)
             {
                 decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
-                if (yield > 0)  //Regular bonds
+                if (yield > 0) //Regular bonds
                 {
                     tradeDashboard.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
 
@@ -964,7 +964,15 @@ public class DriverStockSharpService(
             ClientCode = ClientCodeStockSharp
         };
 
-        conLink.Connector.RegisterOrder(order);
+        try
+        {
+            conLink.Connector.RegisterOrder(order);
+        }
+        catch (Exception ex)
+        {
+            return ResponseBaseModel.CreateError(ex);
+        }
+
         return ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию");
     }
 
