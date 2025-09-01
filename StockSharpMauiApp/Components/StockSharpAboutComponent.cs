@@ -22,7 +22,7 @@ public class StockSharpAboutComponent : BlazorBusyComponentBaseModel
 
 
     /// <inheritdoc/>
-    protected AboutConnectResponseModel? AboutConnection;
+    public AboutConnectResponseModel? AboutConnection { get; protected set; }
 
     /// <inheritdoc/>
     public bool EachDisable => AboutConnection is null || AboutConnection.ConnectionState != ConnectionStatesEnum.Connected;
@@ -60,7 +60,8 @@ public class StockSharpAboutComponent : BlazorBusyComponentBaseModel
         AboutConnection.CanConnect = model.CanConnect;
         AboutConnection.ConnectionState = model.ConnectionState;
         StateHasChangedCall();
-        InvokeAsync(async () => {
+        InvokeAsync(async () =>
+        {
             if (AboutConnection is null)
                 AboutConnection = await DriverRepo.AboutConnection();
             else

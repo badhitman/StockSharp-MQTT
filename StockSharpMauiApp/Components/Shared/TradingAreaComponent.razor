@@ -26,7 +26,7 @@ else if (instruments.Count == 0)
 }
 else
 {
-    <MudStack Row="true" Class="mb-2">
+    <MudStack Row Class="mb-2">
         <MudButton OnClick="async () => await LimitChange(OperatorsEnum.Multiplication, 2)" Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">x2</MudButton>
         <MudButton OnClick="async () => await LimitChange(OperatorsEnum.Dividing, 2)" Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">/2</MudButton>
         <MudButton OnClick="async () => await ShiftCurveChange(1)" Color="Color.Secondary" Disabled="@(AboutConnection?.Curve is null)">S+</MudButton>
@@ -45,7 +45,6 @@ else
             </button>
         </div>
     </MudStack>
-
     <MudTable ServerData="ServerReload" Dense Hover @ref=tableRef>
         <ToolBarContent>
             <MudText title="@($"Click for {(visibleName ? "hide" : "show")} name")" Typo="Typo.h6" Style="cursor:pointer;" @onclick=ToggleNameVisible>Trade strategy</MudText>

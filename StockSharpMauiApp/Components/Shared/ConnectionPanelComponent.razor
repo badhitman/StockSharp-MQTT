@@ -69,6 +69,10 @@
                 <MudSpacer />
                 <nav class="navbar navbar-expand-lg bg-body-tertiary">
                     <div class="container-fluid" id="boards-filter-dashboard">
+                        @if (AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected)
+                        {
+                            <span class="navbar-brand">@($"limits: ↓{AboutConnection.LowLimit} ↑{AboutConnection.HighLimit}")</span>
+                        }
                         @if (Boards is null)
                         {
                             <span class="navbar-brand">init...</span>
