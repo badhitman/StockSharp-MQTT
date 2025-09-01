@@ -154,12 +154,11 @@ public class DriverStockSharpService(
 
         List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        await Task.WhenAll([
+        List<Task> tasks = [
                   Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
                   Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
                   Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
                   Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
-                  Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken)),
                   Task.Run(async () => {
                     int[]? _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
                     if(_boardsFilter is not null && _boardsFilter.Length != 0)
@@ -168,7 +167,12 @@ public class DriverStockSharpService(
                         BoardsCurrent = boardDb.Response;
                     }
                   }, cancellationToken),
-        ]);
+        ];
+
+        if (!StrategyStarted || string.IsNullOrWhiteSpace(ProgramDataPath))
+            tasks.Add(Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken)));
+
+        await Task.WhenAll(tasks);
 
         if (string.IsNullOrWhiteSpace(ProgramDataPath))
         {
@@ -826,7 +830,7 @@ public class DriverStockSharpService(
         await Task.WhenAll([
                 Task.Run(async () => { SecurityCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.SecuritiesCriteriaCodeFilterStockSharp,token: cancellationToken); }, cancellationToken),
                 Task.Run(async () => { BoardCriteriaCodeFilter = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.BoardCriteriaCodeFilterStockSharp, token:cancellationToken); }, cancellationToken),
-                Task.Run(async () => { ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp,token: cancellationToken); }, cancellationToken)
+                Task.Run(async () => { ClientCodeStockSharp = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ClientCodeBrokerStockSharp, token: cancellationToken); }, cancellationToken)
             ]);
 
         RegisterEvents();
@@ -864,6 +868,9 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public Task<ResponseBaseModel> Disconnect(CancellationToken cancellationToken = default)
     {
+        ClientCodeStockSharp = null;
+        SecurityCriteriaCodeFilter = null;
+
         ClearStrategy();
         conLink.Connector.CancelOrders();
         foreach (Subscription sub in conLink.Connector.Subscriptions)
@@ -872,7 +879,6 @@ public class DriverStockSharpService(
             _logger.LogInformation($"{nameof(Connector.UnSubscribe)} > {sub.GetType().FullName}");
         }
 
-        SecurityCriteriaCodeFilter = "";
         lock (SecuritiesCriteriaCodesFilterLookups)
             SecuritiesCriteriaCodesFilterLookups.Clear();
 
@@ -1160,8 +1166,6 @@ public class DriverStockSharpService(
 
         BoardsCurrent?.Clear();
         PortfolioCurrent = null;
-        ClientCodeStockSharp = null;
-        ProgramDataPath = null;
 
         lock (StrategyTrades)
             StrategyTrades.Clear();
