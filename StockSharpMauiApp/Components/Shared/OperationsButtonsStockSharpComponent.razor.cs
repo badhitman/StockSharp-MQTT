@@ -28,11 +28,14 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
     public int InstrumentId { get; set; }
 
 
+    MudNumericField<decimal>? nFieldRef;
     DashboardTradeStockSharpModel? RestoreStrategy;
     public bool _available;
     bool _visible;
 
-    decimal price, volume;
+    decimal price;
+    decimal volume { get; set; }
+
     SidesEnum side;
 
     OrderTypesEnum _selectedOrderType;
@@ -135,8 +138,10 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         }
 
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.WorkingVolume;
+        volume = RestoreStrategy.ValueOperation;
         side = SidesEnum.Buy;
+
+        nFieldRef?.ForceRender(true);
 
         if (price * volume == 0)
         {
@@ -161,7 +166,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         side = SidesEnum.Sell;
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.WorkingVolume;
+        volume = RestoreStrategy.ValueOperation;
 
         if (price * volume == 0)
         {
@@ -186,7 +191,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         side = SidesEnum.Buy;
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.WorkingVolume;
+        volume = RestoreStrategy.ValueOperation;
 
         if (volume > 30000)
             volume = 30000;
@@ -214,7 +219,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         side = SidesEnum.Sell;
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.WorkingVolume;
+        volume = RestoreStrategy.ValueOperation;
 
         if (volume > 30000)
             volume = 30000;

@@ -11,9 +11,13 @@ namespace StockSharpDriver;
 /// </summary>
 public class ConnectionLink
 {
-    /// <inheritdoc/>
+    /// <summary>
+    /// Delegate [event] for <c>Connect</c> event
+    /// </summary>
     public delegate void ConnectHandler();
-    /// <inheritdoc/>
+    /// <summary>
+    /// Delegate [event] for <c>Disconnect</c> event
+    /// </summary>
     public delegate void DisconnectHandler();
 
     /// <inheritdoc/>
@@ -24,14 +28,18 @@ public class ConnectionLink
     /// <inheritdoc/>
     public Connector Connector { get; set; } = new();
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Notify outer service`s to open connection
+    /// </summary>
     public void Subscribe()
     {
         if (ConnectNotify is not null)
             ConnectNotify();
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Notify outer service`s to close connection
+    /// </summary>
     public void Unsubscribe()
     {
         if (DisconnectNotify is not null)

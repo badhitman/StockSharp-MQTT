@@ -941,9 +941,6 @@ public class DriverStockSharpService(
         InstrumentTradeStockSharpViewModel instrumentDb = resInstrument.Response[0];
         PortfolioStockSharpViewModel portfolioDb = resPortfolio.Response[0];
 
-        if (resStrategies.Response.Any(x => x.Id == req.InstrumentId))
-            return ResponseBaseModel.CreateError($"The instrument [{instrumentDb}] are not set with strategy.");
-
         Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == instrumentDb.Code && x.Board.Code == instrumentDb.Board!.Code && (int?)x.Board.Exchange.CountryCode == instrumentDb.Board.Exchange?.CountryCode);
         if (currentSec is null)
             return ResponseBaseModel.CreateError($"Инструмент не найден (aka Security): {instrumentDb}");
@@ -1783,38 +1780,13 @@ public class DriverStockSharpService(
         }
     }
 
-    #region todo
-    void OrderLogReceivedHandle(Subscription subscription, IOrderLogMessage order)
-    {
-        //_logger.LogWarning($"Call > `{nameof(OrderLogReceivedHandle)}`: {JsonConvert.SerializeObject(order)}");
-    }
-
-    void Level1ReceivedHandle(Subscription subscription, Level1ChangeMessage levelCh)
-    {
-        _logger.LogWarning($"Call > `{nameof(Level1ReceivedHandle)}`: {JsonConvert.SerializeObject(levelCh)}");
-    }
-
-    void DataTypeReceivedHandle(Subscription subscription, DataType argDt)
-    {
-        _logger.LogWarning($"Call > `{nameof(DataTypeReceivedHandle)}`: {JsonConvert.SerializeObject(argDt)}");
-    }
-
-    void CandleReceivedHandle(Subscription subscription, ICandleMessage candleMessage)
-    {
-        _logger.LogWarning($"Call > `{nameof(CandleReceivedHandle)}`");
-    }
-    #endregion
 
     void UnregisterEvents()
     {
         conLink.Unsubscribe();
 
-        conLink.Connector.CandleReceived -= CandleReceivedHandle;
-        conLink.Connector.DataTypeReceived -= DataTypeReceivedHandle;
-        conLink.Connector.Level1Received -= Level1ReceivedHandle;
         conLink.Connector.LookupSecuritiesResult -= LookupSecuritiesResultHandle;
         conLink.Connector.OrderBookReceived -= OrderBookReceivedHandle;
-        conLink.Connector.OrderLogReceived -= OrderLogReceivedHandle;
         conLink.Connector.OrderReceived -= OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
         conLink.Connector.SecurityReceived -= SecurityReceivedHandle;
@@ -1824,12 +1796,8 @@ public class DriverStockSharpService(
     {
         conLink.Subscribe();
 
-        conLink.Connector.CandleReceived += CandleReceivedHandle;
-        conLink.Connector.DataTypeReceived += DataTypeReceivedHandle;
-        conLink.Connector.Level1Received += Level1ReceivedHandle;
         conLink.Connector.LookupSecuritiesResult += LookupSecuritiesResultHandle;
         conLink.Connector.OrderBookReceived += OrderBookReceivedHandle;
-        conLink.Connector.OrderLogReceived += OrderLogReceivedHandle;
         conLink.Connector.OrderReceived += OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
         conLink.Connector.SecurityReceived += SecurityReceivedHandle;

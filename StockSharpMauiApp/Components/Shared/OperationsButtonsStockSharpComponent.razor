@@ -18,10 +18,19 @@
     <DialogContent>
         <figure>
             <blockquote class="blockquote">
-                <p>@RestoreStrategy?.Code: <strong title="Volume order">@(volume.ToString("#"))</strong> vol.</p>
+                @* <MudNumericField @bind-Value="volume"
+                                     @ref=nFieldRef
+                                     Label="@RestoreStrategy?.Code"
+                                     Variant="Variant.Text"
+                                     HelperText="volume"
+                                     Min="0" /> *@
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Volume @RestoreStrategy?.Code</label>
+                    <input type="number" @bind-value=volume @bind-value:event="oninput" class="form-control" id="exampleFormControlInput1">
+                </div>
             </blockquote>
             <figcaption class="blockquote-footer" style="font-size: 1em;">
-                @RestoreStrategy?.Name. Bonds: <cite title="price order" style="font-size: 1.5em;" class="text-primary">@(price.ToString("#.##"))</cite>
+                @RestoreStrategy?.Name. Bonds price: <cite title="price order" style="font-size: 1.5em;" class="text-primary">@(price.ToString("#.##"))</cite>
             </figcaption>
         </figure>
         <MudSelect @bind-Value="SelectedOrderType"
