@@ -170,7 +170,7 @@
                     <MudSelectItem Value="@_port"
                                    T="PortfolioStockSharpModel"
                                    @key="@($"portf_{_port.Id}")"
-                                   Disabled="@(EachDisable || _port.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt)">@_port</MudSelectItem>
+                                   Disabled="@(EachDisable || _port.State == PortfolioStatesEnum.Blocked || _port.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt)">@_port</MudSelectItem>
                 }
             </MudSelect>
         }

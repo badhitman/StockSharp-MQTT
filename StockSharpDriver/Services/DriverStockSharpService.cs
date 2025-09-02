@@ -949,7 +949,7 @@ public class DriverStockSharpService(
         if (resStrategies.Response is null || resStrategies.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        InstrumentTradeStockSharpViewModel instrumentDb = resInstrument.Response[0];
+        InstrumentStockSharpModelDB instrumentDb = (InstrumentStockSharpModelDB)resInstrument.Response[0];
         PortfolioStockSharpViewModel portfolioDb = resPortfolio.Response[0];
 
         Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == instrumentDb.Code && x.Board.Code == instrumentDb.Board!.Code && (int?)x.Board.Exchange.CountryCode == instrumentDb.Board.Exchange?.CountryCode);
@@ -957,6 +957,7 @@ public class DriverStockSharpService(
             return ResponseBaseModel.CreateError($"Инструмент не найден (aka Security): {instrumentDb}");
 
         Portfolio? selectedPortfolio = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == portfolioDb.ClientCode && x.Name == portfolioDb.Name);
+
         if (selectedPortfolio is null)
             return ResponseBaseModel.CreateError($"Портфель не найден: {portfolioDb}");
 

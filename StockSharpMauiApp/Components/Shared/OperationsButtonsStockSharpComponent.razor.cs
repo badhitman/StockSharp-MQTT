@@ -9,16 +9,16 @@ using SharedLib;
 
 namespace StockSharpMauiApp.Components.Shared;
 
-public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentBaseModel
+public partial class OperationsButtonsStockSharpComponent : StockSharpBaseComponent
 {
     [Inject]
     IParametersStorageTransmission StorageRepo { get; set; } = default!;
 
     [Inject]
-    IDriverStockSharpService DriverRepo { get; set; } = default!;
+    IDataStockSharpService DataRepo { get; set; } = default!;
 
     [Inject]
-    IDataStockSharpService DataRepo { get; set; } = default!;
+    IEventNotifyReceive<PortfolioStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
 
 
     [Parameter, EditorRequired]
@@ -59,7 +59,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         }
     }
 
-    List<PortfolioStockSharpViewModel>? portfoliosAll;
+    List<PortfolioStockSharpViewModel> portfoliosAll = [];
 
     private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
@@ -76,6 +76,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         await SetBusyAsync();
 
         await Task.WhenAll([
+            PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.PortfolioReceivedStockSharpNotifyReceive, PortfolioNotificationHandle),
             Task.Run(async () => {
                 TResponseModel<int> tradePortfolio = await StorageRepo.ReadParameterAsync<int>(GlobalStaticCloudStorageMetadata.DashboardTradePortfolio);
                 if(tradePortfolio.Success() && tradePortfolio.Response != default)
@@ -88,7 +89,14 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
             }),
             Task.Run(async () => {
                 TResponseModel<List<PortfolioStockSharpViewModel>> res = await DataRepo.GetPortfoliosAsync();
-                portfoliosAll = res.Response;
+                if(res.Response is not null)
+                {
+                    lock (portfoliosAll)
+                    {
+                        portfoliosAll.AddRange(res.Response);
+                    }
+                }
+
                 SnackBarRepo.ShowMessagesResponse(res.Messages);
             }),
         ]);
@@ -99,6 +107,18 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         await SetBusyAsync(false);
     }
 
+    void PortfolioNotificationHandle(PortfolioStockSharpViewModel model)
+    {
+        lock (portfoliosAll)
+        {
+            int _pf = portfoliosAll.FindIndex(x => x.Id == model.Id);
+            if (_pf == -1)
+                portfoliosAll.Add(model);
+            else
+                portfoliosAll[_pf].Reload(model);
+        }
+        StateHasChangedCall();
+    }
     async Task Submit()
     {
         CreateOrderRequestModel req = new()
@@ -228,5 +248,10 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         }
 
         _visible = true;
+    }
+    public override void Dispose()
+    {
+        PortfolioEventRepo.UnregisterAction();
+        base.Dispose();
     }
 }

@@ -1,6 +1,6 @@
 ﻿@using BlazorLib
 
-@inherits BlazorBusyComponentBaseModel
+@inherits StockSharpBaseComponent
 
 <div class="btn-group btn-group-sm" role="group">
     <button disabled="@(!_available)" type="button" class="btn btn-outline-warning" @onclick=Buy>buy</button>
@@ -27,30 +27,38 @@
                 @RestoreStrategy?.Name. Bonds price: <cite title="price order" style="font-size: 1.5em;" class="text-primary">@(price.ToString("#.##"))</cite>
             </figcaption>
         </figure>
-        <MudSelect @bind-Value="SelectedOrderType"
-                   Variant="Variant.Outlined"
-                   Label="Order type"
-                   Dense Modal>
-            @foreach (OrderTypesEnum _ot in Enum.GetValues(typeof(OrderTypesEnum)))
-            {
-                <MudSelectItem title="@_ot.DescriptionInfo()" Value="_ot">@_ot.ToString()</MudSelectItem>
-            }
-        </MudSelect>
-        @if (portfoliosAll is not null)
-        {
-            <MudSelect @bind-Value="SelectedPortfolioId"
-                       Variant="Variant.Outlined"
-                       Label="Portfolio"
-                       Disabled="@(SelectedPortfolioId == 0)"
-                       Dense Modal>
-                @foreach (PortfolioStockSharpViewModel _p in portfoliosAll)
-                {
-                    <MudSelectItem Disabled="@(@_p.State == PortfolioStatesEnum.Blocked)" title="@_p.DepoName" Value="_p.Id">
-                        @_p.ToString()
-                    </MudSelectItem>
-                }
-            </MudSelect>
-        }
+        <MudGrid>
+            <MudItem xs="12" sm=6>
+                <MudSelect @bind-Value="SelectedOrderType"
+                           Variant="Variant.Outlined"
+                           Label="Order type"
+                           Dense Modal>
+                    @foreach (OrderTypesEnum _ot in Enum.GetValues(typeof(OrderTypesEnum)))
+                    {
+                        <MudSelectItem title="@_ot.DescriptionInfo()" Value="_ot">@_ot.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm=6>
+                <MudSelect @bind-Value="SelectedPortfolioId"
+                           Variant="Variant.Outlined"
+                           Label="Portfolio"
+                           Disabled="@(SelectedPortfolioId == 0)"
+                           Dense Modal>
+                    @foreach (PortfolioStockSharpViewModel _p in portfoliosAll)
+                    {
+                        <MudSelectItem Disabled="@(_p.State == PortfolioStatesEnum.Blocked || EachDisable || _p.LastUpdatedAtUTC < AboutConnection!.LastConnectedAt)"
+                                       title="@_p.DepoName"
+                                       @key="@($"portf_{_p.Id}")"
+                                       Value="_p.Id">
+                            @_p.ToString()
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+
+
     </DialogContent>
     <DialogActions>
         <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="() => _visible = false" Class="px-10">Cancel</MudButton>
