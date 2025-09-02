@@ -2,18 +2,19 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using System.Text.RegularExpressions;
+using Ecng.Collections;
+using Ecng.Common;
+using Ecng.Logging;
+using Newtonsoft.Json;
+using SharedLib;
+using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
-using Ecng.Collections;
-using Newtonsoft.Json;
-using StockSharp.Algo;
-using System.Security;
-using Ecng.Logging;
-using Ecng.Common;
 using System.Net;
-using SharedLib;
+using System.Security;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace StockSharpDriver;
 
@@ -320,7 +321,11 @@ public class DriverStockSharpService(
             await Task.WhenAll(tasksMaster);
             await Task.WhenAll(tasksSlave);
         }
-
+        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = conLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
+        }, cancellationToken);
         res.AddInfo("Data loaded!!!");
         return res;
     }
@@ -376,6 +381,12 @@ public class DriverStockSharpService(
         lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
         highLimit = Calculation(highLimit, req.Operator, req.Operand);
 
+        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = conLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
+        }, cancellationToken);
+
         return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
     }
 
@@ -386,7 +397,7 @@ public class DriverStockSharpService(
         if (_ac.ConnectionState != ConnectionStatesEnum.Connected)
             return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState?.DescriptionInfo()})");
 
-        ClearStrategy();
+        await ClearStrategy(cancellationToken);
 
         ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken);
         if (string.IsNullOrWhiteSpace(ProgramDataPath))
@@ -405,7 +416,7 @@ public class DriverStockSharpService(
 
         if (PortfolioCurrent is null)
         {
-            ClearStrategy();
+            await ClearStrategy(cancellationToken);
             return ResponseBaseModel.CreateError($"Portfolio #{req.SelectedPortfolio.ClientCode} - not found");
         }
         TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
@@ -494,7 +505,7 @@ public class DriverStockSharpService(
 
         if (!response.Success())
         {
-            ClearStrategy();
+            await ClearStrategy(cancellationToken);
             return response;
         }
 
@@ -513,7 +524,7 @@ public class DriverStockSharpService(
 
         if (CurveCurrent is null || CurveCurrent.BondList.Count == 0)
         {
-            ClearStrategy();
+            await ClearStrategy(cancellationToken);
             return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
         }
 
@@ -532,11 +543,11 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
     {
-        ClearStrategy();
+        await ClearStrategy(cancellationToken);
         fileWatcher.Changed -= OnDatabaseChanged;
-        return Task.FromResult(ResponseBaseModel.CreateInfo("Ok"));
+        return ResponseBaseModel.CreateInfo("Ok");
     }
 
     /// <inheritdoc/>
@@ -866,12 +877,12 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public Task<ResponseBaseModel> Disconnect(CancellationToken cancellationToken = default)
+    public async Task<ResponseBaseModel> Disconnect(CancellationToken cancellationToken = default)
     {
         ClientCodeStockSharp = null;
         SecurityCriteriaCodeFilter = null;
 
-        ClearStrategy();
+        await ClearStrategy(cancellationToken);
         conLink.Connector.CancelOrders();
         foreach (Subscription sub in conLink.Connector.Subscriptions)
         {
@@ -887,7 +898,7 @@ public class DriverStockSharpService(
 
         lock (AllSecurities)
             AllSecurities.Clear();
-        return Task.FromResult(ResponseBaseModel.CreateInfo("connection closed"));
+        return ResponseBaseModel.CreateInfo("connection closed");
     }
 
     /// <inheritdoc/>
@@ -1155,7 +1166,7 @@ public class DriverStockSharpService(
         }
     }
 
-    void ClearStrategy()
+    async Task ClearStrategy(CancellationToken cancellationToken = default)
     {
         lock (MarketDepthSubscriptions)
         {
@@ -1192,6 +1203,12 @@ public class DriverStockSharpService(
 
         lowLimit = 0.19m;
         highLimit = 0.25m;
+
+        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = conLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
+        }, cancellationToken);
     }
 
     #region events

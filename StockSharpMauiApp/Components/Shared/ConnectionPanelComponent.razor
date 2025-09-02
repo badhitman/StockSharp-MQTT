@@ -71,7 +71,7 @@
                     <div class="container-fluid" id="boards-filter-dashboard">
                         @if (AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected)
                         {
-                            <span class="navbar-brand">@($"limits: ↓{AboutConnection.LowLimit} ↑{AboutConnection.HighLimit}")</span>
+                            <span class="navbar-brand badge text-bg-secondary">@($"limits: ↓{AboutConnection.LowLimit} ↑{AboutConnection.HighLimit}")</span>
                         }
                         @if (Boards is null)
                         {
