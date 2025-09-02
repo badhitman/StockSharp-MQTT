@@ -58,7 +58,7 @@ public class DriverStockSharpService(
 
     #region LastConnectedAt
     readonly object _lockLastConnectedAt = new();
-    DateTime _lastConnectedAt = DateTime.MinValue;
+    DateTime _lastConnectedAt = DateTime.MaxValue;
     DateTime LastConnectedAt
     {
         get
@@ -951,6 +951,9 @@ public class DriverStockSharpService(
 
         InstrumentStockSharpModelDB instrumentDb = (InstrumentStockSharpModelDB)resInstrument.Response[0];
         PortfolioStockSharpViewModel portfolioDb = resPortfolio.Response[0];
+
+        if(portfolioDb.LastUpdatedAtUTC < LastConnectedAt)
+            return ResponseBaseModel.CreateError($"The portfolio #{portfolioDb} not actuality.");
 
         Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == instrumentDb.Code && x.Board.Code == instrumentDb.Board!.Code && (int?)x.Board.Exchange.CountryCode == instrumentDb.Board.Exchange?.CountryCode);
         if (currentSec is null)

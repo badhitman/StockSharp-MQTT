@@ -35,6 +35,10 @@ public partial class OperationsButtonsStockSharpComponent : StockSharpBaseCompon
     decimal price;
     decimal Volume { get; set; }
 
+    List<PortfolioStockSharpViewModel> portfoliosAll = [];
+
+    private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
+
     SidesEnum side;
 
     OrderTypesEnum _selectedOrderType;
@@ -59,10 +63,6 @@ public partial class OperationsButtonsStockSharpComponent : StockSharpBaseCompon
         }
     }
 
-    List<PortfolioStockSharpViewModel> portfoliosAll = [];
-
-    private readonly DialogOptions _dialogOptions = new() { FullWidth = true };
-
     public void AvailableSet(bool available)
     {
         _available = available;
@@ -74,13 +74,11 @@ public partial class OperationsButtonsStockSharpComponent : StockSharpBaseCompon
         await base.OnInitializedAsync();
         _available = Available;
         await SetBusyAsync();
-
+        TResponseModel<int> tradePortfolio = default!;
         await Task.WhenAll([
             PortfolioEventRepo.RegisterAction(GlobalStaticConstantsTransmission.TransmissionQueues.PortfolioReceivedStockSharpNotifyReceive, PortfolioNotificationHandle),
             Task.Run(async () => {
-                TResponseModel<int> tradePortfolio = await StorageRepo.ReadParameterAsync<int>(GlobalStaticCloudStorageMetadata.DashboardTradePortfolio);
-                if(tradePortfolio.Success() && tradePortfolio.Response != default)
-                    _selectedPortfolioId = tradePortfolio.Response;
+                tradePortfolio = await StorageRepo.ReadParameterAsync<int>(GlobalStaticCloudStorageMetadata.DashboardTradePortfolio);
             }),
             Task.Run(async () => {
                 TResponseModel<OrderTypesEnum?> orderType = await StorageRepo.ReadParameterAsync<OrderTypesEnum?>(GlobalStaticCloudStorageMetadata.DashboardTradeOrderType);
@@ -101,8 +99,11 @@ public partial class OperationsButtonsStockSharpComponent : StockSharpBaseCompon
             }),
         ]);
 
+        if (tradePortfolio.Success() && tradePortfolio.Response != default)
+            _selectedPortfolioId = tradePortfolio.Response;
+
         if (portfoliosAll is not null && portfoliosAll.Count != 0 && (SelectedPortfolioId == default || !portfoliosAll.Any(x => x.Id == SelectedPortfolioId)))
-            SelectedPortfolioId = portfoliosAll.First().Id;
+            _selectedPortfolioId = portfoliosAll.First().Id;
 
         await SetBusyAsync(false);
     }
@@ -119,8 +120,26 @@ public partial class OperationsButtonsStockSharpComponent : StockSharpBaseCompon
         }
         StateHasChangedCall();
     }
+
     async Task Submit()
     {
+        PortfolioStockSharpViewModel? _currPort = portfoliosAll.FirstOrDefault(x => x.Id == SelectedPortfolioId);
+        if (AboutConnection is null)
+        {
+            SnackBarRepo.Error("AboutConnection is null");
+            return;
+        }
+        if (_currPort is null)
+        {
+            SnackBarRepo.Warn($"Current portfolio wrong: not found #{SelectedPortfolioId}");
+            return;
+        }
+        if (_currPort.LastUpdatedAtUTC < AboutConnection.LastConnectedAt)
+        {
+            SnackBarRepo.Warn($"Current portfolio wrong: not actuality portfolio `{_currPort.LastUpdatedAtUTC.GetHumanDateTime()}` vs CurrentConnection `{AboutConnection.LastConnectedAt.Value.GetHumanDateTime()}`");
+            return;
+        }
+
         CreateOrderRequestModel req = new()
         {
             Comment = "Manual",
