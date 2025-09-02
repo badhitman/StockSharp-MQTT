@@ -47,7 +47,9 @@ else
     </MudStack>
     <MudTable ServerData="ServerReload" Dense Hover @ref=tableRef>
         <ToolBarContent>
-            <MudText title="@($"Click for {(visibleName ? "hide" : "show")} name")" Typo="Typo.h6" Style="cursor:pointer;" @onclick=ToggleNameVisible>Trade strategy</MudText>
+            <MudText title="@($"Click for {(visibleName ? "hide" : "show")} name")" Typo="Typo.h6" Style="cursor:pointer;" @onclick=ToggleNameVisible>
+                Trade strategy
+            </MudText>
             <MudSpacer />
         </ToolBarContent>
         <ColGroup>

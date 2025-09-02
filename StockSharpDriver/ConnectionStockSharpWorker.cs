@@ -16,9 +16,9 @@ public class ConnectionStockSharpWorker(
     IEventsStockSharp eventTrans,
     ConnectionLink conLink) : BackgroundService
 {
-    private void DisconnectLink() => UnregisterEvents();
+    void DisconnectLink() => UnregisterEvents();
 
-    private void ConnectLink() => RegisterEvents();
+    void ConnectLink() => RegisterEvents();
 
 
     /// <inheritdoc/>

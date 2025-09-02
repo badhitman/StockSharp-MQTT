@@ -90,7 +90,7 @@ public class DriverStockSharpService(
         lowLimit = 0.19m,
         highLimit = 0.25m;
 
-    readonly decimal
+    const decimal
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
 
@@ -976,7 +976,7 @@ public class DriverStockSharpService(
             IsMarketMaker = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker),
             IsSystem = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsSystem),
             Comment = req.Comment,
-            ClientCode = ClientCodeStockSharp
+            ClientCode = ClientCodeStockSharp,              
         };
 
         try
