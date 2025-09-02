@@ -952,7 +952,7 @@ public class DriverStockSharpService(
         InstrumentStockSharpModelDB instrumentDb = (InstrumentStockSharpModelDB)resInstrument.Response[0];
         PortfolioStockSharpViewModel portfolioDb = resPortfolio.Response[0];
 
-        if(portfolioDb.LastUpdatedAtUTC < LastConnectedAt)
+        if (portfolioDb.LastUpdatedAtUTC < LastConnectedAt)
             return ResponseBaseModel.CreateError($"The portfolio #{portfolioDb} not actuality.");
 
         Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == instrumentDb.Code && x.Board.Code == instrumentDb.Board!.Code && (int?)x.Board.Exchange.CountryCode == instrumentDb.Board.Exchange?.CountryCode);
@@ -976,7 +976,7 @@ public class DriverStockSharpService(
             IsMarketMaker = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker),
             IsSystem = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsSystem),
             Comment = req.Comment,
-            ClientCode = ClientCodeStockSharp,              
+            ClientCode = ClientCodeStockSharp,
         };
 
         try
