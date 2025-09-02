@@ -308,10 +308,10 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("NameNormalizedUpper")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("OptionStyle")
+                    b.Property<int?>("OptionStyle")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("OptionType")
+                    b.Property<int?>("OptionType")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal?>("PriceStep")
@@ -323,7 +323,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<DateTimeOffset?>("SettlementDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("SettlementType")
+                    b.Property<int?>("SettlementType")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ShortName")
@@ -332,7 +332,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<bool?>("Shortable")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("TypeInstrument")
+                    b.Property<int?>("TypeInstrument")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("TypeInstrumentManual")
@@ -341,7 +341,7 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("UnderlyingSecurityId")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UnderlyingSecurityType")
+                    b.Property<int?>("UnderlyingSecurityType")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal?>("VolumeStep")

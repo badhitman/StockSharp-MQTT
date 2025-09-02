@@ -665,7 +665,7 @@ public class DriverStockSharpService(
 
             Security? currentSecurity = currentSecurities.FirstOrDefault(x =>
             x.Code == currentStrategy.Code &&
-            (int?)x.Currency == currentStrategy.Currency &&
+            ((x.Currency is null && currentStrategy.Currency is null) || (x.Currency is not null && currentStrategy.Currency is not null && Enum.GetName(typeof(CurrencyTypes), x.Currency) == Enum.GetName(typeof(CurrenciesTypesEnum), currentStrategy.Currency))) &&
             x.Board.Code == currentStrategy.Board?.Code);
 
             if (currentSecurity is null)
@@ -955,7 +955,7 @@ public class DriverStockSharpService(
         if (portfolioDb.LastUpdatedAtUTC < LastConnectedAt)
             return ResponseBaseModel.CreateError($"The portfolio #{portfolioDb} not actuality.");
 
-        Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == instrumentDb.Code && x.Board.Code == instrumentDb.Board!.Code && (int?)x.Board.Exchange.CountryCode == instrumentDb.Board.Exchange?.CountryCode);
+        Security? currentSec = conLink.Connector.Securities.FirstOrDefault(x => x.Code == instrumentDb.Code && x.Board.Code == instrumentDb.Board!.Code && x.Board.Exchange.CountryCode.EqCountry(instrumentDb.Board.Exchange?.CountryCode));
         if (currentSec is null)
             return ResponseBaseModel.CreateError($"Инструмент не найден (aka Security): {instrumentDb}");
 
@@ -1275,7 +1275,7 @@ public class DriverStockSharpService(
         SecurityPosition SbPos = SBondPositionsList.First(sp => sp.Sec.Equals(sec));
 
         InstrumentTradeStockSharpViewModel? currentInstrument = resInstruments.Response
-            .FirstOrDefault(x => x.Code == sec.Code && x.Currency == (int?)sec.Currency && x.Board?.Code == sec.Board.Code);
+            .FirstOrDefault(x => x.Code == sec.Code && x.Currency.EqCurrencies(sec.Currency) && x.Board?.Code == sec.Board.Code);
 
         if (currentInstrument is null)
         {

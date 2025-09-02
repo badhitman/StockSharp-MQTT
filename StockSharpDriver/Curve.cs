@@ -72,7 +72,7 @@ public class Curve : CurveBaseModel
 
                     return
                         reqEx.Exchange.Name == _ge.Name &&
-                        (int?)reqEx.Exchange.CountryCode == _ge.CountryCode;
+                        reqEx.Exchange.CountryCode.EqCountry(_ge.CountryCode);
                 });
             }
 
