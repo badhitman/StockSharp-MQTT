@@ -33,7 +33,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
     bool _visible;
 
     decimal price;
-    decimal volume { get; set; }
+    decimal Volume { get; set; }
 
     SidesEnum side;
 
@@ -107,7 +107,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
             InstrumentId = InstrumentId,
             IsManual = true,
             Price = price,
-            Volume = volume,
+            Volume = Volume,
             Side = side,
 
             OrderType = SelectedOrderType,
@@ -137,12 +137,10 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
         }
 
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.ValueOperation;
+        Volume = RestoreStrategy.ValueOperation;
         side = SidesEnum.Buy;
 
-        nFieldRef?.ForceRender(true);
-
-        if (price * volume == 0)
+        if (price * Volume == 0)
         {
             SnackBarRepo.Warn("price or volume == 0");
             return;
@@ -165,9 +163,9 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         side = SidesEnum.Sell;
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.ValueOperation;
+        Volume = RestoreStrategy.ValueOperation;
 
-        if (price * volume == 0)
+        if (price * Volume == 0)
         {
             SnackBarRepo.Warn("price or volume == 0");
             return;
@@ -190,12 +188,12 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         side = SidesEnum.Buy;
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.ValueOperation;
+        Volume = RestoreStrategy.ValueOperation;
 
-        if (volume > 30000)
-            volume = 30000;
+        if (Volume > 30000)
+            Volume = 30000;
 
-        if (price * volume == 0)
+        if (price * Volume == 0)
         {
             SnackBarRepo.Warn("price or volume == 0");
             return;
@@ -218,12 +216,12 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         side = SidesEnum.Sell;
         price = RestoreStrategy.BasePrice;
-        volume = RestoreStrategy.ValueOperation;
+        Volume = RestoreStrategy.ValueOperation;
 
-        if (volume > 30000)
-            volume = 30000;
+        if (Volume > 30000)
+            Volume = 30000;
 
-        if (price * volume == 0)
+        if (price * Volume == 0)
         {
             SnackBarRepo.Warn("price or volume == 0");
             return;
