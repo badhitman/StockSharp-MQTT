@@ -42,7 +42,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
     OperationsButtonsStockSharpComponent? OperationsButtonsRef;
 
 
-    public DashboardTradeStockSharpModel StrategyTrade => DashboardTradeStockSharpModel.Build(Instrument, BasePrice, ValueOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, LowLimit, HightLimit);
+    public DashboardTradeStockSharpModel StrategyTrade => DashboardTradeStockSharpModel.Build(Instrument, BasePrice, VolumeOperation, Offset, SmallBidVolume, SmallOfferVolume, SmallOffset, WorkingVolume, IsSmall, LowLimit, HightLimit);
     public bool Available => !EachDisable && Instrument.LastUpdatedAtUTC >= AboutConnection!.LastConnectedAt;
 
 
@@ -96,14 +96,14 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         }
     }
 
-    decimal _valueOperation;
+    decimal _volumeOperation;
     /// <inheritdoc/>
-    public decimal ValueOperation
+    public decimal VolumeOperation
     {
-        get => _valueOperation;
+        get => _volumeOperation;
         private set
         {
-            _valueOperation = value;
+            _volumeOperation = value;
             InvokeAsync(SaveStrategy);
         }
     }
@@ -212,7 +212,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
         _hightLimit = RestoreStrategy.HightLimit;
         _isSmall = RestoreStrategy.IsSmall;
         _basePrice = RestoreStrategy.BasePrice;
-        _valueOperation = RestoreStrategy.ValueOperation;
+        _volumeOperation = RestoreStrategy.ValueOperation;
         _offset = RestoreStrategy.Offset;
 
         _smallBidVolume = RestoreStrategy.SmallBidVolume;
@@ -240,7 +240,7 @@ public partial class TradingRowComponent : StockSharpAboutComponent
             {
                 Offset = _offset,
                 BasePrice = _basePrice,
-                ValueOperation = _valueOperation,
+                ValueOperation = _volumeOperation,
                 SmallBidVolume = _smallBidVolume,
                 SmallOfferVolume = _smallOfferVolume,
                 SmallOffset = _smallOffset,

@@ -43,7 +43,7 @@ else
         }
     </MudTd>
     <MudTd DataLabel="Price" Class="@($"trade-instrument-{Instrument.Id}-row")"><input @bind-value="BasePrice" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
-    <MudTd DataLabel="Value"><input @bind-value="ValueOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
+    <MudTd DataLabel="Volume"><input @bind-value="VolumeOperation" type="number" class="form-control form-control-sm" @bind-value:event="oninput"></MudTd>
     <MudTd Class="@_opClass" DataLabel="Actions">
         <OperationsButtonsStockSharpComponent Available=Available InstrumentId=Instrument.Id @ref=OperationsButtonsRef />
     </MudTd>

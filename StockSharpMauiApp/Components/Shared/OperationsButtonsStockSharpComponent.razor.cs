@@ -28,7 +28,6 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
     public int InstrumentId { get; set; }
 
 
-    MudNumericField<decimal>? nFieldRef;
     DashboardTradeStockSharpModel? RestoreStrategy;
     public bool _available;
     bool _visible;
@@ -145,7 +144,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         if (price * volume == 0)
         {
-            SnackBarRepo.Warn("price * volume == 0");
+            SnackBarRepo.Warn("price or volume == 0");
             return;
         }
 
@@ -170,7 +169,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         if (price * volume == 0)
         {
-            SnackBarRepo.Warn("price * volume == 0");
+            SnackBarRepo.Warn("price or volume == 0");
             return;
         }
 
@@ -198,7 +197,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         if (price * volume == 0)
         {
-            SnackBarRepo.Warn("price * volume == 0");
+            SnackBarRepo.Warn("price or volume == 0");
             return;
         }
 
@@ -226,7 +225,7 @@ public partial class OperationsButtonsStockSharpComponent : BlazorBusyComponentB
 
         if (price * volume == 0)
         {
-            SnackBarRepo.Warn("price * volume == 0");
+            SnackBarRepo.Warn("price or volume == 0");
             return;
         }
 
