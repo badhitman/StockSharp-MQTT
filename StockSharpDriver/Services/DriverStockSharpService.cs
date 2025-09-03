@@ -57,9 +57,9 @@ public class DriverStockSharpService(
     readonly FileSystemWatcher fileWatcher = new();
 
     #region LastConnectedAt
-    readonly object _lockLastConnectedAt = new();
-    DateTime _lastConnectedAt = DateTime.MaxValue;
-    DateTime LastConnectedAt
+    readonly static object _lockLastConnectedAt = new();
+    static DateTime? _lastConnectedAt = DateTime.MaxValue;
+    public static DateTime? LastConnectedAt
     {
         get
         {
@@ -884,9 +884,6 @@ public class DriverStockSharpService(
     {
         await ClearStrategy(cancellationToken);
 
-        ClientCodeStockSharp = null;
-        SecurityCriteriaCodeFilter = null;
-
         conLink.Connector.CancelOrders();
         foreach (Subscription sub in conLink.Connector.Subscriptions)
         {
@@ -902,18 +899,22 @@ public class DriverStockSharpService(
 
         lock (AllSecurities)
             AllSecurities.Clear();
+
+        ClientCodeStockSharp = null;
+        SecurityCriteriaCodeFilter = null;
+        LastConnectedAt = null;
+
         return ResponseBaseModel.CreateInfo("connection closed");
     }
 
     /// <inheritdoc/>
     public Task<AboutConnectResponseModel> AboutConnection(CancellationToken cancellationToken = default)
     {
-        DateTime _lc = LastConnectedAt;
         AboutConnectResponseModel res = new()
         {
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!),
-            LastConnectedAt = (_lc == DateTime.MinValue || _lc == default) ? null : _lc,
+            LastConnectedAt = LastConnectedAt,
             StrategyStarted = StrategyStarted,
             LowLimit = lowLimit,
             HighLimit = highLimit,
@@ -1184,7 +1185,7 @@ public class DriverStockSharpService(
             SecurityCriteriaCodeFilterSubscriptions.ForEach(conLink.Connector.UnSubscribe);
             SecurityCriteriaCodeFilterSubscriptions.Clear();
         }
-        
+
         conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
 
         BoardsCurrent?.Clear();
