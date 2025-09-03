@@ -23,7 +23,7 @@
     </MudTd>
 }
 <MudTd DataLabel="Currency">@((CurrenciesTypesEnum?)Context.Currency)</MudTd>
-<MudTd DataLabel="Type">@((InstrumentsStockSharpTypesEnum)Context.TypeInstrument)</MudTd>
+<MudTd DataLabel="Type">@((InstrumentsStockSharpTypesEnum?)Context.TypeInstrument)</MudTd>
 @if (Owner.ColumnsSelected?.Contains(InstrumentsTableStockSharpComponent._mtp) == true)
 {
     <MudTd DataLabel="Multiplier">@(Context.Multiplier)</MudTd>
