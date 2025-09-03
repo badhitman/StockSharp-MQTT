@@ -456,7 +456,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         ExchangeStockSharpModelDB? _exc = req.Exchange is null
             ? null
-            : await context.Exchanges.SingleAsync(x => x.Name == req.Exchange.Name && x.CountryCode == req.Exchange.CountryCode, cancellationToken: cancellationToken);//req.Exchange
+            : await context.Exchanges.SingleAsync(x => x.Name == req.Exchange.Name && x.CountryCode == req.Exchange.CountryCode, cancellationToken: cancellationToken);
 
         IQueryable<BoardStockSharpModelDB> q = context.Boards.AsQueryable();
 
