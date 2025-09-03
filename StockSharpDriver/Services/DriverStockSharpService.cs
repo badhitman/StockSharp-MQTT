@@ -34,7 +34,7 @@ public class DriverStockSharpService(
     Portfolio? PortfolioCurrent;
     List<BoardStockSharpViewModel>? BoardsCurrent;
 
-    Subscription? SecurityCriteriaCodeFilterSubscription;
+    List<Subscription> SecurityCriteriaCodeFilterSubscriptions = [];
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookups = [];
 
     readonly List<DashboardTradeStockSharpModel> StrategyTrades = [];
@@ -866,8 +866,11 @@ public class DriverStockSharpService(
                         },
                         TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
                     });
-                    SecurityCriteriaCodeFilterSubscription = new(SecuritiesCriteriaCodesFilterLookups.Last());
-                    conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscription);
+                    lock (SecurityCriteriaCodeFilterSubscriptions)
+                    {
+                        SecurityCriteriaCodeFilterSubscriptions.Add(new(SecuritiesCriteriaCodesFilterLookups.Last()));
+                        conLink.Connector.Subscribe(SecurityCriteriaCodeFilterSubscriptions.Last());
+                    }
                 }
             }
         }
@@ -879,10 +882,11 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> Disconnect(CancellationToken cancellationToken = default)
     {
+        await ClearStrategy(cancellationToken);
+
         ClientCodeStockSharp = null;
         SecurityCriteriaCodeFilter = null;
 
-        await ClearStrategy(cancellationToken);
         conLink.Connector.CancelOrders();
         foreach (Subscription sub in conLink.Connector.Subscriptions)
         {
@@ -1175,10 +1179,12 @@ public class DriverStockSharpService(
             MarketDepthSubscriptions.Clear();
         }
 
-        if (SecurityCriteriaCodeFilterSubscription is not null)
-            conLink.Connector.UnSubscribe(SecurityCriteriaCodeFilterSubscription);
-        SecurityCriteriaCodeFilterSubscription = null;
-
+        lock (SecurityCriteriaCodeFilterSubscriptions)
+        {
+            SecurityCriteriaCodeFilterSubscriptions.ForEach(conLink.Connector.UnSubscribe);
+            SecurityCriteriaCodeFilterSubscriptions.Clear();
+        }
+        
         conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
 
         BoardsCurrent?.Clear();

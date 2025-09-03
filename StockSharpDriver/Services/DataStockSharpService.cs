@@ -188,7 +188,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (req.PageSize < 10)
             req.PageSize = 10;
 
-        MarkersInstrumentStockSharpEnum[] _allMArkers = [.. Enum.GetValues<MarkersInstrumentStockSharpEnum>()];
+        MarkersInstrumentStockSharpEnum[] _allMarkers = [.. Enum.GetValues<MarkersInstrumentStockSharpEnum>()];
 
         bool _notSet = req.MarkersFilter?.Contains(null) == true;
         IEnumerable<MarkersInstrumentStockSharpEnum>? _woq = req.MarkersFilter?.Where(x => x is not null).Select(x => x!.Value);
@@ -197,9 +197,9 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             ? null
             : [.. _woq];
 
-        MarkersInstrumentStockSharpEnum[]? markersFilterSkip = markersFilterShow is null || markersFilterShow.Length == 0 || markersFilterShow.Length == _allMArkers.Length
+        MarkersInstrumentStockSharpEnum[]? markersFilterSkip = markersFilterShow is null || markersFilterShow.Length == 0 || markersFilterShow.Length == _allMarkers.Length
            ? null
-           : [.. _allMArkers.Where(x => !markersFilterShow.Contains(x))];
+           : [.. _allMarkers.Where(x => !markersFilterShow.Contains(x))];
 
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<InstrumentStockSharpModelDB> q = context.Instruments.AsQueryable();
