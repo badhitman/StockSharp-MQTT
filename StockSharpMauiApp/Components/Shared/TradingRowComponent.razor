@@ -31,11 +31,11 @@ else
             {
                 string colorClass = _ie.MarkerDescriptor switch
                 {
-                    (int)MarkersInstrumentStockSharpEnum.Illiquid => "warning",
-                    (int)MarkersInstrumentStockSharpEnum.IsNew => "info",
-                    (int)MarkersInstrumentStockSharpEnum.IsDisabled => "secondary",
-                    (int)MarkersInstrumentStockSharpEnum.IsFavorite => "success",
-                    (int)MarkersInstrumentStockSharpEnum.IsMarketMaker => "primary",
+                    MarkersInstrumentStockSharpEnum.Illiquid => "warning",
+                    MarkersInstrumentStockSharpEnum.IsNew => "info",
+                    MarkersInstrumentStockSharpEnum.IsDisabled => "secondary",
+                    MarkersInstrumentStockSharpEnum.IsFavorite => "success",
+                    MarkersInstrumentStockSharpEnum.IsMarketMaker => "primary",
                     _ => "danger",
                 };
                 <span class="badge text-bg-@colorClass me-1">@(((MarkersInstrumentStockSharpEnum)_ie.MarkerDescriptor).DescriptionInfo())</span>

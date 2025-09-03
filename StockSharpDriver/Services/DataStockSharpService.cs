@@ -158,7 +158,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
 
         InstrumentMarkersModelDB[] markersDb = await q.ToArrayAsync(cancellationToken: cancellationToken);
         int _resCount = 0;
-        InstrumentMarkersModelDB[] _markers = [.. markersDb.Where(x => !req.SetMarkers.Select(x => (int)x).Contains(x.MarkerDescriptor))];
+        InstrumentMarkersModelDB[] _markers = [.. markersDb.Where(x => !req.SetMarkers.Contains(x.MarkerDescriptor))];
         if (_markers.Length != 0)
         {
             context.InstrumentsMarkers.RemoveRange(_markers);
@@ -166,11 +166,11 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         }
 
         _markers = [..req.SetMarkers
-            .Where(x => !markersDb.Any(y => y.MarkerDescriptor == (int)x))
+            .Where(x => !markersDb.Any(y => y.MarkerDescriptor == x))
             .Select(x => new InstrumentMarkersModelDB()
             {
                 InstrumentId = req.InstrumentId,
-                MarkerDescriptor = (int)x,
+                MarkerDescriptor = x,
             })];
 
         if (_markers.Length != 0)
@@ -188,16 +188,16 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         if (req.PageSize < 10)
             req.PageSize = 10;
 
-        int[] _allMArkers = [.. Enum.GetValues<MarkersInstrumentStockSharpEnum>().Select(x => (int)x)];
+        MarkersInstrumentStockSharpEnum[] _allMArkers = [.. Enum.GetValues<MarkersInstrumentStockSharpEnum>()];
 
         bool _notSet = req.MarkersFilter?.Contains(null) == true;
-        IEnumerable<int>? _woq = req.MarkersFilter?.Where(x => x is not null).Select(x => (int)x!.Value);
+        IEnumerable<MarkersInstrumentStockSharpEnum>? _woq = req.MarkersFilter?.Where(x => x is not null).Select(x => x!.Value);
 
-        int[]? markersFilterShow = _woq is null || !_woq.Any()
+        MarkersInstrumentStockSharpEnum[]? markersFilterShow = _woq is null || !_woq.Any()
             ? null
-            : [.. _woq.Select(x => (int)x)];
+            : [.. _woq];
 
-        int[]? markersFilterSkip = markersFilterShow is null || markersFilterShow.Length == 0 || markersFilterShow.Length == _allMArkers.Length
+        MarkersInstrumentStockSharpEnum[]? markersFilterSkip = markersFilterShow is null || markersFilterShow.Length == 0 || markersFilterShow.Length == _allMArkers.Length
            ? null
            : [.. _allMArkers.Where(x => !markersFilterShow.Contains(x))];
 

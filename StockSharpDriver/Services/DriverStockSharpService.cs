@@ -267,7 +267,7 @@ public class DriverStockSharpService(
                 }
                 else
                 {
-                    if (_instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+                    if (_instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
                     {
                         if ((SBnd.Maturity - curDate).Days < 300)
                         {
@@ -498,7 +498,7 @@ public class DriverStockSharpService(
             if (currentStrategy.IsSmall)
                 SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
 
-            if (tryFindInstrument[0].Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+            if (tryFindInstrument[0].Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
                 SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
         }
         bl.ForEach(securityHandleAction);
@@ -690,7 +690,7 @@ public class DriverStockSharpService(
             if (IsSmall)
                 SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
 
-            if (!instrument.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.Illiquid))
+            if (!instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
                 SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
 
             Subscription? sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
@@ -973,20 +973,17 @@ public class DriverStockSharpService(
             Security = currentSec,
             Side = (Sides)Enum.Parse(typeof(Sides), Enum.GetName(req.Side)!),
             IsManual = req.IsManual,
-            IsMarketMaker = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker),
-            IsSystem = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsSystem),
+            IsMarketMaker = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsMarketMaker),
+            IsSystem = instrumentDb.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsSystem),
             Comment = req.Comment,
             ClientCode = ClientCodeStockSharp,
         };
 
-        try
-        {
-            conLink.Connector.RegisterOrder(order);
-        }
-        catch (Exception ex)
-        {
-            return ResponseBaseModel.CreateError(ex);
-        }
+        //#if DEBUG
+        //        string _rj = JsonConvert.SerializeObject(order);
+        //#endif
+
+        conLink.Connector.RegisterOrder(order);
 
         return ResponseBaseModel.CreateInfo("Заявка отправлена на регистрацию");
     }
@@ -1317,7 +1314,7 @@ public class DriverStockSharpService(
             return;
         }
 
-        bool isMarketMaker = currentInstrument.Markers?.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker) == true;
+        bool isMarketMaker = currentInstrument.Markers?.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsMarketMaker) == true;
         if (SbPos is not null && sec is not null)
         {
             if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && depth.Bids is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
@@ -1701,7 +1698,7 @@ public class DriverStockSharpService(
             _logger.LogError(msg);
             return;
         }
-        bool? _IsMarketMaker = currInstrument.Markers?.Any(x => x.MarkerDescriptor == (int)MarkersInstrumentStockSharpEnum.IsMarketMaker);
+        bool? _IsMarketMaker = currInstrument.Markers?.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsMarketMaker);
 
         if (bBid.Value.Price > _secNode.ModelPrice + SbPos.LowLimit + SbPos.HighLimit)
         {

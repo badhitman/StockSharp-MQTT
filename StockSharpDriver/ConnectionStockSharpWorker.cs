@@ -281,12 +281,12 @@ public class ConnectionStockSharpWorker(
     void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
         _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF, GlobalStaticConstants.JsonSerializerSettings)}");
-        eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = nameof(conLink.Connector.OrderRegisterFailReceived),
-            TypeMessage = MessagesTypesEnum.Error,
-            MessageText = $"[{orderF.Error.GetType().Name}]/[{orderF.Error.Message}]"
-        });
+        //eventTrans.ToastClientShow(new()
+        //{
+        //    HeadTitle = nameof(conLink.Connector.OrderRegisterFailReceived),
+        //    TypeMessage = MessagesTypesEnum.Error,
+        //    MessageText = $"[{orderF.Error.GetType().Name}]/[{orderF.Error.Message}]"
+        //});
     }
     void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
     {
@@ -409,11 +409,13 @@ public class ConnectionStockSharpWorker(
                 break;
             case Ecng.Logging.LogLevels.Warning:
                 //logLevel = NLog.LogLevel.Warn;
+                eventTrans.ToastClientShow(new ToastShowClientModel() { HeadTitle = $"{nameof(LogHandle)} - Warning", MessageText = senderLog.Message, TypeMessage = MessagesTypesEnum.Warning });
                 _logger.LogWarning(senderLog.Message);
                 break;
             case Ecng.Logging.LogLevels.Error:
                 //logLevel = NLog.LogLevel.Error;
                 _logger.LogError(senderLog.Message);
+                eventTrans.ToastClientShow(new ToastShowClientModel() { HeadTitle = $"{nameof(LogHandle)} - Error", MessageText = senderLog.Message, TypeMessage = MessagesTypesEnum.Error });
                 break;
             case Ecng.Logging.LogLevels.Off:
                 //logLevel = NLog.LogLevel.Trace;
