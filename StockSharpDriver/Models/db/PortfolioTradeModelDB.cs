@@ -10,7 +10,7 @@ namespace SharedLib;
 /// classPortfolioTradeModelDB
 /// </summary>
 [Index(nameof(IsFavorite)), Index(nameof(LastUpdatedAtUTC))]
-public class PortfolioTradeModelDB : PortfolioStockSharpViewModel, IBaseStockSharpModel
+public class PortfolioTradeModelDB : PortfolioStockSharpViewModel
 {
     /// <inheritdoc/>
     public new BoardStockSharpModelDB? Board { get; set; }

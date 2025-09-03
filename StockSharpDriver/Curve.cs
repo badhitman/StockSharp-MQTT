@@ -21,7 +21,7 @@ public class Curve : CurveBaseModel
     /// <summary>
     /// Load Curve form database
     /// </summary>
-    public string? GetCurveFromDb(string DbName, Connector trader, List<BoardStockSharpViewModel> boards, List<string>? bigPriceDifferences, ref IEventsStockSharp eventTrans)
+    public string? GetCurveFromDb(string DbName, Connector trader, List<BoardStockSharpMetaModel> boards, List<string>? bigPriceDifferences, ref IEventsStockSharp eventTrans)
     {
         string secName;
         decimal secPrice;

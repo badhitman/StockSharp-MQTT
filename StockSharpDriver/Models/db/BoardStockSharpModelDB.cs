@@ -10,7 +10,7 @@ namespace SharedLib;
 /// Площадка
 /// </summary>
 [Index(nameof(Code))]
-public class BoardStockSharpModelDB : BoardStockSharpViewModel, IBaseStockSharpModel
+public class BoardStockSharpModelDB : BoardStockSharpViewModel
 {
     /// <summary>
     /// Exchange

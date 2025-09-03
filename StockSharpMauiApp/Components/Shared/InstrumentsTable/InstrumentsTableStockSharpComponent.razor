@@ -6,7 +6,7 @@
           @ref="_tableRef">
     <ToolBarContent>
         <MudText Typo="Typo.h6">
-            <span title="Click for reload instruments" style="cursor:pointer;" @onclick="_tableRef!.ReloadServerData">Instruments</span>
+            <span title="Click for reload instruments" style="cursor:pointer;" @onclick="_tableRef!.ReloadServerData">Instruments catalog</span>
         </MudText>
         <MudSpacer />
         <MudTextField T="string"
@@ -18,7 +18,7 @@
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       IconSize="Size.Medium"
                       Class="mt-0 me-1" />
-        <MudSelect T="BoardStockSharpViewModel"
+        <MudSelect T="BoardStockSharpMetaModel"
                    Label="Boards"
                    MultiSelection
                    @bind-SelectedValues="SelectedBoards"
@@ -28,9 +28,12 @@
                    Clearable
                    Dense
                    Class="mt-0 me-1">
-            @foreach (BoardStockSharpViewModel state in Boards)
+            @foreach (BoardStockSharpMetaModel state in Boards)
             {
-                <MudSelectItem Disabled="AboutConnection is not null && state.LastUpdatedAtUTC < AboutConnection.LastConnectedAt" T="BoardStockSharpViewModel" Value="@state">@state</MudSelectItem>
+                <MudSelectItem T="BoardStockSharpMetaModel" Value="@state">
+                    @state
+                    @($"[x{@state.TotalCount} /♫{@state.ActualCount}]")
+                </MudSelectItem>
             }
         </MudSelect>
         <MudSelect T="CurrenciesTypesEnum"
@@ -153,7 +156,7 @@
         }
     </HeaderContent>
     <RowTemplate>
-       <InstrumentTableRowComponent Context="@context" Owner="this" />
+        <InstrumentTableRowComponent Context="@context" Owner="this" />
     </RowTemplate>
     <NoRecordsContent>
         <MudText>Nothing found</MudText>

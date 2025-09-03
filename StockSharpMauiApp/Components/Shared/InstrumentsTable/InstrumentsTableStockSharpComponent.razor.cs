@@ -113,8 +113,8 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
         }
     }
 
-    IEnumerable<BoardStockSharpViewModel>? _selectedBoards;
-    IEnumerable<BoardStockSharpViewModel> SelectedBoards
+    IEnumerable<BoardStockSharpMetaModel>? _selectedBoards;
+    IEnumerable<BoardStockSharpMetaModel> SelectedBoards
     {
         get => _selectedBoards ?? [];
         set
@@ -178,7 +178,7 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
                 _markersSelected = markersSet.Response ?? [];
             }),
             Task.Run(async () => {
-                TResponseModel<BoardStockSharpViewModel[]?> boardsSet = await StorageRepo.ReadParameterAsync<BoardStockSharpViewModel[]?>(setBoards);
+                TResponseModel<BoardStockSharpMetaModel[]?> boardsSet = await StorageRepo.ReadParameterAsync<BoardStockSharpMetaModel[]?>(setBoards);
                 _selectedBoards = boardsSet.Response;
             }),
             Task.Run(ReloadBoards)]);
@@ -188,7 +188,7 @@ public partial class InstrumentsTableStockSharpComponent : StockSharpAboutCompon
 
     async Task ReloadBoards()
     {
-        TResponseModel<List<BoardStockSharpViewModel>> boardsRes = await SsRepo.GetBoardsAsync();
+        TResponseModel<List<BoardStockSharpMetaModel>> boardsRes = await SsRepo.GetBoardsAsync();
 
         lock (Boards)
         {

@@ -86,6 +86,7 @@
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Success" Icon="@Icons.Material.Filled.Start" Disabled="@(!CanStarted)" />
                 <MudIconButton OnClick="() => _visibleStrategyBoard = true" Color="Color.Warning" Icon="@Icons.Material.Filled.Stop" Disabled="@(!CanStopped)" />
                 <MudIconButton OnClick="DownloadBaseAsync"
+                               Disabled=@(AboutConnection?.ConnectionState != ConnectionStatesEnum.Connected)
                                title="Curve: Initial load RedArrowData.db"
                                Color="Color.Primary"
                                Icon="@Icons.Material.Filled.FileDownload"
@@ -158,10 +159,12 @@
         }
         else
         {
-            <MudSelect T="BoardStockSharpViewModel" Label="Board`s [restriction]" ReadOnly MultiSelection @bind-SelectedValues="Boards">
-                @foreach (BoardStockSharpViewModel _board in allBoards)
+            <MudSelect T="BoardStockSharpMetaModel" Label="Board`s [restriction]" ReadOnly MultiSelection @bind-SelectedValues="Boards">
+                @foreach (BoardStockSharpMetaModel _board in allBoards)
                 {
-                    <MudSelectItem T="BoardStockSharpViewModel" Value="@_board">@_board</MudSelectItem>
+                    <MudSelectItem T="BoardStockSharpMetaModel" Value="@_board">
+                        @_board [x@_board.TotalCount /♫@_board.ActualCount]
+                    </MudSelectItem>
                 }
             </MudSelect>
             <MudSelect T="PortfolioStockSharpModel" Label="Portfolio" @bind-Value="SelectedPortfolio">

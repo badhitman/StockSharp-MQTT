@@ -31,7 +31,7 @@ public class DriverStockSharpService(
     #region prop`s
     Curve? CurveCurrent;
     Portfolio? PortfolioCurrent;
-    List<BoardStockSharpViewModel>? BoardsCurrent;
+    List<BoardStockSharpMetaModel>? BoardsCurrent;
 
     List<Subscription> SecurityCriteriaCodeFilterSubscriptions = [];
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookups = [];
@@ -93,7 +93,7 @@ public class DriverStockSharpService(
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
 
-    bool StrategyStarted => BoardsCurrent is not null && BoardsCurrent.Count != 0 && StrategyTrades is not null && StrategyTrades.Count != 0;
+    bool StrategyStarted => MarketDepthSubscriptions.Count != 0;
 
     List<Security> SecuritiesBonds(bool ofStrategy)
     {
@@ -132,12 +132,6 @@ public class DriverStockSharpService(
     {
         ResponseSimpleModel res = new();
 
-        if (conLink.Connector.ConnectionState != Ecng.ComponentModel.ConnectionStates.Connected)
-        {
-            res.AddError($"Connection: {Enum.GetName(conLink.Connector.ConnectionState)}");
-            return res;
-        }
-
         if (StrategyStarted)
         {
             res.AddError($"{nameof(StrategyStarted)}! Stop strategy for initial load");
@@ -152,7 +146,7 @@ public class DriverStockSharpService(
             return res;
         }
 
-        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
         List<Task> tasks = [
                   Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
@@ -163,7 +157,7 @@ public class DriverStockSharpService(
                     int[]? _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
                     if(_boardsFilter is not null && _boardsFilter.Length != 0)
                     {
-                        TResponseModel<List<BoardStockSharpViewModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
+                        TResponseModel<List<BoardStockSharpMetaModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
                         BoardsCurrent = boardDb.Response;
                     }
                   }, cancellationToken),
@@ -220,7 +214,7 @@ public class DriverStockSharpService(
         {
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
             InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
-            DashboardTradeStockSharpModel tradeDashboard = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
+            DashboardTradeStockSharpModel tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
 
             SBnd = CurveCurrent.GetNode(_sec);
 
@@ -349,9 +343,9 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        if (dataParse.Count == 0)
+        if (StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Dashboard - not set");
 
         ResponseBaseModel res = new();
@@ -361,7 +355,7 @@ public class DriverStockSharpService(
         {
             InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
             InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
-            DashboardTradeStockSharpModel tradeDashboard = dataParse.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
+            DashboardTradeStockSharpModel tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
 
             tradeDashboard.LowLimit = Calculation(tradeDashboard.LowLimit, req.Operator, req.Operand);
             tradeDashboard.HightLimit = Calculation(tradeDashboard.HightLimit, req.Operator, req.Operand);
@@ -423,32 +417,10 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        if (dataParse.Count == 0)
+        if (StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Dashboard - not set");
-
-        lock (StrategyTrades)
-        {
-            StrategyTrades.Clear();
-            foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
-            {
-                int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
-                if (_fx < 0)
-                    return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
-
-                if (dataParse[_fx].ValueOperation < 1)
-                    return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
-
-                if (dataParse[_fx].BasePrice < 1)
-                    return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
-
-                StrategyTrades.Add(dataParse[_fx]);
-            }
-
-            if (StrategyTrades is null || StrategyTrades.Count == 0)
-                return ResponseBaseModel.CreateError("Instruments - is empty");
-        }
 
         List<Security> bl = SecuritiesBonds(true);
         if (!bl.Any())
@@ -508,6 +480,12 @@ public class DriverStockSharpService(
             return response;
         }
 
+        if (CurveCurrent is null || CurveCurrent.BondList.Count == 0)
+        {
+            await ClearStrategy(cancellationToken);
+            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+        }
+
         lock (MarketDepthSubscriptions)
         {
             MarketDepthSubscriptions.Clear();
@@ -520,12 +498,6 @@ public class DriverStockSharpService(
             MarketDepthSubscriptions.Add(depthSubscription);
         }
         conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
-
-        if (CurveCurrent is null || CurveCurrent.BondList.Count == 0)
-        {
-            await ClearStrategy(cancellationToken);
-            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
-        }
 
         lock (_ordersForQuoteBuyReregister)
             _ordersForQuoteBuyReregister.Clear();
@@ -577,16 +549,16 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        if (dataParse.Count == 0)
+        if (StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Dashboard - not set");
 
-        int _fx = dataParse.FindIndex(x => x.Id == req.InstrumentId);
+        int _fx = StrategyTrades.FindIndex(x => x.Id == req.InstrumentId);
         if (_fx < 0)
             return ResponseBaseModel.CreateError($"Instrument not set strategy: {currInstrument}");
 
-        DashboardTradeStockSharpModel currentStrategy = dataParse[_fx];
+        DashboardTradeStockSharpModel currentStrategy = StrategyTrades[_fx];
 
         InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
 
@@ -642,25 +614,25 @@ public class DriverStockSharpService(
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
             return ResponseBaseModel.CreateError($"The instruments are not configured.");
 
-        List<DashboardTradeStockSharpModel> dataParse = await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
 
-        if (dataParse.Count == 0)
+        if (StrategyTrades.Count == 0)
             return ResponseBaseModel.CreateError("Dashboard - not set");
 
         string msg;
         foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
         {
-            int _fx = dataParse.FindIndex(x => x.Id == instrument.Id);
+            int _fx = StrategyTrades.FindIndex(x => x.Id == instrument.Id);
             if (_fx < 0)
                 return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
 
-            if (dataParse[_fx].ValueOperation < 1)
+            if (StrategyTrades[_fx].ValueOperation < 1)
                 return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
 
-            if (dataParse[_fx].BasePrice < 1)
+            if (StrategyTrades[_fx].BasePrice < 1)
                 return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
 
-            DashboardTradeStockSharpModel currentStrategy = dataParse[_fx];
+            DashboardTradeStockSharpModel currentStrategy = StrategyTrades[_fx];
 
             Security? currentSecurity = currentSecurities.FirstOrDefault(x =>
             x.Code == currentStrategy.Code &&
@@ -732,8 +704,12 @@ public class DriverStockSharpService(
 
 
     /// <inheritdoc/>
-    public async Task<List<DashboardTradeStockSharpModel>> ReadDashboard(int[] instrumentsIds, CancellationToken cancellationToken = default)
+    public async Task ReadDashboard(int[] instrumentsIds, CancellationToken cancellationToken = default)
     {
+        lock (StrategyTrades)
+        {
+            StrategyTrades.Clear();
+        }
         FindStorageBaseModel _findParametersQuery = new()
         {
             ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
@@ -744,14 +720,16 @@ public class DriverStockSharpService(
         FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
 
         if (findStorageRows.Length == 0)
-            return [];
+            return;
 
-        IQueryable<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = findStorageRows.Where(x => x.PrefixPropertyName == GlobalStaticConstantsRoutes.Routes.BROKER_CONTROLLER_NAME)
+        List<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = [.. findStorageRows.Where(x => x.PrefixPropertyName == GlobalStaticConstantsRoutes.Routes.BROKER_CONTROLLER_NAME)
             .GroupBy(x => x.OwnerPrimaryKey)
-            .Where(x => x.Key.HasValue)
-            .AsQueryable();
+            .Where(x => x.Key.HasValue)];
 
-        return [.. _q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)];
+        lock (StrategyTrades)
+        {
+            StrategyTrades.AddRange(_q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)!);
+        }
     }
 
     /// <inheritdoc/>
@@ -1243,11 +1221,7 @@ public class DriverStockSharpService(
             return;
         }
 
-        TPaginationResponseModel<InstrumentTradeStockSharpViewModel> resInstruments = dataRepo.InstrumentsSelectAsync(new()
-        {
-            PageNum = 0,
-            PageSize = int.MaxValue,
-        }).Result;
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync();
         string _msg;
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
         {
@@ -1261,9 +1235,9 @@ public class DriverStockSharpService(
             });
             return;
         }
-        List<DashboardTradeStockSharpModel> dataParse = ReadDashboard([.. resInstruments.Response.Select(x => x.Id)]).Result;
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)]);
 
-        if (dataParse.Count == 0)
+        if (StrategyTrades.Count == 0)
         {
             _msg = "Dashboard - not set";
 
@@ -1302,7 +1276,7 @@ public class DriverStockSharpService(
             return;
         }
 
-        DashboardTradeStockSharpModel? currentStrategy = dataParse.FirstOrDefault(x => x.Id == currentInstrument.Id);
+        DashboardTradeStockSharpModel? currentStrategy = StrategyTrades.FirstOrDefault(x => x.Id == currentInstrument.Id);
         if (currentStrategy is null)
         {
             _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";
@@ -1699,9 +1673,9 @@ public class DriverStockSharpService(
             return;
         }
 
-        List<DashboardTradeStockSharpModel> dataParse = ReadDashboard([currInstrument.Id]).Result;
+        await ReadDashboard([currInstrument.Id]);
 
-        if (dataParse.Count == 0)
+        if (StrategyTrades.Count == 0)
         {
             msg = "Dashboard - not set";
             await eventTrans.ToastClientShow(new()

@@ -18,7 +18,8 @@ else
             @if (NameInstrumentVisible)
             {
                 <u class="me-2">@Instrument.Code</u>
-                <span class="text-primary-emphasis">@Instrument.Name</span>
+                <span class="text-primary-emphasis me-1">@Instrument.Name</span>
+                <text>@Instrument.Board!.ToString()</text>
             }
             else
             {

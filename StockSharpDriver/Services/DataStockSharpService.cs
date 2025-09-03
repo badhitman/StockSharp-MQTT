@@ -5,6 +5,7 @@
 using Microsoft.EntityFrameworkCore;
 using SharedLib;
 using DbcLib;
+using Ecng.Common;
 
 namespace StockSharpDriver;
 
@@ -433,7 +434,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
 
     #region board`s
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<BoardStockSharpViewModel>>> GetBoardsAsync(int[]? ids = null, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<BoardStockSharpMetaModel>>> GetBoardsAsync(int[]? ids = null, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<BoardStockSharpModelDB> q = ids is null || ids.Length == 0
@@ -451,7 +452,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
     }
 
     /// <inheritdoc/>
-    public async Task<TResponseModel<List<BoardStockSharpViewModel>>> FindBoardsAsync(BoardStockSharpModel req, CancellationToken cancellationToken = default)
+    public async Task<TResponseModel<List<BoardStockSharpMetaModel>>> FindBoardsAsync(BoardStockSharpModel req, CancellationToken cancellationToken = default)
     {
         using StockSharpAppContext context = await toolsDbFactory.CreateDbContextAsync(cancellationToken);
         ExchangeStockSharpModelDB? _exc = req.Exchange is null
@@ -476,7 +477,7 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         };
     }
 
-    static async Task<List<BoardStockSharpModelDB>> InjectStatistic(List<BoardStockSharpModelDB> data, StockSharpAppContext context, CancellationToken cancellationToken = default)
+    static async Task<List<BoardStockSharpMetaModel>> InjectStatistic(List<BoardStockSharpModelDB> data, StockSharpAppContext context, CancellationToken cancellationToken = default)
     {
         int[] ids = [.. data.Select(x => x.Id)];
 
@@ -490,7 +491,13 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
         var _statDb = await query.ToArrayAsync(cancellationToken: cancellationToken);
 
         if (_statDb.Count(x => x.count != 0) <= 1)
-            return data;
+            return [..data.Select(x => new BoardStockSharpMetaModel() {
+                  Id = x.Id,
+                  Code = x.Code,
+                  Exchange = x.Exchange,
+                  CreatedAtUTC = x.CreatedAtUTC,
+                  LastUpdatedAtUTC = x.LastUpdatedAtUTC,
+            })];
 
         DateTime? lastConnectedAt = DriverStockSharpService.LastConnectedAt;
 
@@ -504,22 +511,29 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
                         count = g.Count()
                     };
             var _subStatDb = await query.ToArrayAsync(cancellationToken: cancellationToken);
-            data.ForEach(x =>
-            {
+            return [..data.Select(x => {
                 var _cs = _statDb.FirstOrDefault(y => y.boardId == x.Id);
                 var _cs2 = _subStatDb.FirstOrDefault(y => y.boardId == x.Id);
-                x.Code += $" [x{_cs?.count ?? 0} /✡{_cs2?.count ?? 0}]";
-            });
-            return data;
+                return new BoardStockSharpMetaModel() {
+                      Id = x.Id,
+                      Code = x.Code,
+                      Exchange = x.Exchange,
+                      CreatedAtUTC = x.CreatedAtUTC,
+                      LastUpdatedAtUTC = x.LastUpdatedAtUTC,
+                      TotalCount = _statDb.FirstOrDefault(y => y.boardId == x.Id)?.count??0,
+                      ActualCount=_subStatDb.FirstOrDefault(y => y.boardId == x.Id)?.count??0,
+                };
+            })];
         }
 
-        data.ForEach(x =>
-        {
-            var _cs = _statDb.FirstOrDefault(y => y.boardId == x.Id);
-            x.Code += $" [x{_cs?.count ?? 0}]";
-        });
-
-        return data;
+        return [..data.Select(x => new BoardStockSharpMetaModel() {
+                  Id = x.Id,
+                  Code = x.Code,
+                  Exchange = x.Exchange,
+                  CreatedAtUTC = x.CreatedAtUTC,
+                  LastUpdatedAtUTC = x.LastUpdatedAtUTC,
+                  TotalCount = _statDb.FirstOrDefault(y => y.boardId == x.Id)?.count??0,
+            })];
     }
 
     #endregion

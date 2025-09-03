@@ -43,7 +43,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     bool _visibleStrategyBoard;
     readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
-    IEnumerable<BoardStockSharpViewModel>? Boards { get; set; }
+    IEnumerable<BoardStockSharpMetaModel>? Boards { get; set; }
 
     string ConnectionStateStyles => AboutConnection is null
         ? ""
@@ -55,8 +55,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     ResponseSimpleModel? InitialLoadCheck;
     readonly List<PortfolioStockSharpViewModel> portfolios = [];
 
-    List<BoardStockSharpViewModel>? allBoards;
-    //BoardStockSharpViewModel? SelectedBoard { get; set; }
+    List<BoardStockSharpMetaModel>? allBoards;
 
     bool CanStarted => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.Curve is not null && !AboutConnection.StrategyStarted;
     bool CanStopped => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.StrategyStarted;
@@ -224,7 +223,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
         await Task.WhenAll([
               Task.Run(async () => {
-                TResponseModel<List<BoardStockSharpViewModel>> res = await DataRepo.GetBoardsAsync();
+                TResponseModel<List<BoardStockSharpMetaModel>> res = await DataRepo.GetBoardsAsync();
                 allBoards = res.Response;
             }),
 
@@ -250,7 +249,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
         TResponseModel<int[]?> _boardsFilter = await StorageRepo.ReadParameterAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard);
         if (_boardsFilter.Response is not null && _boardsFilter.Response.Length != 0)
         {
-            TResponseModel<List<BoardStockSharpViewModel>> boardDb = await DataRepo.GetBoardsAsync(_boardsFilter.Response);
+            TResponseModel<List<BoardStockSharpMetaModel>> boardDb = await DataRepo.GetBoardsAsync(_boardsFilter.Response);
             Boards = boardDb.Response;
         }
         StateHasChangedCall();

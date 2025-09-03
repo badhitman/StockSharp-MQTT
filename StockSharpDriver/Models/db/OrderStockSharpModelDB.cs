@@ -8,7 +8,7 @@ namespace SharedLib;
 
 /// <inheritdoc/>
 [Index(nameof(LastUpdatedAtUTC)), Index(nameof(Id)), Index(nameof(StringId)), Index(nameof(BoardId)), Index(nameof(TransactionId)), Index(nameof(BrokerCode))]
-public class OrderStockSharpModelDB : OrderStockSharpViewModel, IBaseStockSharpModel
+public class OrderStockSharpModelDB : OrderStockSharpViewModel
 {
     ///<inheritdoc/>
     public new InstrumentStockSharpModelDB? Instrument { get; set; }
