@@ -14,7 +14,6 @@ using StockSharp.Messages;
 using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace StockSharpDriver;
 
@@ -393,7 +392,7 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
     {
-        AboutConnectResponseModel _ac = await AboutConnection(cancellationToken);
+        AboutConnectResponseModel _ac = await AboutConnection(cancellationToken: cancellationToken);
         if (_ac.ConnectionState != ConnectionStatesEnum.Connected)
             return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState?.DescriptionInfo()})");
 
@@ -908,7 +907,7 @@ public class DriverStockSharpService(
     }
 
     /// <inheritdoc/>
-    public Task<AboutConnectResponseModel> AboutConnection(CancellationToken cancellationToken = default)
+    public async Task<AboutConnectResponseModel> AboutConnection(AboutConnectionRequestModel? req = default, CancellationToken cancellationToken = default)
     {
         AboutConnectResponseModel res = new()
         {
@@ -924,7 +923,16 @@ public class DriverStockSharpService(
             Curve = CurveCurrent,
         };
 
-        return Task.FromResult(res);
+        if (req?.EchoStatus == true)
+        {
+            await eventTrans.UpdateConnectionHandle(new()
+            {
+                CanConnect = conLink.Connector.CanConnect,
+                ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
+            }, cancellationToken);
+        }
+
+        return res;
     }
 
     /// <inheritdoc/>

@@ -43,15 +43,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     bool _visibleStrategyBoard;
     readonly DialogOptions _dialogOptions = new() { FullWidth = true };
 
-    IEnumerable<BoardStockSharpViewModel>? _boards;
-    IEnumerable<BoardStockSharpViewModel>? Boards
-    {
-        get => _boards;
-        set
-        {
-            _boards = value;
-        }
-    }
+    IEnumerable<BoardStockSharpViewModel>? Boards { get; set; }
 
     string ConnectionStateStyles => AboutConnection is null
         ? ""
@@ -68,7 +60,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     bool CanStarted => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.Curve is not null && !AboutConnection.StrategyStarted;
     bool CanStopped => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected && AboutConnection.StrategyStarted;
-    
+
     bool CanConnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Disconnected;
     bool CanDisconnect => AboutConnection?.ConnectionState == ConnectionStatesEnum.Connected;
     readonly InitialLoadRequestModel reqDownloadBase = new() { BigPriceDifferences = [] };
@@ -214,10 +206,8 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
 
     protected override async Task GetStatusConnection()
     {
-        await Task.WhenAll([
-                Task.Run(ReadBoards),
-                Task.Run(base.GetStatusConnection)
-            ]);
+        await ReadBoards();
+        await base.GetStatusConnection();
     }
 
     async Task AboutBotAsync()
@@ -263,6 +253,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
             TResponseModel<List<BoardStockSharpViewModel>> boardDb = await DataRepo.GetBoardsAsync(_boardsFilter.Response);
             Boards = boardDb.Response;
         }
+        StateHasChangedCall();
     }
 
     private void ToastShowHandle(ToastShowClientModel toast)
@@ -287,7 +278,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     private void UpdateConnectionNotificationHandle(UpdateConnectionHandleModel req)
     {
         AboutConnection?.Update(req);
-        InvokeAsync(GetStatusConnection);
+        InvokeAsync(ReadBoards);
     }
 
     public override void Dispose()

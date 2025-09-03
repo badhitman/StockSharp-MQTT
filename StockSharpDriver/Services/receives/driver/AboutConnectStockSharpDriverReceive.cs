@@ -10,17 +10,17 @@ namespace Transmission.Receives.StockSharpDriver;
 /// AboutConnectStockSharpDriverReceive
 /// </summary>
 public class AboutConnectStockSharpDriverReceive(IDriverStockSharpService ssRepo)
-    : IMQTTReceive<object?, AboutConnectResponseModel?>
+    : IMQTTReceive<AboutConnectionRequestModel?, AboutConnectResponseModel?>
 {
     /// <inheritdoc/>
     public static string QueueName => GlobalStaticConstantsTransmission.TransmissionQueues.AboutConnectStockSharpReceive;
 
     /// <inheritdoc/>
-    public async Task<AboutConnectResponseModel?> ResponseHandleActionAsync(object? req, CancellationToken token = default)
+    public async Task<AboutConnectResponseModel?> ResponseHandleActionAsync(AboutConnectionRequestModel? req, CancellationToken token = default)
     {
         //if (req is null)
         //    throw new ArgumentNullException(nameof(req));
 
-        return await ssRepo.AboutConnection(token);
+        return await ssRepo.AboutConnection(req, token);
     }
 }
