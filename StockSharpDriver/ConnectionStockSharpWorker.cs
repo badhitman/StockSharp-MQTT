@@ -281,12 +281,6 @@ public class ConnectionStockSharpWorker(
     void OrderRegisterFailReceivedHandle(Subscription subscription, OrderFail orderF)
     {
         _logger.LogWarning($"Call > `{nameof(OrderRegisterFailReceivedHandle)}`: {JsonConvert.SerializeObject(orderF, GlobalStaticConstants.JsonSerializerSettings)}");
-        //eventTrans.ToastClientShow(new()
-        //{
-        //    HeadTitle = nameof(conLink.Connector.OrderRegisterFailReceived),
-        //    TypeMessage = MessagesTypesEnum.Error,
-        //    MessageText = $"[{orderF.Error.GetType().Name}]/[{orderF.Error.Message}]"
-        //});
     }
     void OrderLogReceivedHandle(Subscription subscription, StockSharp.Messages.IOrderLogMessage order)
     {
