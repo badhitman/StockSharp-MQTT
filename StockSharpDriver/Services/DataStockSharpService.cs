@@ -444,50 +444,9 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
             .Include(x => x.Exchange)
             .ToListAsync(cancellationToken: cancellationToken);
 
-        ids = [.. data.Select(x => x.Id)];
-
-        var query = from p in context.Instruments.Where(x => ids.Contains(x.BoardId))
-                    group p by p.BoardId into g
-                    select new
-                    {
-                        boardId = g.Key,
-                        count = g.Count()
-                    };
-        var _statDb = await query.ToArrayAsync(cancellationToken: cancellationToken);
-
-        if (_statDb.Count(x => x.count != 0) <= 1)
-            return new() { Response = [.. data] };
-
-        DateTime? lastConnectedAt = DriverStockSharpService.LastConnectedAt;
-
-        if(lastConnectedAt is not null)
-        {
-            query = from p in context.Instruments.Where(x => x.LastUpdatedAtUTC >= lastConnectedAt && ids.Contains(x.BoardId))
-                    group p by p.BoardId into g
-                    select new
-                    {
-                        boardId = g.Key,
-                        count = g.Count()
-                    };
-           var _subStatDb = await query.ToArrayAsync(cancellationToken: cancellationToken);
-            return new()
-            {
-                Response = [.. data.Select(x => {
-                var _cs = _statDb.FirstOrDefault(y => y.boardId == x.Id);
-                var _cs2 = _subStatDb.FirstOrDefault(y => y.boardId == x.Id);
-                x.Code += $" [x{_cs?.count ?? 0} /✡{_cs2?.count ?? 0}]";
-                return x;
-            })]
-            };
-        }
-
         return new()
         {
-            Response = [.. data.Select(x => {
-                var _cs = _statDb.FirstOrDefault(y => y.boardId == x.Id);
-                x.Code += $" [x{_cs?.count ?? 0}]";
-                return x;
-            })]
+            Response = [.. await InjectStatistic(data, context, cancellationToken)]
         };
     }
 
@@ -513,9 +472,56 @@ public class DataStockSharpService(IDbContextFactory<StockSharpAppContext> tools
 
         return new()
         {
-            Response = [.. data]
+            Response = [.. await InjectStatistic(data, context, cancellationToken)]
         };
     }
+
+    static async Task<List<BoardStockSharpModelDB>> InjectStatistic(List<BoardStockSharpModelDB> data, StockSharpAppContext context, CancellationToken cancellationToken = default)
+    {
+        int[] ids = [.. data.Select(x => x.Id)];
+
+        var query = from p in context.Instruments.Where(x => ids.Contains(x.BoardId))
+                    group p by p.BoardId into g
+                    select new
+                    {
+                        boardId = g.Key,
+                        count = g.Count()
+                    };
+        var _statDb = await query.ToArrayAsync(cancellationToken: cancellationToken);
+
+        if (_statDb.Count(x => x.count != 0) <= 1)
+            return data;
+
+        DateTime? lastConnectedAt = DriverStockSharpService.LastConnectedAt;
+
+        if (lastConnectedAt is not null)
+        {
+            query = from p in context.Instruments.Where(x => x.LastUpdatedAtUTC >= lastConnectedAt && ids.Contains(x.BoardId))
+                    group p by p.BoardId into g
+                    select new
+                    {
+                        boardId = g.Key,
+                        count = g.Count()
+                    };
+            var _subStatDb = await query.ToArrayAsync(cancellationToken: cancellationToken);
+            data.ForEach(x =>
+            {
+                var _cs = _statDb.FirstOrDefault(y => y.boardId == x.Id);
+                var _cs2 = _subStatDb.FirstOrDefault(y => y.boardId == x.Id);
+                x.Code += $" [x{_cs?.count ?? 0} /✡{_cs2?.count ?? 0}]";
+            });
+            return data;
+        }
+
+        data.ForEach(x =>
+        {
+            var _cs = _statDb.FirstOrDefault(y => y.boardId == x.Id);
+            x.Code += $" [x{_cs?.count ?? 0}]";
+        });
+
+        return data;
+    }
+
     #endregion
 
     /// <inheritdoc/>
