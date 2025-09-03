@@ -846,7 +846,7 @@ public class DriverStockSharpService(
 
         RegisterEvents();
         if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
-            conLink.Connector.SubscriptionsOnConnect.RemoveRange(conLink.Connector.SubscriptionsOnConnect.Where(x => x.DataType == DataType.Securities));
+            conLink.Connector.SubscriptionsOnConnect.RemoveWhere(x => x.DataType == DataType.Securities);
 
         await conLink.Connector.ConnectAsync(cancellationToken);
 
@@ -855,14 +855,14 @@ public class DriverStockSharpService(
             lock (SecuritiesCriteriaCodesFilterLookups)
             {
                 SecuritiesCriteriaCodesFilterLookups.Clear();
-                foreach (string _sc in Regex.Split(SecurityCriteriaCodeFilter, @"\s+").Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct())
+                foreach (string _sc in Regex.Split(SecurityCriteriaCodeFilter, @"\s+").Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
                     SecuritiesCriteriaCodesFilterLookups.Add(new()
                     {
                         SecurityId = new SecurityId
                         {
                             SecurityCode = _sc.Trim(),
-                            BoardCode = BoardCriteriaCodeFilter
+                            BoardCode = string.IsNullOrWhiteSpace(BoardCriteriaCodeFilter) ? null : BoardCriteriaCodeFilter
                         },
                         TransactionId = conLink.Connector.TransactionIdGenerator.GetNextId()
                     });
