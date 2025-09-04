@@ -158,59 +158,6 @@ public class MessageTelegramModelDB
     /// </summary>
     public DateTime CreatedAtUtc { get; set; }
 
-    /// <summary>
-    /// Optional. Message is a photo, available sizes of the photo
-    /// </summary>
-    public List<PhotoMessageTelegramModelDB>? Photo { get; set; }
-
-
-    /// <summary>
-    /// Audio
-    /// </summary>
-    public int? AudioId { get; set; }
-    /// <summary>
-    /// Audio
-    /// </summary>
-    public AudioTelegramModelDB? Audio { get; set; }
-
-
-    /// <summary>
-    /// Video
-    /// </summary>
-    public VideoTelegramModelDB? Video { get; set; }
-    /// <summary>
-    /// Video
-    /// </summary>
-    public int? VideoId { get; set; }
-
-
-    /// <summary>
-    /// Document
-    /// </summary>
-    public DocumentTelegramModelDB? Document { get; set; }
-    /// <summary>
-    /// Document
-    /// </summary>
-    public int? DocumentId { get; set; }
-
-
-    /// <summary>
-    /// Voice
-    /// </summary>
-    public VoiceTelegramModelDB? Voice { get; set; }
-    /// <summary>
-    /// Voice
-    /// </summary>
-    public int? VoiceId { get; set; }
-
-    /// <summary>
-    /// Contact
-    /// </summary>
-    public ContactTelegramModelDB? Contact { get; set; }
-    /// <summary>
-    /// Contact
-    /// </summary>
-    public int? ContactId { get; set; }
 
     /// <summary>
     /// Optional. Caption for the animation, audio, document, photo, video or voice, 0-1024 characters

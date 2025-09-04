@@ -2,8 +2,8 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using BlazorLib;
 using Microsoft.AspNetCore.Components;
+using BlazorLib;
 using SharedLib;
 
 namespace StockSharpMauiApp.Components;
@@ -11,7 +11,7 @@ namespace StockSharpMauiApp.Components;
 /// <summary>
 /// StockSharpAboutComponent
 /// </summary>
-public class StockSharpAboutComponent : BlazorBusyComponentBaseModel
+public partial class StockSharpAboutComponent : BlazorBusyComponentBaseModel
 {
     /// <inheritdoc/>
     [Inject]
