@@ -3,6 +3,7 @@ using StockSharpDriver;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
 
 namespace Telegram.Bot.Services;
@@ -51,6 +52,9 @@ public class UpdateHandler(ITelegramBotClient botClient,
             chatId: message.Chat.Id,
             text: $"Hi {msg_db.From!.GetName()}",
             cancellationToken: cancellationToken);
+
+        if (message.Chat.Type == ChatType.Private)
+            await Usage(msg_db, message.MessageId, TelegramMessagesTypesEnum.TextMessage, message.Chat.Id, messageText, cancellationToken);
     }
 
     // Process Inline Keyboard callback data
@@ -58,16 +62,27 @@ public class UpdateHandler(ITelegramBotClient botClient,
     {
         _logger.LogInformation("Received inline keyboard callback from: {CallbackQueryId}", callbackQuery.Id);
 
-        await _botClient.AnswerCallbackQueryAsync(
-            callbackQueryId: callbackQuery.Id,
-            text: $"Received {callbackQuery.Data}",
-            cancellationToken: cancellationToken);
+        if (callbackQuery.Message?.From is null || string.IsNullOrEmpty(callbackQuery.Data))
+            return;
+
+        MessageTelegramModelDB msg_db = await storeRepo.StoreMessage(callbackQuery.Message);
+
 
         await _botClient.SendTextMessageAsync(
-            chatId: callbackQuery.Message!.Chat.Id,
-            text: $"Received {callbackQuery.Data}",
+            chatId: callbackQuery.Message.Chat.Id,
+            text: $"Hi {msg_db.From!.GetName()}",
             cancellationToken: cancellationToken);
+        
+               if (callbackQuery.Message.Chat.Type == ChatType.Private)
+                   await Usage(msg_db, callbackQuery.Message.MessageId, TelegramMessagesTypesEnum.CallbackQuery, callbackQuery.Message.Chat.Id, callbackQuery.Data, cancellationToken);
     }
+
+
+    async Task Usage(MessageTelegramModelDB uc, int incomingMessageId, TelegramMessagesTypesEnum eventType, ChatId chatId, string messageText, CancellationToken cancellationToken)
+    {
+
+    }
+
 
     #region Inline Mode
 
