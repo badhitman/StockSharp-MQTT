@@ -13,12 +13,12 @@ public abstract partial class TelegramBotAppLayerContext : DbContext
     /// <summary>
     /// FileName
     /// </summary>
-    private static readonly string _ctxName = nameof(TelegramBotAppContext);
+    private static readonly string _ctxName = nameof(StockSharpAppContext);
 
     /// <summary>
     /// db Path
     /// </summary>
-    public static string DbPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _ctxName, $"{(AppDomain.CurrentDomain.FriendlyName.Equals("ef", StringComparison.OrdinalIgnoreCase) ? "TelegramBotAppData" : AppDomain.CurrentDomain.FriendlyName)}.db3");
+    public static string DbPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _ctxName, $"{(AppDomain.CurrentDomain.FriendlyName.Equals("ef", StringComparison.OrdinalIgnoreCase) ? "TelegramData" : AppDomain.CurrentDomain.FriendlyName)}.TelegramBot.db3");
 
 
     /// <inheritdoc/>

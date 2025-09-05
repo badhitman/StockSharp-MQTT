@@ -18,7 +18,7 @@ public partial class PropertiesStorageLayerContext : DbContext
     /// <summary>
     /// db Path
     /// </summary>
-    public static string DbPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _ctxName, $"{(AppDomain.CurrentDomain.FriendlyName.Equals("ef", StringComparison.OrdinalIgnoreCase) ? "StockSharpAppData" : AppDomain.CurrentDomain.FriendlyName)}.Properties.db3");
+    public static string DbPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _ctxName, $"{(AppDomain.CurrentDomain.FriendlyName.Equals("ef", StringComparison.OrdinalIgnoreCase) ? "CloudStorageData" : AppDomain.CurrentDomain.FriendlyName)}.Properties.db3");
 
 
     /// <inheritdoc/>

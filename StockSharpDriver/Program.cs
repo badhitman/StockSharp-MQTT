@@ -31,6 +31,9 @@ public class Program
         StockSharpClientConfigModel _conf = StockSharpClientConfigModel.BuildEmpty();
         IHostBuilder builderH = Host.CreateDefaultBuilder(args);
 
+        string? appBasePath = Path.GetDirectoryName(TelegramBotAppLayerContext.DbPath);
+        GlobalDiagnosticsContext.Set("appbasepath", appBasePath);
+         
         string curr_dir = Directory.GetCurrentDirectory();
         string _environmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
         string appName = typeof(Program).Assembly.GetName().Name ?? "StockSharpDriverAssemblyNameDemo";

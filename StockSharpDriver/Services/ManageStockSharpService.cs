@@ -230,10 +230,19 @@ public class ManageStockSharpService(IDbContextFactory<StockSharpAppContext> too
     /// <inheritdoc/>
     public Task<AboutDatabasesResponseModel> AboutDatabases(CancellationToken cancellationToken = default)
     {
+        FileInfo
+            _fiDriver = new($"{StockSharpAppLayerContext.DbPath}"),
+            _fiProps = new($"{PropertiesStorageLayerContext.DbPath}"),
+            _fiTelegram = new($"{TelegramBotAppLayerContext.DbPath}"),
+            _fiNLog = new($"{NLogsLayerContext.DbPath}")
+            ;
+
         return Task.FromResult(new AboutDatabasesResponseModel()
         {
-            DriverDatabase = $"{StockSharpAppLayerContext.DbPath}",
-            PropertiesDatabase = $"{PropertiesStorageLayerContext.DbPath}"
+            DriverDatabase = $"{_fiDriver.FullName} - {(_fiDriver.Exists ? GlobalToolsStandard.SizeDataAsString(_fiDriver.Length) : "file not exist")}",
+            PropertiesDatabase = $"{_fiProps.FullName} - {(_fiProps.Exists ? GlobalToolsStandard.SizeDataAsString(_fiProps.Length) : "file not exist")}",
+            TelegramBotDatabase = $"{_fiTelegram.FullName} - {(_fiTelegram.Exists ? GlobalToolsStandard.SizeDataAsString(_fiTelegram.Length) : "file not exist")}",
+            NLogDatabase = $"{_fiNLog.FullName} - {(_fiNLog.Exists ? GlobalToolsStandard.SizeDataAsString(_fiNLog.Length) : "file not exist")}",
         });
     }
 }
