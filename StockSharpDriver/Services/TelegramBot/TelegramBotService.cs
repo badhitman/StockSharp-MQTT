@@ -50,7 +50,7 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
     }
 
     /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<ChatTelegramModelDB>> ChatsSelectTelegramAsync(TPaginationRequestModel<string?> req, CancellationToken token = default)
+    public async Task<TPaginationResponseModel<ChatTelegramModelDB>> ChatsSelectTelegramAsync(TPaginationRequestStandardModel<string?> req, CancellationToken token = default)
     {
         if (req.PageSize < 5)
             req.PageSize = 5;
@@ -192,7 +192,7 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
     }
 
     /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<MessageTelegramModelDB>> MessagesSelectTelegramAsync(TPaginationRequestModel<SearchMessagesChatModel> req, CancellationToken token = default)
+    public async Task<TPaginationResponseModel<MessageTelegramModelDB>> MessagesSelectTelegramAsync(TPaginationRequestStandardModel<SearchMessagesChatModel> req, CancellationToken token = default)
     {
         if (req.PageSize < 5)
             req.PageSize = 5;
@@ -200,13 +200,17 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
         using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync(token);
         IQueryable<MessageTelegramModelDB> q = context.Messages.AsQueryable();
 
-        if (req.Payload.ChatId != 0)
-            q = q.Where(x => x.ChatId == req.Payload.ChatId);
-
-        if (!string.IsNullOrWhiteSpace(req.Payload.SearchQuery))
+        if (req.Payload is not null)
         {
-            req.Payload.SearchQuery = req.Payload.SearchQuery.ToUpper();
-            q = q.Where(x => (x.NormalizedTextUpper != null && x.NormalizedTextUpper.Contains(req.Payload.SearchQuery)) || (x.NormalizedCaptionUpper != null && x.NormalizedCaptionUpper.Contains(req.Payload.SearchQuery)));
+
+            if (req.Payload.ChatId != 0)
+                q = q.Where(x => x.ChatId == req.Payload.ChatId);
+
+            if (!string.IsNullOrWhiteSpace(req.Payload.SearchQuery))
+            {
+                req.Payload.SearchQuery = req.Payload.SearchQuery.ToUpper();
+                q = q.Where(x => (x.NormalizedTextUpper != null && x.NormalizedTextUpper.Contains(req.Payload.SearchQuery)) || (x.NormalizedCaptionUpper != null && x.NormalizedCaptionUpper.Contains(req.Payload.SearchQuery)));
+            }
         }
 
         async Task<List<MessageTelegramModelDB>> Include(IQueryable<MessageTelegramModelDB> query)

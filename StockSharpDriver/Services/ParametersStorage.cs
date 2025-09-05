@@ -78,7 +78,7 @@ public class ParametersStorage(
     }
 
     /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<TagViewModel>> TagsSelectAsync(TPaginationRequestModel<SelectMetadataRequestModel> req, CancellationToken token = default)
+    public async Task<TPaginationResponseModel<TagViewModel>> TagsSelectAsync(TPaginationRequestStandardModel<SelectMetadataRequestModel> req, CancellationToken token = default)
     {
         if (req.Payload is null)
         {

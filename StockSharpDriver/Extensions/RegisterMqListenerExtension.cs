@@ -28,7 +28,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<ReadParametersReceive, StorageMetadataModel[], TResponseModel<List<StorageCloudParameterPayloadModel>>>()
             .RegisterMqListener<FindParametersReceive, FindStorageBaseModel, TResponseModel<FoundParameterModel[]>>()
             .RegisterMqListener<TagSetReceive, TagSetModel, ResponseBaseModel>()
-            .RegisterMqListener<TagsSelectReceive, TPaginationRequestModel<SelectMetadataRequestModel>, TPaginationResponseModel<TagViewModel>>()
+            .RegisterMqListener<TagsSelectReceive, TPaginationRequestStandardModel<SelectMetadataRequestModel>, TPaginationResponseModel<TagViewModel>>()
             .RegisterMqListener<RubricsListReceive, RubricsListRequestModel, List<UniversalBaseModel>>()
             .RegisterMqListener<RubricCreateOrUpdateReceive, RubricStandardModel, TResponseModel<int>>()
             .RegisterMqListener<RubricMoveReceive, TAuthRequestModel<RowMoveModel>, ResponseBaseModel>()
@@ -38,10 +38,10 @@ public static class RegisterMqListenerExtension
 
             .RegisterMqListener<ChatsFindForUserTelegramReceive, long[], List<ChatTelegramModelDB>>()
             .RegisterMqListener<ChatsReadTelegramReceive, long[], List<ChatTelegramModelDB>>()
-            .RegisterMqListener<ChatsSelectTelegramReceive, TPaginationRequestModel<string?>, TPaginationResponseModel<ChatTelegramModelDB>>()
+            .RegisterMqListener<ChatsSelectTelegramReceive, TPaginationRequestStandardModel<string?>, TPaginationResponseModel<ChatTelegramModelDB>>()
             .RegisterMqListener<ChatTelegramReadReceive, int, ChatTelegramModelDB>()
             .RegisterMqListener<GetFileTelegramReceive, string, TResponseModel<byte[]>>()
-            .RegisterMqListener<MessagesSelectTelegramReceive, TPaginationRequestModel<SearchMessagesChatModel>?, TPaginationResponseModel<MessageTelegramModelDB>>()
+            .RegisterMqListener<MessagesSelectTelegramReceive, TPaginationRequestStandardModel<SearchMessagesChatModel>?, TPaginationResponseModel<MessageTelegramModelDB>>()
             .RegisterMqListener<ForwardMessageTelegramReceive, ForwardMessageTelegramBotModel?, TResponseModel<MessageComplexIdsModel>>()
             
             .RegisterMqListener<SendTextMessageTelegramReceive, SendTextMessageTelegramBotModel, TResponseModel<MessageComplexIdsModel>>()
