@@ -121,7 +121,7 @@ public class ConnectionStockSharpWorker(
 
     void PositionReceivedHandle(Subscription subscription, Position pos)
     {
-        _logger.LogTrace($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings)}");
+        _logger.LogInformation($"Call > `{nameof(PositionReceivedHandle)}`: {JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings)}");
         //eventTrans.ToastClientShow(new()
         //{
         //    HeadTitle = nameof(conLink.Connector.OrderRegisterFailReceived),

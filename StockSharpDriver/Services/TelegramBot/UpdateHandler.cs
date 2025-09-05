@@ -5,6 +5,7 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Telegram.Bot.Services;
 
@@ -48,7 +49,7 @@ public class UpdateHandler(ITelegramBotClient botClient,
             return;
 
         MessageTelegramModelDB msg_db = await storeRepo.StoreMessage(message);
-        
+
         if (message.Chat.Type == ChatType.Private)
             await Usage(msg_db, message.MessageId, TelegramMessagesTypesEnum.TextMessage, message.Chat.Id, messageText, cancellationToken);
     }
@@ -61,27 +62,39 @@ public class UpdateHandler(ITelegramBotClient botClient,
         if (callbackQuery.Message?.From is null || string.IsNullOrEmpty(callbackQuery.Data))
             return;
 
+        callbackQuery.Message.From = callbackQuery.From;
         MessageTelegramModelDB msg_db = await storeRepo.StoreMessage(callbackQuery.Message);
 
         if (callbackQuery.Message.Chat.Type == ChatType.Private)
-            await Usage(msg_db, callbackQuery.Message.MessageId, TelegramMessagesTypesEnum.CallbackQuery, callbackQuery.Message.Chat.Id, callbackQuery.Data, cancellationToken);
+        {
+            TelegramDialogResponseModel resp = await Usage(msg_db, callbackQuery.Message.MessageId, TelegramMessagesTypesEnum.CallbackQuery, callbackQuery.Message.Chat.Id, callbackQuery.Data, cancellationToken);
+            await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, resp.Response, true, cancellationToken: cancellationToken);
+        }
     }
 
-
-    async Task Usage(MessageTelegramModelDB uc, int incomingMessageId, TelegramMessagesTypesEnum eventType, ChatId chatId, string messageText, CancellationToken cancellationToken)
+    async Task<TelegramDialogResponseModel> Usage(MessageTelegramModelDB uc, int incomingMessageId, TelegramMessagesTypesEnum eventType, ChatId chatId, string messageText, CancellationToken cancellationToken)
     {
         TelegramDialogResponseModel resp = await receiveService.TelegramDialogHandleAsync(new TelegramDialogRequestModel()
         {
             MessageText = messageText,
             MessageTelegramId = incomingMessageId,
-            TelegramUser = uc,
+            TelegramUser = uc.From,
             TypeMessage = eventType,
         }, cancellationToken);
 
-        await _botClient.SendTextMessageAsync(
-            chatId: chatId,
-            text: $"Hi {uc.From!.GetName()}",
-            cancellationToken: cancellationToken);
+        IReplyMarkup? replyKB = resp.ReplyKeyboard is null
+            ? null
+            : new InlineKeyboardMarkup(resp.ReplyKeyboard
+            .Select(x => x.Select(y => InlineKeyboardButton.WithCallbackData(y.Title ?? "~not set~", y.Data ?? "~not set~"))));
+
+        if (eventType == TelegramMessagesTypesEnum.TextMessage)
+            await _botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: $"Hi {uc.From!.GetName()}",
+                replyMarkup: replyKB,
+                cancellationToken: cancellationToken);
+
+        return resp;
     }
 
 
@@ -143,14 +156,5 @@ public class UpdateHandler(ITelegramBotClient botClient,
         // Cooldown in case of network connection error
         if (exception is RequestException)
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
-    }
-}
-
-
-public class TelegramDialogService : ITelegramDialogService
-{
-    public Task<TelegramDialogResponseModel> TelegramDialogHandleAsync(TelegramDialogRequestModel tgDialog, CancellationToken token = default)
-    {
-        throw new NotImplementedException();
     }
 }

@@ -27,5 +27,5 @@ public class TelegramDialogRequestModel
     public TelegramMessagesTypesEnum TypeMessage { get; set; }
 
     /// <inheritdoc/>
-    public MessageTelegramModelDB? TelegramUser { get; set; }
+    public UserTelegramModelDB? TelegramUser { get; set; }
 }

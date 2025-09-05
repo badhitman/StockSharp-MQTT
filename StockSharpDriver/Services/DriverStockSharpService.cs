@@ -1208,15 +1208,15 @@ public class DriverStockSharpService(
     #region events
 
 
-    async void PositionReceivedHandle(Subscription sub, Position pos)
+    void PositionReceivedHandle(Subscription sub, Position pos)
     {
-        await eventTrans.ToastClientShow(new()
-        {
-            HeadTitle = $"warn [{nameof(PositionReceivedHandle)}]",
-            MessageText = JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings),
-            TypeMessage = MessagesTypesEnum.Info
-        });
-        return;
+        //await eventTrans.ToastClientShow(new()
+        //{
+        //    HeadTitle = $"warn [{nameof(PositionReceivedHandle)}]",
+        //    MessageText = JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings),
+        //    TypeMessage = MessagesTypesEnum.Info
+        //});
+        //return;
     }
 
     /// <inheritdoc/>
