@@ -131,6 +131,7 @@ public class Program
                 //
                 services
                     .AddSingleton<ITelegramBotStandardService, TelegramBotStandardService>()
+                    .AddSingleton<ITelegramDialogService, TelegramDialogService>()
                     .AddSingleton<StoreTelegramService>()
                     .AddSingleton<IFlushStockSharpService, FlushStockSharpService>()
                     .AddSingleton<IDataStockSharpService, DataStockSharpService>()
@@ -144,7 +145,7 @@ public class Program
                     .AddHostedService<PollingService>()
                 ;
                 services.AddMemoryCache();
-
+                
                 ConnectionLink _connector = new();
                 _conf.Reload(bx.Configuration.GetSection("StockSharpDriverConfig").Get<StockSharpClientConfigModel>());
 
