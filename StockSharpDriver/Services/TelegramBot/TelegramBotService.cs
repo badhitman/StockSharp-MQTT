@@ -103,39 +103,6 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
     }
 
     /// <inheritdoc/>
-    public async Task<TPaginationResponseModel<ErrorSendingMessageTelegramBotModelDB>> ErrorsForChatsSelectTelegramAsync(TPaginationRequestModel<long[]> req, CancellationToken token = default)
-    {
-        if (req.PageSize < 5)
-            req.PageSize = 5;
-
-        using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync(token);
-
-        IQueryable<ErrorSendingMessageTelegramBotModelDB> q = context
-            .ErrorsSendingTextMessageTelegramBot
-            .AsQueryable();
-
-        if (req.Payload is not null && req.Payload.Length != 0)
-            q = q.Where(x => req.Payload.Any(y => y == x.ChatId));
-
-        IQueryable<ErrorSendingMessageTelegramBotModelDB> TakePart(IQueryable<ErrorSendingMessageTelegramBotModelDB> q, DirectionsEnum direct)
-        {
-            return direct == DirectionsEnum.Up
-                ? q.OrderBy(x => x.CreatedAtUtc).Skip(req.PageNum * req.PageSize).Take(req.PageSize)
-                : q.OrderByDescending(x => x.CreatedAtUtc).Skip(req.PageNum * req.PageSize).Take(req.PageSize);
-        }
-
-        return new()
-        {
-            PageNum = req.PageNum,
-            PageSize = req.PageSize,
-            SortBy = req.SortBy,
-            SortingDirection = req.SortingDirection,
-            TotalRowsCount = await q.CountAsync(cancellationToken: token),
-            Response = await TakePart(q, req.SortingDirection).ToListAsync(cancellationToken: token),
-        };
-    }
-
-    /// <inheritdoc/>
     public async Task<TResponseModel<MessageComplexIdsModel>> ForwardMessageTelegramAsync(ForwardMessageTelegramBotModel message, CancellationToken token = default)
     {
         TResponseModel<MessageComplexIdsModel> res = new();
@@ -159,20 +126,8 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
             else if (ex is RequestException _re)
                 errorCode = (int?)_re.HttpStatusCode;
 
-            using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync(token);
-            await context.AddAsync(new ErrorSendingMessageTelegramBotModelDB()
-            {
-                ChatId = (int)message.DestinationChatId,
-                CreatedAtUtc = DateTime.UtcNow,
-                SourceMessageId = message.SourceMessageId,
-                Message = ex.Message,
-                ExceptionTypeName = ex.GetType().FullName,
-                ErrorCode = errorCode,
-            }, token);
-            await context.SaveChangesAsync(token);
-
             res.AddError("Ошибка отправки Telegram сообщения. error E06E939D-6E93-45CE-A5F5-19A417A27DC1");
-
+            _logger.LogError(ex, $"{nameof(ForwardMessageTelegramAsync)}: {nameof(errorCode)} {errorCode}");
             res.Messages.InjectException(ex);
             return res;
         }
@@ -396,18 +351,6 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
                 errorCode = _are.ErrorCode;
             else if (ex is RequestException _re)
                 errorCode = (int?)_re.HttpStatusCode;
-
-            await context.AddAsync(new ErrorSendingMessageTelegramBotModelDB()
-            {
-                ChatId = (int)message.UserTelegramId,
-                CreatedAtUtc = DateTime.UtcNow,
-                ReplyToMessageId = message.ReplyToMessageId,
-                ParseModeName = message.ParseModeName,
-                Message = $"{ex.Message}\n\n{JsonConvert.SerializeObject(message)}",
-                ExceptionTypeName = ex.GetType().FullName,
-                ErrorCode = errorCode
-            }, token);
-            await context.SaveChangesAsync(token);
 
             msg = "Ошибка отправки Telegram сообщения. error FA51C4EC-6AC7-4F7D-9B64-A6D6436DFDDA";
             res.AddError(msg);

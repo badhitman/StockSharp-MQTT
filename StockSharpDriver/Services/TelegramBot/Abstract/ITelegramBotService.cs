@@ -32,11 +32,6 @@ public interface ITelegramBotService : ITelegramBotStandardService
     public Task<ChatTelegramModelDB> ChatTelegramReadAsync(int chatId, CancellationToken token = default);
 
     /// <summary>
-    /// ErrorsForChatsSelectTelegram
-    /// </summary>
-    public Task<TPaginationResponseModel<ErrorSendingMessageTelegramBotModelDB>> ErrorsForChatsSelectTelegramAsync(TPaginationRequestModel<long[]> req, CancellationToken token = default);
-
-    /// <summary>
     /// ForwardMessageTelegram
     /// </summary>
     public Task<TResponseModel<MessageComplexIdsModel>> ForwardMessageTelegramAsync(ForwardMessageTelegramBotModel req, CancellationToken token = default);

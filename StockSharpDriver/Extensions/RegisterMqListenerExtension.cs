@@ -43,8 +43,7 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<GetFileTelegramReceive, string, TResponseModel<byte[]>>()
             .RegisterMqListener<MessagesSelectTelegramReceive, TPaginationRequestModel<SearchMessagesChatModel>?, TPaginationResponseModel<MessageTelegramModelDB>>()
             .RegisterMqListener<ForwardMessageTelegramReceive, ForwardMessageTelegramBotModel?, TResponseModel<MessageComplexIdsModel>>()
-            .RegisterMqListener<ErrorsForChatsSelectTelegramReceive, TPaginationRequestModel<long[]>?, TPaginationResponseModel<ErrorSendingMessageTelegramBotModelDB>>()
-
+            
             .RegisterMqListener<SendTextMessageTelegramReceive, SendTextMessageTelegramBotModel, TResponseModel<MessageComplexIdsModel>>()
             .RegisterMqListener<GoToPageForRowReceive, TPaginationRequestStandardModel<int>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<MetadataLogsReceive, PeriodDatesTimesModel, TResponseModel<LogsMetadataResponseModel>>()

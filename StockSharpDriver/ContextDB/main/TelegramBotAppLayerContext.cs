@@ -74,9 +74,4 @@ public abstract partial class TelegramBotAppLayerContext : DbContext
     /// Messages
     /// </summary>
     public DbSet<MessageTelegramModelDB> Messages { get; set; } = default!;
-
-    /// <summary>
-    /// Ошибки отправки сообщений TelegramBot
-    /// </summary>
-    public DbSet<ErrorSendingMessageTelegramBotModelDB> ErrorsSendingTextMessageTelegramBot { get; set; } = default!;
 }

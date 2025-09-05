@@ -50,11 +50,6 @@ public class ChatTelegramModelDB : ChatTelegramViewModel
     /// </summary>
     public List<JoinUserChatModelDB>? UsersJoins { get; set; }
 
-    /// <summary>
-    /// Errors (if exist)
-    /// </summary>
-    public List<ErrorSendingMessageTelegramBotModelDB>? Errors { get; set; }
-
     /// <inheritdoc/>
     public override string ToString()
     {
