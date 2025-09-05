@@ -64,8 +64,4 @@
 		<ProjectReference Include="..\..\BlankCRM\SharedLibStandard21\SharedLibStandard21.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Migrations\TelegramBotApp\" />
-	</ItemGroup>
-
 </Project>

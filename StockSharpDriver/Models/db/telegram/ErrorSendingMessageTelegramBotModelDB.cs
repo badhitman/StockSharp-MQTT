@@ -9,7 +9,8 @@ namespace SharedLib;
 /// <summary>
 /// Ошибка отправки сообщения TelegramBot
 /// </summary>
-[Index(nameof(ChatId)), Index(nameof(IsDisabled))]
+[Index(nameof(ChatId)), Index(nameof(IsDisabled)), Index(nameof(ReplyToMessageId)), Index(nameof(SourceMessageId)), Index(nameof(ErrorCode))]
+[Index(nameof(ExceptionTypeName))]
 public class ErrorSendingMessageTelegramBotModelDB : IdSwitchableModel
 {
     /// <summary>
@@ -20,7 +21,11 @@ public class ErrorSendingMessageTelegramBotModelDB : IdSwitchableModel
     /// <summary>
     /// Chat
     /// </summary>
-    public long ChatId { get; set; }
+    public ChatTelegramModelDB? Chat { get; set; }
+    /// <summary>
+    /// Chat
+    /// </summary>
+    public int ChatId { get; set; }
 
     /// <summary>
     /// Имя типа исключения
@@ -44,11 +49,6 @@ public class ErrorSendingMessageTelegramBotModelDB : IdSwitchableModel
     /// Message (error)
     /// </summary>
     public string? Message { get; set; }
-
-    /// <summary>
-    /// Подпись (от кого сообщение). Если null, то подписи не будет
-    /// </summary>
-    public string? SignFrom { get; set; }
 
     /// <summary>
     /// Имя режима парсинга сообщений Telegram (default: Html). Пример: Html, Markdown, MarkdownV2

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace StockSharpDriver.Migrations.TelegramBotApp
+namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(TelegramBotAppContext))]
     partial class TelegramBotAppContextModelSnapshot : ModelSnapshot
@@ -98,7 +98,7 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("ChatId")
+                    b.Property<int>("ChatId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -125,9 +125,6 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                     b.Property<int?>("ReplyToMessageId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("SignFrom")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("SourceMessageId")
                         .HasColumnType("INTEGER");
 
@@ -135,7 +132,15 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
 
                     b.HasIndex("ChatId");
 
+                    b.HasIndex("ErrorCode");
+
+                    b.HasIndex("ExceptionTypeName");
+
                     b.HasIndex("IsDisabled");
+
+                    b.HasIndex("ReplyToMessageId");
+
+                    b.HasIndex("SourceMessageId");
 
                     b.ToTable("ErrorsSendingTextMessageTelegramBot");
                 });
@@ -327,6 +332,17 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("SharedLib.ErrorSendingMessageTelegramBotModelDB", b =>
+                {
+                    b.HasOne("SharedLib.ChatTelegramModelDB", "Chat")
+                        .WithMany("Errors")
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chat");
+                });
+
             modelBuilder.Entity("SharedLib.JoinUserChatModelDB", b =>
                 {
                     b.HasOne("SharedLib.ChatTelegramModelDB", "Chat")
@@ -366,7 +382,7 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
             modelBuilder.Entity("SharedLib.RoleUserTelegramModelDB", b =>
                 {
                     b.HasOne("SharedLib.UserTelegramModelDB", "User")
-                        .WithMany()
+                        .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -376,6 +392,8 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
 
             modelBuilder.Entity("SharedLib.ChatTelegramModelDB", b =>
                 {
+                    b.Navigation("Errors");
+
                     b.Navigation("Messages");
 
                     b.Navigation("UsersJoins");
@@ -386,6 +404,8 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                     b.Navigation("ChatsJoins");
 
                     b.Navigation("Messages");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

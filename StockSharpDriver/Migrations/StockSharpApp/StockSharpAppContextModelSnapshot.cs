@@ -3,18 +3,16 @@ using System;
 using DbcLib;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace StockSharpDriver.Migrations
+namespace StockSharpDriver.Migrations.StockSharpApp
 {
     [DbContext(typeof(StockSharpAppContext))]
-    [Migration("20250903062950_AppStockSharpContext001")]
-    partial class AppStockSharpContext001
+    partial class StockSharpAppContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.36");

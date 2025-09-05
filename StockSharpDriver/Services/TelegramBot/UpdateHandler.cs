@@ -1,11 +1,8 @@
-using DbcLib;
-using HelpDeskService;
-using Microsoft.EntityFrameworkCore;
 using SharedLib;
+using StockSharpDriver;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
 
 namespace Telegram.Bot.Services;
@@ -46,10 +43,14 @@ public class UpdateHandler(ITelegramBotClient botClient,
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
-        if (message.Text is not { } messageText)
+        if (message.Text is not { } messageText || message.From is null)
             return;
-        
+
         MessageTelegramModelDB msg_db = await storeRepo.StoreMessage(message);
+        await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Hi {msg_db.From!.GetName()}",
+            cancellationToken: cancellationToken);
     }
 
     // Process Inline Keyboard callback data

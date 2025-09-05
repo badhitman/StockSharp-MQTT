@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using NLog.Extensions.Logging;
 using Telegram.Bot.Services;
 using StockSharpService;
-using HelpDeskService;
-using StorageService;
 using RemoteCallLib;
 using Telegram.Bot;
 using SharedLib;

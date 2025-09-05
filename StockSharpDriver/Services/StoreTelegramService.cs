@@ -2,13 +2,13 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore;
+using Telegram.Bot.Types;
 using SharedLib;
 using DbcLib;
-using Telegram.Bot.Types;
-using Microsoft.EntityFrameworkCore.Query;
 
-namespace HelpDeskService;
+namespace StockSharpDriver;
 
 /// <summary>
 /// Сохранение в базу данных данных Telegram
@@ -81,6 +81,7 @@ public class StoreTelegramService(IDbContextFactory<TelegramBotAppContext> tgDbF
         using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync();
         UserTelegramModelDB? user_db = await context
             .Users
+            .Include(x => x.UserRoles)
             .FirstOrDefaultAsync(x => x.UserTelegramId == user.Id);
 
         if (user_db is null)

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SharedLib;
 using DbcLib;
 
-namespace StorageService;
+namespace StockSharpDriver;
 
 /// <summary>
 /// LogsNavigationImpl

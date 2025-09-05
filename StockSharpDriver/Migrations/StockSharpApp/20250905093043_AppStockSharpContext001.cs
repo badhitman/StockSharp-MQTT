@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace StockSharpDriver.Migrations
+namespace StockSharpDriver.Migrations.StockSharpApp
 {
     public partial class AppStockSharpContext001 : Migration
     {

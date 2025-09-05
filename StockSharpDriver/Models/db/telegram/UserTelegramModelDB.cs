@@ -22,4 +22,9 @@ public class UserTelegramModelDB : UserTelegramViewModel
     /// ChatsJoins
     /// </summary>
     public List<JoinUserChatModelDB>? ChatsJoins { get; set; }
+
+    /// <summary>
+    /// UserRoles
+    /// </summary>
+    public List<RoleUserTelegramModelDB>? UserRoles { get; set; }
 }
