@@ -35,6 +35,16 @@ public static class RegisterMqListenerExtension
             .RegisterMqListener<RubricReadReceive, int, TResponseModel<List<RubricStandardModel>>>()
             .RegisterMqListener<RubricsGetReceive, int[], TResponseModel<List<RubricStandardModel>>>()
             .RegisterMqListener<GetBotUsernameReceive, object, TResponseModel<UserTelegramBaseModel>>()
+
+            .RegisterMqListener<ChatsFindForUserTelegramReceive, long[], List<ChatTelegramModelDB>>()
+            .RegisterMqListener<ChatsReadTelegramReceive, long[], List<ChatTelegramModelDB>>()
+            .RegisterMqListener<ChatsSelectTelegramReceive, TPaginationRequestModel<string?>, TPaginationResponseModel<ChatTelegramModelDB>>()
+            .RegisterMqListener<ChatTelegramReadReceive, int, ChatTelegramModelDB>()
+            .RegisterMqListener<GetFileTelegramReceive, string, TResponseModel<byte[]>>()
+            .RegisterMqListener<MessagesSelectTelegramReceive, TPaginationRequestModel<SearchMessagesChatModel>?, TPaginationResponseModel<MessageTelegramModelDB>>()
+            .RegisterMqListener<ForwardMessageTelegramReceive, ForwardMessageTelegramBotModel?, TResponseModel<MessageComplexIdsModel>>()
+            .RegisterMqListener<ErrorsForChatsSelectTelegramReceive, TPaginationRequestModel<long[]>?, TPaginationResponseModel<ErrorSendingMessageTelegramBotModelDB>>()
+
             .RegisterMqListener<SendTextMessageTelegramReceive, SendTextMessageTelegramBotModel, TResponseModel<MessageComplexIdsModel>>()
             .RegisterMqListener<GoToPageForRowReceive, TPaginationRequestStandardModel<int>, TPaginationResponseModel<NLogRecordModelDB>>()
             .RegisterMqListener<MetadataLogsReceive, PeriodDatesTimesModel, TResponseModel<LogsMetadataResponseModel>>()
