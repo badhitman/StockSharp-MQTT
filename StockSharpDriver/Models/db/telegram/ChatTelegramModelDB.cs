@@ -41,11 +41,6 @@ public class ChatTelegramModelDB : ChatTelegramViewModel
     public int LastMessageId { get; set; }
 
     /// <summary>
-    /// ChatPhoto
-    /// </summary>
-    public ChatPhotoTelegramModelDB? ChatPhoto { get; set; }
-
-    /// <summary>
     /// Messages
     /// </summary>
     public List<MessageTelegramModelDB>? Messages { get; set; }

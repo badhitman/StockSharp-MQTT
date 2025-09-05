@@ -83,29 +83,6 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                 });
 
             migrationBuilder.CreateTable(
-                name: "ChatsPhotos",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SmallFileId = table.Column<string>(type: "TEXT", nullable: true),
-                    SmallFileUniqueId = table.Column<string>(type: "TEXT", nullable: true),
-                    BigFileId = table.Column<string>(type: "TEXT", nullable: true),
-                    BigFileUniqueId = table.Column<string>(type: "TEXT", nullable: true),
-                    ChatOwnerId = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ChatsPhotos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ChatsPhotos_Chats_ChatOwnerId",
-                        column: x => x.ChatOwnerId,
-                        principalTable: "Chats",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "JoinsUsersToChats",
                 columns: table => new
                 {
@@ -177,6 +154,24 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "RolesUsers",
+                columns: table => new
+                {
+                    Role = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RolesUsers", x => new { x.Role, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_RolesUsers_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Chats_ChatTelegramId",
                 table: "Chats",
@@ -239,12 +234,6 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                 column: "Username");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChatsPhotos_ChatOwnerId",
-                table: "ChatsPhotos",
-                column: "ChatOwnerId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ErrorsSendingTextMessageTelegramBot_ChatId",
                 table: "ErrorsSendingTextMessageTelegramBot",
                 column: "ChatId");
@@ -281,6 +270,17 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                 columns: new[] { "MessageTelegramId", "ChatId", "FromId" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_RolesUsers_Role_UserId",
+                table: "RolesUsers",
+                columns: new[] { "Role", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RolesUsers_UserId",
+                table: "RolesUsers",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_FirstName",
                 table: "Users",
                 column: "FirstName");
@@ -310,9 +310,6 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ChatsPhotos");
-
-            migrationBuilder.DropTable(
                 name: "ErrorsSendingTextMessageTelegramBot");
 
             migrationBuilder.DropTable(
@@ -320,6 +317,9 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
 
             migrationBuilder.DropTable(
                 name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "RolesUsers");
 
             migrationBuilder.DropTable(
                 name: "Chats");

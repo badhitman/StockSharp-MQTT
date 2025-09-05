@@ -130,6 +130,7 @@ public class Program
                 //
                 services
                     .AddSingleton<ITelegramBotStandardService, TelegramBotStandardService>()
+                    .AddSingleton<StoreTelegramService>()
                     .AddSingleton<IFlushStockSharpService, FlushStockSharpService>()
                     .AddSingleton<IDataStockSharpService, DataStockSharpService>()
                     .AddSingleton<IParametersStorage, ParametersStorage>()

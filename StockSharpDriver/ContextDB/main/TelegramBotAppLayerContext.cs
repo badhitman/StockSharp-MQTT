@@ -43,10 +43,12 @@ public abstract partial class TelegramBotAppLayerContext : DbContext
         base.OnConfiguring(options);
     }
 
-    /// <summary>
-    /// JoinsUsersToChats
-    /// </summary>
-    public DbSet<JoinUserChatModelDB> JoinsUsersToChats { get; set; } = default!;
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RoleUserTelegramModelDB>().HasKey(ol => new { ol.Role, ol.UserId });
+
+        base.OnModelCreating(modelBuilder);
+    }
 
     /// <summary>
     /// Chats
@@ -54,16 +56,19 @@ public abstract partial class TelegramBotAppLayerContext : DbContext
     public DbSet<ChatTelegramModelDB> Chats { get; set; } = default!;
 
     /// <summary>
-    /// Chats Photos
-    /// </summary>
-    public DbSet<ChatPhotoTelegramModelDB> ChatsPhotos { get; set; } = default!;
-
-
-    /// <summary>
     /// Users
     /// </summary>
     public DbSet<UserTelegramModelDB> Users { get; set; } = default!;
 
+    /// <summary>
+    /// JoinsUsersToChats
+    /// </summary>
+    public DbSet<JoinUserChatModelDB> JoinsUsersToChats { get; set; } = default!;
+
+    /// <summary>
+    /// Roles for users
+    /// </summary>
+    public DbSet<RoleUserTelegramModelDB> RolesUsers { get; set; } = default!;
 
     /// <summary>
     /// Messages

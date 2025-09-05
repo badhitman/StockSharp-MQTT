@@ -1206,6 +1206,19 @@ public class DriverStockSharpService(
     }
 
     #region events
+
+
+    async void PositionReceivedHandle(Subscription sub, Position pos)
+    {
+        await eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = $"warn [{nameof(PositionReceivedHandle)}]",
+            MessageText = JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings),
+            TypeMessage = MessagesTypesEnum.Info
+        });
+        return;
+    }
+
     /// <inheritdoc/>
     async void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
     {
@@ -1805,6 +1818,7 @@ public class DriverStockSharpService(
         conLink.Connector.OrderReceived -= OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
         conLink.Connector.SecurityReceived -= SecurityReceivedHandle;
+        conLink.Connector.PositionReceived -= PositionReceivedHandle;
     }
 
     void RegisterEvents()
@@ -1816,6 +1830,7 @@ public class DriverStockSharpService(
         conLink.Connector.OrderReceived += OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
         conLink.Connector.SecurityReceived += SecurityReceivedHandle;
+        conLink.Connector.PositionReceived += PositionReceivedHandle;
     }
     #endregion
 }

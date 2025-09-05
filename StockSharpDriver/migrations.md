@@ -6,6 +6,7 @@ Enable-Migrations -ProjectName StockSharpDriver -StartUpProjectName StockSharpDr
 EntityFrameworkCore\Add-Migration AppStockSharpContext001 -Context StockSharpAppContext -Project StockSharpDriver -StartupProject StockSharpDriver
 EntityFrameworkCore\Update-Database -AppContext StockSharpAppContext -Project StockSharpDriver -StartupProject StockSharpDriver
 ```
+
 ```
 EntityFrameworkCore\Add-Migration PropertiesStorageContext001 -Context PropertiesStorageContext -Project StockSharpDriver -StartupProject StockSharpDriver
 EntityFrameworkCore\Update-Database -Context PropertiesStorageContext -Project StockSharpDriver -StartupProject StockSharpDriver

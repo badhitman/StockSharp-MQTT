@@ -17,35 +17,6 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.36");
 
-            modelBuilder.Entity("SharedLib.ChatPhotoTelegramModelDB", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("BigFileId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("BigFileUniqueId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ChatOwnerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SmallFileId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SmallFileUniqueId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChatOwnerId")
-                        .IsUnique();
-
-                    b.ToTable("ChatsPhotos");
-                });
-
             modelBuilder.Entity("SharedLib.ChatTelegramModelDB", b =>
                 {
                     b.Property<int>("Id")
@@ -277,6 +248,24 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("SharedLib.RoleUserTelegramModelDB", b =>
+                {
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Role", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Role", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("RolesUsers");
+                });
+
             modelBuilder.Entity("SharedLib.UserTelegramModelDB", b =>
                 {
                     b.Property<int>("Id")
@@ -338,17 +327,6 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("SharedLib.ChatPhotoTelegramModelDB", b =>
-                {
-                    b.HasOne("SharedLib.ChatTelegramModelDB", "ChatOwner")
-                        .WithOne("ChatPhoto")
-                        .HasForeignKey("SharedLib.ChatPhotoTelegramModelDB", "ChatOwnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChatOwner");
-                });
-
             modelBuilder.Entity("SharedLib.JoinUserChatModelDB", b =>
                 {
                     b.HasOne("SharedLib.ChatTelegramModelDB", "Chat")
@@ -385,10 +363,19 @@ namespace StockSharpDriver.Migrations.TelegramBotApp
                     b.Navigation("From");
                 });
 
+            modelBuilder.Entity("SharedLib.RoleUserTelegramModelDB", b =>
+                {
+                    b.HasOne("SharedLib.UserTelegramModelDB", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SharedLib.ChatTelegramModelDB", b =>
                 {
-                    b.Navigation("ChatPhoto");
-
                     b.Navigation("Messages");
 
                     b.Navigation("UsersJoins");
