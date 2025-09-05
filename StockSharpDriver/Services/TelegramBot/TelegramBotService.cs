@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
-using Newtonsoft.Json;
 using Telegram.Bot;
 using SharedLib;
 using DbcLib;
