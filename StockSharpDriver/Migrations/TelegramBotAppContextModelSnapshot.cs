@@ -186,6 +186,9 @@ namespace StockSharpDriver.Migrations
                     b.Property<string>("Text")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("TypeMessage")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long?>("ViaBotId")
                         .HasColumnType("INTEGER");
 

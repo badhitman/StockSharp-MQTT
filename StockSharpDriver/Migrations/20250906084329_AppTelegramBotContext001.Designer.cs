@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace StockSharpDriver.Migrations
 {
     [DbContext(typeof(TelegramBotAppContext))]
-    [Migration("20250906071237_AppTelegramBotContext001")]
+    [Migration("20250906084329_AppTelegramBotContext001")]
     partial class AppTelegramBotContext001
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -187,6 +187,9 @@ namespace StockSharpDriver.Migrations
 
                     b.Property<string>("Text")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("TypeMessage")
+                        .HasColumnType("INTEGER");
 
                     b.Property<long?>("ViaBotId")
                         .HasColumnType("INTEGER");

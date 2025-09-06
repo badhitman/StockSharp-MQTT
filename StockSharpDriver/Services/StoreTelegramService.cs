@@ -143,7 +143,7 @@ public class StoreTelegramService(IDbContextFactory<TelegramBotAppContext> tgDbF
     /// <summary>
     /// Сохранить сообщение в базу данных
     /// </summary>
-    public async Task<MessageTelegramModelDB> StoreMessage(Message message)
+    public async Task<MessageTelegramModelDB> StoreMessage(Message message, TelegramMessagesTypesEnum typeMsg = TelegramMessagesTypesEnum.TextMessage)
     {
         ChatTelegramModelDB chat_db = await StoreChat(message.Chat);
         ChatTelegramModelDB? sender_chat_db = message.SenderChat is null ? null : await StoreChat(message.SenderChat);
@@ -171,7 +171,7 @@ public class StoreTelegramService(IDbContextFactory<TelegramBotAppContext> tgDbF
                 FromId = from_db?.Id,
                 EditDate = message.EditDate,
                 ForwardDate = message.ForwardDate,
-
+                TypeMessage = typeMsg,
                 ForwardFromChatId = message.ForwardFromChat?.Id,
                 ForwardFromMessageId = message.ForwardFromMessageId,
                 ForwardFromId = message.ForwardFrom?.Id,

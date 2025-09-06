@@ -91,6 +91,7 @@ namespace StockSharpDriver.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    TypeMessage = table.Column<int>(type: "INTEGER", nullable: false),
                     MessageTelegramId = table.Column<int>(type: "INTEGER", nullable: false),
                     MessageThreadId = table.Column<int>(type: "INTEGER", nullable: true),
                     FromId = table.Column<int>(type: "INTEGER", nullable: true),

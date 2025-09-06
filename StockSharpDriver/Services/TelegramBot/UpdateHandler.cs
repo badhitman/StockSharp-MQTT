@@ -63,12 +63,17 @@ public class UpdateHandler(ITelegramBotClient botClient,
             return;
 
         callbackQuery.Message.From = callbackQuery.From;
-        MessageTelegramModelDB msg_db = await storeRepo.StoreMessage(callbackQuery.Message);
+        callbackQuery.Message.Text = callbackQuery.Data;
+        MessageTelegramModelDB msg_db = await storeRepo.StoreMessage(callbackQuery.Message, TelegramMessagesTypesEnum.CallbackQuery);
 
         if (callbackQuery.Message.Chat.Type == ChatType.Private)
         {
             TelegramDialogResponseModel resp = await Usage(msg_db, callbackQuery.Message.MessageId, TelegramMessagesTypesEnum.CallbackQuery, callbackQuery.Message.Chat.Id, callbackQuery.Data, cancellationToken);
             await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, resp.Response, true, cancellationToken: cancellationToken);
+
+            callbackQuery.Message.From = await _botClient.GetMeAsync(cancellationToken: cancellationToken);
+            callbackQuery.Message.Text = resp.Response;
+            msg_db = await storeRepo.StoreMessage(callbackQuery.Message, TelegramMessagesTypesEnum.CallbackQuery);
         }
     }
 
@@ -88,11 +93,15 @@ public class UpdateHandler(ITelegramBotClient botClient,
             .Select(x => x.Select(y => InlineKeyboardButton.WithCallbackData(y.Title ?? "~not set~", y.Data ?? "~not set~"))));
 
         if (eventType == TelegramMessagesTypesEnum.TextMessage)
-            await _botClient.SendTextMessageAsync(
+        {
+            Message message = await _botClient.SendTextMessageAsync(
                 chatId: chatId,
                 text: $"Hi {uc.From!.GetName()}",
                 replyMarkup: replyKB,
                 cancellationToken: cancellationToken);
+
+            uc = await storeRepo.StoreMessage(message);
+        }
 
         return resp;
     }
