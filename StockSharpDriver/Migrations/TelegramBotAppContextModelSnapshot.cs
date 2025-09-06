@@ -92,59 +92,6 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Chats");
                 });
 
-            modelBuilder.Entity("SharedLib.ErrorSendingMessageTelegramBotModelDB", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ChatId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("ErrorCode")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ExceptionTypeName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDisabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsEditing")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ParseModeName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("ReplyToMessageId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SourceMessageId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChatId");
-
-                    b.HasIndex("ErrorCode");
-
-                    b.HasIndex("ExceptionTypeName");
-
-                    b.HasIndex("IsDisabled");
-
-                    b.HasIndex("ReplyToMessageId");
-
-                    b.HasIndex("SourceMessageId");
-
-                    b.ToTable("ErrorsSendingTextMessageTelegramBot");
-                });
-
             modelBuilder.Entity("SharedLib.JoinUserChatModelDB", b =>
                 {
                     b.Property<int>("Id")
@@ -332,17 +279,6 @@ namespace StockSharpDriver.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("SharedLib.ErrorSendingMessageTelegramBotModelDB", b =>
-                {
-                    b.HasOne("SharedLib.ChatTelegramModelDB", "Chat")
-                        .WithMany("Errors")
-                        .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Chat");
-                });
-
             modelBuilder.Entity("SharedLib.JoinUserChatModelDB", b =>
                 {
                     b.HasOne("SharedLib.ChatTelegramModelDB", "Chat")
@@ -392,8 +328,6 @@ namespace StockSharpDriver.Migrations
 
             modelBuilder.Entity("SharedLib.ChatTelegramModelDB", b =>
                 {
-                    b.Navigation("Errors");
-
                     b.Navigation("Messages");
 
                     b.Navigation("UsersJoins");

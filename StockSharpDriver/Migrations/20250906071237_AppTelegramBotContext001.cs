@@ -60,34 +60,6 @@ namespace StockSharpDriver.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ErrorsSendingTextMessageTelegramBot",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ChatId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ExceptionTypeName = table.Column<string>(type: "TEXT", nullable: true),
-                    ReplyToMessageId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SourceMessageId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Message = table.Column<string>(type: "TEXT", nullable: true),
-                    ParseModeName = table.Column<string>(type: "TEXT", nullable: true),
-                    IsEditing = table.Column<bool>(type: "INTEGER", nullable: false),
-                    ErrorCode = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsDisabled = table.Column<bool>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ErrorsSendingTextMessageTelegramBot", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ErrorsSendingTextMessageTelegramBot_Chats_ChatId",
-                        column: x => x.ChatId,
-                        principalTable: "Chats",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "JoinsUsersToChats",
                 columns: table => new
                 {
@@ -239,36 +211,6 @@ namespace StockSharpDriver.Migrations
                 column: "Username");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ErrorsSendingTextMessageTelegramBot_ChatId",
-                table: "ErrorsSendingTextMessageTelegramBot",
-                column: "ChatId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ErrorsSendingTextMessageTelegramBot_ErrorCode",
-                table: "ErrorsSendingTextMessageTelegramBot",
-                column: "ErrorCode");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ErrorsSendingTextMessageTelegramBot_ExceptionTypeName",
-                table: "ErrorsSendingTextMessageTelegramBot",
-                column: "ExceptionTypeName");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ErrorsSendingTextMessageTelegramBot_IsDisabled",
-                table: "ErrorsSendingTextMessageTelegramBot",
-                column: "IsDisabled");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ErrorsSendingTextMessageTelegramBot_ReplyToMessageId",
-                table: "ErrorsSendingTextMessageTelegramBot",
-                column: "ReplyToMessageId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ErrorsSendingTextMessageTelegramBot_SourceMessageId",
-                table: "ErrorsSendingTextMessageTelegramBot",
-                column: "SourceMessageId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_JoinsUsersToChats_ChatId",
                 table: "JoinsUsersToChats",
                 column: "ChatId");
@@ -334,9 +276,6 @@ namespace StockSharpDriver.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ErrorsSendingTextMessageTelegramBot");
-
             migrationBuilder.DropTable(
                 name: "JoinsUsersToChats");
 

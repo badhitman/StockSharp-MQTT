@@ -1,0 +1,10 @@
+﻿@page "/telegram-chat/{ChatId:int}"
+
+@using BlazorLib.Components.Telegram
+
+<ChatTelegramComponent ChatId=ChatId />
+
+@code {
+    [Parameter]
+    public int ChatId { get; set; }
+}

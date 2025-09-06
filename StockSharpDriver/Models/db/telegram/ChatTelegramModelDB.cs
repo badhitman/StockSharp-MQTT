@@ -43,12 +43,12 @@ public class ChatTelegramModelDB : ChatTelegramViewModel
     /// <summary>
     /// Messages
     /// </summary>
-    public List<MessageTelegramModelDB>? Messages { get; set; }
+    public new List<MessageTelegramModelDB>? Messages { get; set; }
 
     /// <summary>
     /// ChatsJoins
     /// </summary>
-    public List<JoinUserChatModelDB>? UsersJoins { get; set; }
+    public new List<JoinUserChatModelDB>? UsersJoins { get; set; }
 
     /// <inheritdoc/>
     public override string ToString()

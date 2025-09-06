@@ -77,7 +77,7 @@ public class StoreTelegramService(IDbContextFactory<TelegramBotAppContext> tgDbF
     /// <summary>
     /// Сохранить пользователя в базу данных
     /// </summary>
-    public async Task<UserTelegramModelDB> StoreUser(User user)
+    public async Task<UserTelegramModelDB> StoreUser(User user, ChatTelegramModelDB? chat_db)
     {
         using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync();
         UserTelegramModelDB? user_db = await context
@@ -130,6 +130,13 @@ public class StoreTelegramService(IDbContextFactory<TelegramBotAppContext> tgDbF
             context.Update(user_db);
         }
         await context.SaveChangesAsync();
+
+        if (chat_db is not null && !await context.JoinsUsersToChats.AnyAsync(x => x.UserId == user_db.Id && x.ChatId == chat_db.Id))
+        {
+            await context.JoinsUsersToChats.AddAsync(new JoinUserChatModelDB() { ChatId = chat_db.Id, UserId = user_db.Id });
+            await context.SaveChangesAsync();
+        }
+
         return user_db;
     }
 
@@ -140,8 +147,8 @@ public class StoreTelegramService(IDbContextFactory<TelegramBotAppContext> tgDbF
     {
         ChatTelegramModelDB chat_db = await StoreChat(message.Chat);
         ChatTelegramModelDB? sender_chat_db = message.SenderChat is null ? null : await StoreChat(message.SenderChat);
-        UserTelegramModelDB? from_db = message.From is null ? null : await StoreUser(message.From);
-        UserTelegramModelDB? forward_from_db = message.ForwardFrom is null ? null : await StoreUser(message.ForwardFrom);
+        UserTelegramModelDB? from_db = message.From is null ? null : await StoreUser(message.From, chat_db);
+        UserTelegramModelDB? forward_from_db = message.ForwardFrom is null ? null : await StoreUser(message.ForwardFrom, sender_chat_db);
 
         MessageTelegramModelDB? replyToMessageDB = message.ReplyToMessage is null ? null : await StoreMessage(message.ReplyToMessage);
 
