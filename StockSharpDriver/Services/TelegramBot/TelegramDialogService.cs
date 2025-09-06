@@ -10,7 +10,10 @@ public class TelegramDialogService : ITelegramDialogService
         return Task.FromResult(new TelegramDialogResponseModel()
         {
             MainTelegramMessageId = tgDialog.MessageTelegramId,
-            ReplyKeyboard = [[new ButtonActionModel() { Title = "demo 1", Data = "data-1" }]],
+            ReplyKeyboard = [
+                [new ButtonActionModel() { Title = "demo 1.0", Data = "data-1" }],
+                [new ButtonActionModel() { Title = "test 2.1", Data = "test-2-1" }, new ButtonActionModel() { Title = "test 2.2", Data = "test-2-2" }]
+            ],
             Response = $"Hi {tgDialog.TelegramUser!.GetName()}"
         });
     }

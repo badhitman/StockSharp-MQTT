@@ -185,7 +185,8 @@ public class StoreTelegramService(IDbContextFactory<TelegramBotAppContext> tgDbF
                 NormalizedTextUpper = message.Text?.ToUpper(),
 
                 AuthorSignature = message.AuthorSignature,
-                MediaGroupId = message.MediaGroupId,
+                MediaGroupId = message.MediaGroupId, 
+                CreatedAtUtc = DateTime.UtcNow,
             };
 
             await context.AddAsync(messageDb);
