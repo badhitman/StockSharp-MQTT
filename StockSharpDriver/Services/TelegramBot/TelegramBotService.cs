@@ -85,7 +85,10 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
             SortBy = req.SortBy,
             SortingDirection = req.SortingDirection,
             TotalRowsCount = await q.CountAsync(cancellationToken: token),
-            Response = await TakePart(q, req.SortingDirection).ToListAsync(cancellationToken: token),
+            Response = await TakePart(q, req.SortingDirection)
+                                .Include(x => x.UsersJoins)!
+                                .ThenInclude(x => x.User)
+                                .ToListAsync(cancellationToken: token),
         };
     }
 
@@ -236,7 +239,7 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
                 r.msg.From = r.sender;
             });
 
-            return dbData.Select(x => x.msg).ToList();
+            return [.. dbData.Select(x => x.msg)];
         }
 
         IQueryable<MessageTelegramModelDB> TakePart(IQueryable<MessageTelegramModelDB> q, DirectionsEnum direct)
