@@ -95,14 +95,6 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
         TResponseModel<ChatTelegramModelDB> res = new();
         using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync(token);
 
-#if DEBUG
-        var v = await context
-            .Chats
-            .Include(x => x.UsersJoins!)
-            .ThenInclude(x => x.User)
-            .FirstAsync(x => x.Id == chatId, cancellationToken: token);
-#endif
-
         return await context
             .Chats
             .Include(x => x.UsersJoins!)

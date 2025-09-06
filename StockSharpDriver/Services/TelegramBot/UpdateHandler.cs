@@ -17,8 +17,8 @@ public class UpdateHandler(ITelegramBotClient botClient,
     ITelegramDialogService receiveService,
     StoreTelegramService storeRepo) : IUpdateHandler
 {
-    private readonly ITelegramBotClient _botClient = botClient;
-    private readonly ILogger<UpdateHandler> _logger = logger;
+    readonly ITelegramBotClient _botClient = botClient;
+    readonly ILogger<UpdateHandler> _logger = logger;
 
     /// <inheritdoc/>
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
@@ -42,7 +42,7 @@ public class UpdateHandler(ITelegramBotClient botClient,
         await handler;
     }
 
-    private async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
+    async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
         if (message.Text is not { } messageText || message.From is null)
@@ -55,7 +55,7 @@ public class UpdateHandler(ITelegramBotClient botClient,
     }
 
     // Process Inline Keyboard callback data
-    private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery, CancellationToken cancellationToken)
+    async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Received inline keyboard callback from: {CallbackQueryId}", callbackQuery.Id);
 
@@ -100,7 +100,7 @@ public class UpdateHandler(ITelegramBotClient botClient,
 
     #region Inline Mode
 
-    private async Task BotOnInlineQueryReceived(InlineQuery inlineQuery, CancellationToken cancellationToken)
+    async Task BotOnInlineQueryReceived(InlineQuery inlineQuery, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Received inline query from: {InlineQueryFromId}", inlineQuery.From.Id);
 
@@ -120,7 +120,7 @@ public class UpdateHandler(ITelegramBotClient botClient,
             cancellationToken: cancellationToken);
     }
 
-    private async Task BotOnChosenInlineResultReceived(ChosenInlineResult chosenInlineResult, CancellationToken cancellationToken)
+    async Task BotOnChosenInlineResultReceived(ChosenInlineResult chosenInlineResult, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Received inline result: {ChosenInlineResultId}", chosenInlineResult.ResultId);
 
@@ -134,7 +134,7 @@ public class UpdateHandler(ITelegramBotClient botClient,
 
 #pragma warning disable IDE0060 // Remove unused parameter
 #pragma warning disable RCS1163 // Unused parameter.
-    private Task UnknownUpdateHandlerAsync(Update update, CancellationToken cancellationToken)
+    Task UnknownUpdateHandlerAsync(Update update, CancellationToken cancellationToken)
 #pragma warning restore RCS1163 // Unused parameter.
 #pragma warning restore IDE0060 // Remove unused parameter
     {
