@@ -4,13 +4,14 @@
 
 using Newtonsoft.Json;
 using SharedLib;
+using StockSharpDriver;
 
 namespace Transmission.Receives.telegram;
 
 /// <summary>
 /// Отправить сообщение пользователю через TelegramBot SendTextMessageTelegramBotModel
 /// </summary>
-public class SendTextMessageTelegramReceive(ITelegramBotStandardService tgRepo, ILogger<SendTextMessageTelegramReceive> _logger)
+public class SendTextMessageTelegramReceive(ITelegramBotService tgRepo, ILogger<SendTextMessageTelegramReceive> _logger)
     : IMQTTReceive<SendTextMessageTelegramBotModel?, TResponseModel<MessageComplexIdsModel>?>
 {
     /// <inheritdoc/>

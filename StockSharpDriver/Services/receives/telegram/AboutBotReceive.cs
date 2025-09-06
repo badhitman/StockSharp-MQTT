@@ -3,13 +3,14 @@
 ////////////////////////////////////////////////
 
 using SharedLib;
+using StockSharpDriver;
 
 namespace Transmission.Receives.telegram;
 
 /// <summary>
 /// Получить Username TelegramBot
 /// </summary>
-public class GetBotUsernameReceive(ITelegramBotStandardService tgRepo)
+public class GetBotUsernameReceive(ITelegramBotService tgRepo)
     : IMQTTReceive<object?, TResponseModel<UserTelegramBaseModel>?>
 {
     /// <inheritdoc/>

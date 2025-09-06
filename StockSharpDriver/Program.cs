@@ -131,7 +131,6 @@ public class Program
                 //
                 services
                     .AddSingleton<ITelegramBotService, TelegramBotServiceImplement>()
-                    .AddSingleton<ITelegramBotStandardService, TelegramBotStandardService>()
                     .AddSingleton<ITelegramDialogService, TelegramDialogService>()
                     .AddSingleton<StoreTelegramService>()
                     .AddSingleton<IFlushStockSharpService, FlushStockSharpService>()
