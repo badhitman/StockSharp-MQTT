@@ -13,18 +13,12 @@ namespace SharedLib;
 [Index(nameof(Username)), Index(nameof(FirstName)), Index(nameof(LastName)), Index(nameof(IsBot))]
 public class UserTelegramModelDB : UserTelegramViewModel
 {
-    /// <summary>
-    /// Messages
-    /// </summary>
+    /// <inheritdoc/>
     public List<MessageTelegramModelDB>? Messages { get; set; }
 
-    /// <summary>
-    /// ChatsJoins
-    /// </summary>
-    public List<JoinUserChatModelDB>? ChatsJoins { get; set; }
+    /// <inheritdoc/>
+    public new List<JoinUserChatModelDB>? ChatsJoins { get; set; }
 
-    /// <summary>
-    /// UserRoles
-    /// </summary>
-    public List<RoleUserTelegramModelDB>? UserRoles { get; set; }
+    /// <inheritdoc/>
+    public new List<RoleUserTelegramModelDB>? UserRoles { get; set; }
 }

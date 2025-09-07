@@ -377,4 +377,37 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
 
         return res;
     }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> UserTelegramPermissionUpdateAsync(UserTelegramPermissionSetModel req, CancellationToken token = default)
+    {
+        using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync(token);
+        RoleUserTelegramModelDB[] rolesForUserDb = await context.RolesUsers
+            .Where(x => x.UserId == req.UserId)
+            .ToArrayAsync(cancellationToken: token);
+
+        if (req.Roles is null || req.Roles.Length == 0)
+        {
+            if (rolesForUserDb.Length == 0)
+                return ResponseBaseModel.CreateInfo("Roles for user is empty");
+
+            context.RolesUsers.RemoveRange(rolesForUserDb);
+
+            return ResponseBaseModel.CreateSuccess($"Removed - {await context.SaveChangesAsync(token)} items");
+        }
+
+        IQueryable<RoleUserTelegramModelDB> rq = rolesForUserDb
+            .Where(x => !req.Roles.Any(y => y == x.Role))
+            .AsQueryable();
+
+        if (rq.Any())
+            context.RolesUsers.RemoveRange([.. rq]);
+
+        rq = req.Roles.Select(x => new RoleUserTelegramModelDB() { Role = x, UserId = req.UserId }).AsQueryable();
+        if (rq.Any())
+            await context.RolesUsers.AddRangeAsync([.. rq], cancellationToken: token);
+
+        await context.SaveChangesAsync(token);
+        return ResponseBaseModel.CreateSuccess($"Ok - `{nameof(UserTelegramPermissionUpdateAsync)}`");
+    }
 }

@@ -9,7 +9,7 @@ using StockSharpDriver;
 namespace Transmission.Receives.telegram;
 
 /// <summary>
-/// Отправить сообщение пользователю через TelegramBot SendTextMessageTelegramBotModel
+/// Отправить сообщение пользователю через TelegramBot
 /// </summary>
 public class SendTextMessageTelegramReceive(ITelegramBotService tgRepo, ILogger<SendTextMessageTelegramReceive> _logger)
     : IMQTTReceive<SendTextMessageTelegramBotModel?, TResponseModel<MessageComplexIdsModel>?>

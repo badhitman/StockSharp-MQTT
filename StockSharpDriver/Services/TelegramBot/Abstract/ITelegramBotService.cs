@@ -11,38 +11,27 @@ namespace StockSharpDriver;
 /// </summary>
 public interface ITelegramBotService : ITelegramBotStandardService
 {
-    /// <summary>
-    /// ChatsFindForUserTelegram
-    /// </summary>
+    /// <inheritdoc/>
+    public Task<ResponseBaseModel> UserTelegramPermissionUpdateAsync(UserTelegramPermissionSetModel req, CancellationToken token = default);
+
+    /// <inheritdoc/>
     public Task<List<ChatTelegramModelDB>> ChatsFindForUserTelegramAsync(long[] req, CancellationToken token = default);
 
-    /// <summary>
-    /// ChatsReadTelegram
-    /// </summary>
+    /// <inheritdoc/>
     public Task<List<ChatTelegramModelDB>> ChatsReadTelegramAsync(long[] req, CancellationToken token = default);
 
-    /// <summary>
-    /// ChatsSelectTelegram
-    /// </summary>
+    /// <inheritdoc/>
     public Task<TPaginationResponseModel<ChatTelegramModelDB>> ChatsSelectTelegramAsync(TPaginationRequestStandardModel<string?> req, CancellationToken token = default);
 
-    /// <summary>
-    /// ChatTelegramRead
-    /// </summary>
+    /// <inheritdoc/>
     public Task<ChatTelegramModelDB> ChatTelegramReadAsync(int chatId, CancellationToken token = default);
 
-    /// <summary>
-    /// ForwardMessageTelegram
-    /// </summary>
+    /// <inheritdoc/>
     public Task<TResponseModel<MessageComplexIdsModel>> ForwardMessageTelegramAsync(ForwardMessageTelegramBotModel req, CancellationToken token = default);
 
-    /// <summary>
-    /// GetFileTelegram
-    /// </summary>
+    /// <inheritdoc/>
     public Task<TResponseModel<byte[]>> GetFileTelegramAsync(string req, CancellationToken token = default);
 
-    /// <summary>
-    /// MessagesSelectTelegram
-    /// </summary>
+    /// <inheritdoc/>
     public Task<TPaginationResponseModel<MessageTelegramModelDB>> MessagesSelectTelegramAsync(TPaginationRequestStandardModel<SearchMessagesChatModel> req, CancellationToken token = default);
 }
