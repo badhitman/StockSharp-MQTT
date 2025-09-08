@@ -403,11 +403,18 @@ public class TelegramBotServiceImplement(ILogger<TelegramBotServiceImplement> _l
         if (rq.Any())
             context.RolesUsers.RemoveRange([.. rq]);
 
-        rq = req.Roles.Select(x => new RoleUserTelegramModelDB() { Role = x, UserId = req.UserId }).AsQueryable();
+        rq = req.Roles.Where(x => !rolesForUserDb.Any(y => y.Role == x)).Select(x => new RoleUserTelegramModelDB() { Role = x, UserId = req.UserId }).AsQueryable();
         if (rq.Any())
             await context.RolesUsers.AddRangeAsync([.. rq], cancellationToken: token);
 
         await context.SaveChangesAsync(token);
         return ResponseBaseModel.CreateSuccess($"Ok - `{nameof(UserTelegramPermissionUpdateAsync)}`");
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<UserTelegramModelDB>> UsersReadTelegramAsync(int[] req, CancellationToken token = default)
+    {
+        using TelegramBotAppContext context = await tgDbFactory.CreateDbContextAsync(token);
+        return await context.Users.Where(x => req.Contains(x.Id)).Include(x => x.UserRoles).ToListAsync(cancellationToken: token);
     }
 }
