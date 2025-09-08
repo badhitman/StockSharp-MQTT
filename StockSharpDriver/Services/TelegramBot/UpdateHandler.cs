@@ -108,7 +108,6 @@ public class UpdateHandler(ITelegramBotClient botClient,
 
 
     #region Inline Mode
-
     async Task BotOnInlineQueryReceived(InlineQuery inlineQuery, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Received inline query from: {InlineQueryFromId}", inlineQuery.From.Id);
@@ -138,7 +137,6 @@ public class UpdateHandler(ITelegramBotClient botClient,
             text: $"You chose result with Id: {chosenInlineResult.ResultId}",
             cancellationToken: cancellationToken);
     }
-
     #endregion
 
 #pragma warning disable IDE0060 // Remove unused parameter
