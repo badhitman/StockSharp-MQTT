@@ -2,7 +2,6 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using Newtonsoft.Json;
 using SharedLib;
 using StockSharpDriver;
 
@@ -11,7 +10,7 @@ namespace Transmission.Receives.telegram;
 /// <summary>
 /// UsersReadTelegramReceive
 /// </summary>
-public class UsersReadTelegramReceive(ITelegramBotService tgRepo, ILogger<UsersReadTelegramReceive> _logger)
+public class UsersReadTelegramReceive(ITelegramBotService tgRepo)
     : IMQTTReceive<int[]?, List<UserTelegramModelDB>?>
 {
     /// <inheritdoc/>
@@ -21,7 +20,6 @@ public class UsersReadTelegramReceive(ITelegramBotService tgRepo, ILogger<UsersR
     public async Task<List<UserTelegramModelDB>?> ResponseHandleActionAsync(int[]? req, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(req);
-        _logger.LogInformation($"call `{GetType().Name}`: {JsonConvert.SerializeObject(req)}");
         return await tgRepo.UsersReadTelegramAsync(req, token);
     }
 }
