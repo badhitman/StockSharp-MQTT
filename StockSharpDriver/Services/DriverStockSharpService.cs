@@ -131,7 +131,6 @@ public class DriverStockSharpService(
     public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
     {
         ResponseSimpleModel res = new();
-
         if (StrategyStarted)
         {
             res.AddError($"{nameof(StrategyStarted)}! Stop strategy for initial load");
@@ -139,7 +138,6 @@ public class DriverStockSharpService(
         }
 
         TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-
         if (resInstruments.Response is null || resInstruments.Response.Count == 0)
         {
             res.AddError($"The instruments are not configured.");
@@ -152,7 +150,7 @@ public class DriverStockSharpService(
                   Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
                   Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
                   Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
-                  Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteSmallStrategyOfferVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume, 2000, cancellationToken)),
                   Task.Run(async () => {
                     int[]? _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
                     if(_boardsFilter is not null && _boardsFilter.Length != 0)
@@ -390,9 +388,11 @@ public class DriverStockSharpService(
         if (_ac.ConnectionState != ConnectionStatesEnum.Connected)
             return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState?.DescriptionInfo()})");
 
-        await ClearStrategy(cancellationToken);
+        await Task.WhenAll([
+                Task.Run(async () => await ClearStrategy(cancellationToken), cancellationToken),
+                Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken))
+            ]);
 
-        ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken);
         if (string.IsNullOrWhiteSpace(ProgramDataPath))
             return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
 
@@ -704,7 +704,7 @@ public class DriverStockSharpService(
 
 
     /// <inheritdoc/>
-    public async Task ReadDashboard(int[] instrumentsIds, CancellationToken cancellationToken = default)
+    async Task ReadDashboard(int[] instrumentsIds, CancellationToken cancellationToken = default)
     {
         lock (StrategyTrades)
         {
@@ -717,7 +717,8 @@ public class DriverStockSharpService(
             OwnersPrimaryKeys = instrumentsIds,
         };
 
-        FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo.FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
+        FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo
+            .FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
 
         if (findStorageRows.Length == 0)
             return;
@@ -1030,11 +1031,11 @@ public class DriverStockSharpService(
         }
     }
 
-    void OnDatabaseChanged(object source, FileSystemEventArgs a)
+    async void OnDatabaseChanged(object source, FileSystemEventArgs a)
     {
         string msg = $"call > {nameof(OnDatabaseChanged)}: {a.Name}", headTitle = $"{fileWatcher.GetType().Name}.{nameof(fileWatcher.Changed)}";
         _logger.LogWarning(msg);
-        eventTrans.ToastClientShow(new()
+        await eventTrans.ToastClientShow(new()
         {
             HeadTitle = headTitle,
             TypeMessage = MessagesTypesEnum.Info,
@@ -1045,7 +1046,7 @@ public class DriverStockSharpService(
         {
             msg = $"Curve is null";
             _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 TypeMessage = MessagesTypesEnum.Error,
@@ -1057,7 +1058,7 @@ public class DriverStockSharpService(
         {
             msg = $"string.IsNullOrWhiteSpace(ProgramDataPath)";
             _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 TypeMessage = MessagesTypesEnum.Error,
@@ -1069,7 +1070,7 @@ public class DriverStockSharpService(
         {
             msg = $"!Directory.Exists('{ProgramDataPath}')";
             _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 TypeMessage = MessagesTypesEnum.Error,
@@ -1081,7 +1082,7 @@ public class DriverStockSharpService(
         {
             msg = $"Boards is null || Boards.Count == 0";
             _logger.LogError(msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 TypeMessage = MessagesTypesEnum.Error,
@@ -1097,7 +1098,7 @@ public class DriverStockSharpService(
             {
                 msg = $"Curve.GetCurveFromDb is null";
                 _logger.LogError(msg);
-                eventTrans.ToastClientShow(new()
+                await eventTrans.ToastClientShow(new()
                 {
                     HeadTitle = headTitle,
                     TypeMessage = MessagesTypesEnum.Error,
@@ -1109,7 +1110,7 @@ public class DriverStockSharpService(
             {
                 msg = $"Curve.BondList.Count == 0";
                 _logger.LogError(msg);
-                eventTrans.ToastClientShow(new()
+                await eventTrans.ToastClientShow(new()
                 {
                     HeadTitle = headTitle,
                     TypeMessage = MessagesTypesEnum.Error,
@@ -1149,7 +1150,7 @@ public class DriverStockSharpService(
         {
             msg = $"Error of OnDatabaseChanged for Curve";
             _logger.LogError(ex, msg);
-            eventTrans.ToastClientShow(new()
+            await eventTrans.ToastClientShow(new()
             {
                 HeadTitle = headTitle,
                 TypeMessage = MessagesTypesEnum.Error,
