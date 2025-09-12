@@ -1283,6 +1283,9 @@ public class DriverStockSharpService(
         lowLimit = 0.19m;
         highLimit = 0.25m;
 
+        bondPositionTraded = 0;
+        bondOutOfRangePositionTraded = 0;
+
         await eventTrans.UpdateConnectionHandle(new()
         {
             CanConnect = conLink.Connector.CanConnect,
