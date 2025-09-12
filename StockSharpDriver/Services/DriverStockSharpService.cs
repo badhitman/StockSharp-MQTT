@@ -44,7 +44,6 @@ public class DriverStockSharpService(
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookups = [];
 
     readonly List<MyTrade> myTrades = [];
-    readonly List<long?> TradesList = [];
 
     readonly List<SBond> SBondList = [];
     readonly List<Order> AllOrders = [];
@@ -1074,7 +1073,7 @@ public class DriverStockSharpService(
         {
             foreach (Order order in orders)
             {
-                if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.ContainsIgnoreCase(strategy))
+                if ((!string.IsNullOrEmpty(order.Comment)) && order.Comment.Contains(strategy, StringComparison.OrdinalIgnoreCase))
                     conLink.Connector.CancelOrder(order);
 
                 await eventTrans.ToastClientShow(new()
@@ -1390,9 +1389,9 @@ public class DriverStockSharpService(
         bool isMarketMaker = currentInstrument.Markers?.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.IsMarketMaker) == true;
         if (SbPos is not null && sec is not null)
         {
-            if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && depth.Bids is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
+            if (!_ordersForQuoteBuyReregister.ContainsKey(sec.Code) && depth.Bids is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.Contains("Quote", StringComparison.OrdinalIgnoreCase)) && (s.Security.Code == sec.Code) && (s.Side == Sides.Buy))))
             {
-                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Buy));
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && (s.Comment.Contains("Quote", StringComparison.OrdinalIgnoreCase)) && (s.Side == Sides.Buy));
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
@@ -1483,9 +1482,9 @@ public class DriverStockSharpService(
             }
 
             //only for sell orders
-            if (!_ordersForQuoteSellReregister.ContainsKey(sec.Code) && depth.Asks is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Security.Code == sec.Code) && (s.Side == Sides.Sell))))
+            if (!_ordersForQuoteSellReregister.ContainsKey(sec.Code) && depth.Asks is not null && !AllOrders.Any(s => ((s.State == OrderStates.Pending) && (s.Comment is not null) && (s.Comment.Contains("Quote", StringComparison.OrdinalIgnoreCase)) && (s.Security.Code == sec.Code) && (s.Side == Sides.Sell))))
             {
-                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && (s.Comment.ContainsIgnoreCase("Quote")) && (s.Side == Sides.Sell));
+                IEnumerable<Order> Orders = AllOrders.Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && s.Comment.Contains("Quote", StringComparison.OrdinalIgnoreCase) && (s.Side == Sides.Sell));
 
                 if (Orders.IsEmpty()) //if there is no orders in stakan
                 {
@@ -1638,7 +1637,13 @@ public class DriverStockSharpService(
 
     async void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
-        if (TradesList.Contains(tr.Trade.Id))
+        bool doubleCheck;
+        lock (myTrades)
+        {
+            doubleCheck = myTrades.Any(x => x.Trade.Id == tr.Trade.Id);
+        }
+
+        if (doubleCheck)
         {
             conLink.Connector.AddWarningLog("Trade duplication! Bond name ={0}, size = {1}", tr.Order.Security, tr.Trade.Volume);
             await eventTrans.ToastClientShow(new()
@@ -1647,51 +1652,47 @@ public class DriverStockSharpService(
                 TypeMessage = MessagesTypesEnum.Warning,
                 MessageText = $"Trade duplication! Bond name ={tr.Order.Security}, size = {tr.Trade.Volume}"
             });
+            return;
         }
-        else
+
+        lock (myTrades)
         {
-            lock (myTrades)
-                myTrades.Add(tr);
+            myTrades.Add(tr);
+        }
 
-            await eventTrans.ToastClientShow(new()
-            {
-                HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
-                TypeMessage = MessagesTypesEnum.Success,
-                MessageText = tr.ToString()
-            });
+        await eventTrans.ToastClientShow(new()
+        {
+            HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
+            TypeMessage = MessagesTypesEnum.Success,
+            MessageText = tr.ToString()
+        });
 
-            lock (TradesList)
+        if (!string.IsNullOrWhiteSpace(tr.Order.Comment) && tr.Order.Comment.Contains("Quote", StringComparison.OrdinalIgnoreCase))
+        {
+            SecurityPosition? SbPos = SBondPositionsList.FirstOrDefault(sb => (sb.Sec.Code == tr.Order.Security.Code));
+            if (SbPos is not null)
             {
-                TradesList.Add(tr.Trade.Id);
-            }
-
-            if (!string.IsNullOrWhiteSpace(tr.Order.Comment) && tr.Order.Comment.ContainsIgnoreCase("Quote"))
-            {
-                SecurityPosition? SbPos = SBondPositionsList.FirstOrDefault(sb => (sb.Sec.Code == tr.Order.Security.Code));
-                if (SbPos is not null)
+                if (tr.Order.Side == Sides.Buy)
                 {
-                    if (tr.Order.Side == Sides.Buy)
-                    {
-                        SbPos.Position += tr.Trade.Volume;
-                        SbPos.Offset -= 0.5m * tr.Trade.Volume / SbPos.BidVolume * SbPos.LowLimit;
-                    }
-                    else
-                    {
-                        SbPos.Position -= tr.Trade.Volume;
-                        SbPos.Offset += 0.5m * tr.Trade.Volume / SbPos.OfferVolume * SbPos.LowLimit;
-                    }
-
-                    bondPositionTraded += Math.Abs(tr.Trade.Volume);
-
-                    conLink.Connector.AddWarningLog("New trade done in bond name ={0}, size = {1}", tr.Order.Security, tr.Trade.Volume);
-
-                    Subscription? sub = conLink.Connector
-                        .FindSubscriptions(tr.Order.Security, DataType.MarketDepth)
-                        .FirstOrDefault(s => s.SubscriptionMessage.To == null && s.State.IsActive());
-
-                    if (sub != null)
-                        OrderBookReceivedHandle(sub, OderBookList[tr.Order.Security]);
+                    SbPos.Position += tr.Trade.Volume;
+                    SbPos.Offset -= 0.5m * tr.Trade.Volume / SbPos.BidVolume * SbPos.LowLimit;
                 }
+                else
+                {
+                    SbPos.Position -= tr.Trade.Volume;
+                    SbPos.Offset += 0.5m * tr.Trade.Volume / SbPos.OfferVolume * SbPos.LowLimit;
+                }
+
+                bondPositionTraded += Math.Abs(tr.Trade.Volume);
+
+                conLink.Connector.AddWarningLog("New trade done in bond name ={0}, size = {1}", tr.Order.Security, tr.Trade.Volume);
+
+                Subscription? sub = conLink.Connector
+                    .FindSubscriptions(tr.Order.Security, DataType.MarketDepth)
+                    .FirstOrDefault(s => s.SubscriptionMessage.To == null && s.State.IsActive());
+
+                if (sub != null)
+                    OrderBookReceivedHandle(sub, OderBookList[tr.Order.Security]);
             }
 
             if ((!string.IsNullOrWhiteSpace(tr.Order.Comment)) && (tr.Order.Comment.Contains("OfR", StringComparison.OrdinalIgnoreCase)))
@@ -1762,7 +1763,7 @@ public class DriverStockSharpService(
             return;
 
         IEnumerable<Order> Orders = [.. AllOrders
-            .Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && s.Comment.ContainsIgnoreCase("Ofr"))];
+            .Where(s => (s.State == OrderStates.Active) && (s.Security.Code == sec.Code) && (s.Comment is not null) && s.Comment.Contains("Ofr", StringComparison.OrdinalIgnoreCase))];
 
         if (!Orders.Any() && (Orders.Count() > 4))
             return;
