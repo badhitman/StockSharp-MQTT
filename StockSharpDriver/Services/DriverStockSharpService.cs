@@ -111,8 +111,6 @@ public class DriverStockSharpService(
 
     decimal
         bondPositionTraded,
-        bondSizePositionTraded,
-        bondSmallPositionTraded,
         bondOutOfRangePositionTraded;
 
     /// <summary>
@@ -501,7 +499,7 @@ public class DriverStockSharpService(
             await Task.WhenAll(tasksMaster);
             await Task.WhenAll(tasksSlave);
         }
-        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        await eventTrans.UpdateConnectionHandle(new()
         {
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
@@ -564,7 +562,7 @@ public class DriverStockSharpService(
         lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
         highLimit = Calculation(highLimit, req.Operator, req.Operand);
 
-        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        await eventTrans.UpdateConnectionHandle(new()
         {
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
@@ -713,8 +711,8 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
     {
-        await ClearStrategy(cancellationToken);
         fileWatcher.Changed -= OnDatabaseChanged;
+        await ClearStrategy(cancellationToken);
         return ResponseBaseModel.CreateInfo("Ok");
     }
 
@@ -1046,7 +1044,7 @@ public class DriverStockSharpService(
         conLink.Connector = new();
         RegisterEvents();
 
-        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        await eventTrans.UpdateConnectionHandle(new()
         {
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
@@ -1266,7 +1264,7 @@ public class DriverStockSharpService(
         lowLimit = 0.19m;
         highLimit = 0.25m;
 
-        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        await eventTrans.UpdateConnectionHandle(new()
         {
             CanConnect = conLink.Connector.CanConnect,
             ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
