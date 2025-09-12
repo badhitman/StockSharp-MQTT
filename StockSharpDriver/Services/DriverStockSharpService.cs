@@ -33,26 +33,20 @@ public class DriverStockSharpService(
     Portfolio? PortfolioCurrent;
 
     readonly List<BoardStockSharpMetaModel> BoardsCurrent = [];
-    bool BoardsCurrentAny()
-    {
-        lock (BoardsCurrent)
-            return BoardsCurrent.Count != 0;
-    }
+    bool BoardsCurrentAny() { lock (BoardsCurrent) return BoardsCurrent.Count != 0; }
+
+    readonly List<DashboardTradeStockSharpModel> StrategyTrades = [];
+    bool StrategyTradesAny() { lock (StrategyTrades) return StrategyTrades.Count != 0; }
+
+    readonly List<Security> AllSecurities = [];
 
     readonly List<Subscription> SecurityCriteriaCodeFilterSubscriptions = [];
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookups = [];
 
-    readonly List<DashboardTradeStockSharpModel> StrategyTrades = [];
-    bool StrategyTradesAny()
-    {
-        lock (StrategyTrades)
-            return StrategyTrades.Count != 0;
-    }
-
-    readonly List<Security> AllSecurities = [];
     readonly List<MyTrade> myTrades = [];
-    readonly List<SBond> SBondList = [];
     readonly List<long?> TradesList = [];
+
+    readonly List<SBond> SBondList = [];
     readonly List<Order> AllOrders = [];
 
     readonly List<Subscription> MarketDepthSubscriptions = [];
@@ -114,6 +108,12 @@ public class DriverStockSharpService(
     const decimal
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
+
+    decimal
+        bondPositionTraded,
+        bondSizePositionTraded,
+        bondSmallPositionTraded,
+        bondOutOfRangePositionTraded;
 
     /// <summary>
     /// Get securities for current Dashboard
@@ -283,7 +283,9 @@ public class DriverStockSharpService(
         }
 
         lock (SecuritiesCriteriaCodesFilterLookups)
+        {
             SecuritiesCriteriaCodesFilterLookups.Clear();
+        }
 
         UnregisterEvents();
         conLink.Connector.Disconnect();
@@ -410,8 +412,10 @@ public class DriverStockSharpService(
             tradeDashboard.WorkingVolume = (long)quoteStrategyVolume;
             tradeDashboard.SmallOffset = 0;
             tradeDashboard.Offset = 0;
-
-            SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
+            lock (SBondList)
+            {
+                SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
+            }
 
             if (SBnd is not null)
             {
@@ -890,7 +894,11 @@ public class DriverStockSharpService(
 
         CurveCurrent.BondList.ForEach(bnd =>
         {
-            SBond? SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
+            SBond? SBnd;
+            lock (SBondList)
+            {
+                SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
+            }
 
             if (SBnd is not null)
             {
@@ -1632,15 +1640,87 @@ public class DriverStockSharpService(
 
     async void OwnTradeReceivedHandle(Subscription subscription, MyTrade tr)
     {
-        lock (myTrades)
-            myTrades.Add(tr);
-
-        await eventTrans.ToastClientShow(new()
+        if (TradesList.Contains(tr.Trade.Id))
         {
-            HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
-            TypeMessage = MessagesTypesEnum.Success,
-            MessageText = tr.ToString()
-        });
+            conLink.Connector.AddWarningLog("Trade duplication! Bond name ={0}, size = {1}", tr.Order.Security, tr.Trade.Volume);
+            await eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
+                TypeMessage = MessagesTypesEnum.Warning,
+                MessageText = $"Trade duplication! Bond name ={tr.Order.Security}, size = {tr.Trade.Volume}"
+            });
+        }
+        else
+        {
+            lock (myTrades)
+                myTrades.Add(tr);
+
+            await eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
+                TypeMessage = MessagesTypesEnum.Success,
+                MessageText = tr.ToString()
+            });
+
+            lock (TradesList)
+            {
+                TradesList.Add(tr.Trade.Id);
+            }
+
+            if (!string.IsNullOrWhiteSpace(tr.Order.Comment) && tr.Order.Comment.ContainsIgnoreCase("Quote"))
+            {
+                SecurityPosition? SbPos = SBondPositionsList.FirstOrDefault(sb => (sb.Sec.Code == tr.Order.Security.Code));
+                if (SbPos is not null)
+                {
+                    if (tr.Order.Side == Sides.Buy)
+                    {
+                        SbPos.Position += tr.Trade.Volume;
+                        SbPos.Offset -= 0.5m * tr.Trade.Volume / SbPos.BidVolume * SbPos.LowLimit;
+                    }
+                    else
+                    {
+                        SbPos.Position -= tr.Trade.Volume;
+                        SbPos.Offset += 0.5m * tr.Trade.Volume / SbPos.OfferVolume * SbPos.LowLimit;
+                    }
+
+                    bondPositionTraded += Math.Abs(tr.Trade.Volume);
+
+                    conLink.Connector.AddWarningLog("New trade done in bond name ={0}, size = {1}", tr.Order.Security, tr.Trade.Volume);
+
+                    Subscription? sub = conLink.Connector
+                        .FindSubscriptions(tr.Order.Security, DataType.MarketDepth)
+                        .FirstOrDefault(s => s.SubscriptionMessage.To == null && s.State.IsActive());
+
+                    if (sub != null)
+                        OrderBookReceivedHandle(sub, OderBookList[tr.Order.Security]);
+                }
+            }
+
+            if ((!string.IsNullOrWhiteSpace(tr.Order.Comment)) && (tr.Order.Comment.Contains("OfR", StringComparison.OrdinalIgnoreCase)))
+            {
+                bondOutOfRangePositionTraded += Math.Abs(tr.Trade.Volume);
+                conLink.Connector.AddWarningLog("New trade done in bond name (OfrStrategy) ={0}, size = {1}", tr.Order.Security, tr.Trade.Volume);
+                await eventTrans.ToastClientShow(new()
+                {
+                    HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
+                    TypeMessage = MessagesTypesEnum.Warning,
+                    MessageText = $"New trade done in bond name (OfrStrategy) ={tr.Order.Security}, size = {tr.Trade.Volume}"
+                });
+            }
+        }
+
+        if (bondPositionTraded >= 100000 || bondOutOfRangePositionTraded >= 100000)
+        {
+            conLink.Connector.AddWarningLog("Program suspended because of limit trade reached");
+            await eventTrans.ToastClientShow(new()
+            {
+                HeadTitle = nameof(conLink.Connector.OwnTradeReceived),
+                TypeMessage = MessagesTypesEnum.Warning,
+                MessageText = $"Limit reached!"
+            });
+
+            await StopStrategy(new());
+        }
     }
 
     async void OrderBookReceivedHandle(Subscription subscription, IOrderBookMessage orderBM)
