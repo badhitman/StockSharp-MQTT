@@ -2,18 +2,18 @@
 // © https://github.com/badhitman - @FakeGov 
 ////////////////////////////////////////////////
 
-using Ecng.Collections;
-using Ecng.Common;
-using Ecng.Logging;
-using Newtonsoft.Json;
-using SharedLib;
-using StockSharp.Algo;
+using System.Text.RegularExpressions;
 using StockSharp.BusinessEntities;
 using StockSharp.Fix.Quik.Lua;
 using StockSharp.Messages;
-using System.Net;
+using Ecng.Collections;
+using Newtonsoft.Json;
+using StockSharp.Algo;
 using System.Security;
-using System.Text.RegularExpressions;
+using Ecng.Logging;
+using Ecng.Common;
+using System.Net;
+using SharedLib;
 
 namespace StockSharpDriver;
 
@@ -31,18 +31,40 @@ public class DriverStockSharpService(
     #region prop`s
     Curve? CurveCurrent;
     Portfolio? PortfolioCurrent;
-    List<BoardStockSharpMetaModel>? BoardsCurrent;
 
-    List<Subscription> SecurityCriteriaCodeFilterSubscriptions = [];
+    readonly List<BoardStockSharpMetaModel> BoardsCurrent = [];
+    bool BoardsCurrentAny()
+    {
+        lock (BoardsCurrent)
+            return BoardsCurrent.Count != 0;
+    }
+
+    readonly List<Subscription> SecurityCriteriaCodeFilterSubscriptions = [];
     readonly List<SecurityLookupMessage> SecuritiesCriteriaCodesFilterLookups = [];
 
     readonly List<DashboardTradeStockSharpModel> StrategyTrades = [];
+    bool StrategyTradesAny()
+    {
+        lock (StrategyTrades)
+            return StrategyTrades.Count != 0;
+    }
+
     readonly List<Security> AllSecurities = [];
     readonly List<MyTrade> myTrades = [];
     readonly List<SBond> SBondList = [];
     readonly List<long?> TradesList = [];
     readonly List<Order> AllOrders = [];
+
     readonly List<Subscription> MarketDepthSubscriptions = [];
+    bool StrategyStarted
+    {
+        get
+        {
+            lock (MarketDepthSubscriptions)
+                return MarketDepthSubscriptions.Count != 0;
+        }
+    }
+
     readonly List<SecurityPosition>
         SBondPositionsList = [],
         SBondSizePositionsList = [],
@@ -93,650 +115,41 @@ public class DriverStockSharpService(
        lowYieldLimit = 4m,
        highYieldLimit = 5m;
 
-    bool StrategyStarted => MarketDepthSubscriptions.Count != 0;
-
+    /// <summary>
+    /// Get securities for current Dashboard
+    /// </summary>
+    /// <param name="ofStrategy">if true - then securities only configured strategy</param>
     List<Security> SecuritiesBonds(bool ofStrategy)
     {
         List<Security> res = [];
 
         lock (AllSecurities)
-        {
             lock (StrategyTrades)
-            {
-                if (ofStrategy && StrategyTrades.Count == 0)
-                    return res;
-
-                foreach (Security security in AllSecurities)
+                lock (BoardsCurrent)
                 {
-                    BoardStockSharpModel _bo = new BoardStockSharpModel().Bind(security.Board);
-                    if (ofStrategy)
+                    foreach (Security security in AllSecurities)
                     {
-                        if (StrategyTrades.Any(x => x.Code == security.Code) && (BoardsCurrent is null || BoardsCurrent.Count == 0 || BoardsCurrent.Any(x => x.Equals(_bo))))
-                            res.Add(security);
-                    }
-                    else
-                    {
-                        if (BoardsCurrent is null || BoardsCurrent.Count == 0 || BoardsCurrent.Any(x => x.Equals(_bo)))
-                            res.Add(security);
+                        if (!BoardsCurrent.Any(x => x.Equals(new BoardStockSharpModel().Bind(security.Board))))
+                            continue;
+
+                        if (ofStrategy && !StrategyTrades.Any(x => x.Code == security.Code))
+                            continue;
+
+                        res.Add(security);
                     }
                 }
-            }
-        }
-
         return res;
     }
     #endregion
 
     /// <inheritdoc/>
-    public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
-    {
-        ResponseSimpleModel res = new();
-        if (StrategyStarted)
-        {
-            res.AddError($"{nameof(StrategyStarted)}! Stop strategy for initial load");
-            return res;
-        }
-
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-        {
-            res.AddError($"The instruments are not configured.");
-            return res;
-        }
-
-        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
-        List<Task> tasks = [
-                  Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
-                  Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
-                  Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
-                  Task.Run(async () => quoteSmallStrategyOfferVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume, 2000, cancellationToken)),
-                  Task.Run(async () => {
-                    int[]? _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
-                    if(_boardsFilter is not null && _boardsFilter.Length != 0)
-                    {
-                        TResponseModel<List<BoardStockSharpMetaModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
-                        BoardsCurrent = boardDb.Response;
-                    }
-                  }, cancellationToken),
-        ];
-
-        if (!StrategyStarted || string.IsNullOrWhiteSpace(ProgramDataPath))
-            tasks.Add(Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken)));
-
-        await Task.WhenAll(tasks);
-
-        if (string.IsNullOrWhiteSpace(ProgramDataPath))
-        {
-            res.AddError($"set: {nameof(ProgramDataPath)} for load Curve data!");
-            return res;
-        }
-
-        if (!Directory.Exists(ProgramDataPath))
-        {
-            res.AddError($"Directory ({nameof(ProgramDataPath)}): {ProgramDataPath} not Exists");
-            return res;
-        }
-
-        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
-        {
-            res.AddError($"Board is null");
-            return res;
-        }
-
-        SBond? SBnd;
-        DateTime curDate;
-        decimal BndPrice = 0;
-
-        List<Security> currBonds = SecuritiesBonds(false);
-        if (!currBonds.Any())
-        {
-            res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
-            return res;
-        }
-        DateTime _gnvd = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
-        CurveCurrent = new Curve(_gnvd);
-        res.Response = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, req.BigPriceDifferences, ref eventTrans);
-        if (!string.IsNullOrWhiteSpace(res.Response))
-            return res;
-
-        if (CurveCurrent.BondList.Count == 0)
-        {
-            res.AddError("OfzCurve.Length == 0");
-            return res;
-        }
-
-        curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
-        List<Task> tasksMaster = [], tasksSlave = [];
-        currBonds.ForEach(security =>
-        {
-            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
-            DashboardTradeStockSharpModel tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
-
-            SBnd = CurveCurrent.GetNode(_sec);
-
-            if (SBnd is not null)
-                BndPrice = SBnd.ModelPrice;
-
-            tradeDashboard.BasePrice = BndPrice;
-            tradeDashboard.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
-            tradeDashboard.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
-            tradeDashboard.WorkingVolume = (long)quoteStrategyVolume;
-            tradeDashboard.SmallOffset = 0;
-            tradeDashboard.Offset = 0;
-
-            SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
-
-            if (SBnd is not null)
-            {
-                decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
-                if (yield > 0) //Regular bonds
-                {
-                    tradeDashboard.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
-
-                    if (tradeDashboard.LowLimit < 9)
-                        tradeDashboard.LowLimit = 9;
-                    if (tradeDashboard.LowLimit > lowLimit * 100)
-                        tradeDashboard.LowLimit = (int)(lowLimit * 100);
-
-                    tradeDashboard.HightLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
-
-                    if (tradeDashboard.HightLimit < 11)
-                        tradeDashboard.HightLimit = 11;
-                    if (tradeDashboard.HightLimit > highLimit * 100)
-                        tradeDashboard.HightLimit = (int)(highLimit * 100);
-
-                    if ((SBnd.Maturity - curDate).Days < 400)
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                    else if ((SBnd.Maturity - curDate).Days < 1100)
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                    else if ((SBnd.Maturity - curDate).Days < 1500)
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                    else
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                }
-                else
-                {
-                    if (_instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
-                    {
-                        if ((SBnd.Maturity - curDate).Days < 300)
-                        {
-                            tradeDashboard.WorkingVolume = 1000;
-                            tradeDashboard.LowLimit = (int)(lowLimit * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit * 100);
-                        }
-                        else
-                        {
-                            tradeDashboard.WorkingVolume = 1000;
-                            tradeDashboard.LowLimit = (int)(lowLimit * 2 * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit * 2 * 100);
-                        }
-                    }
-                    else
-                    {
-                        if ((SBnd.Maturity - curDate).Days < 500)
-                        {
-                            tradeDashboard.WorkingVolume = 2000;
-                            tradeDashboard.LowLimit = (int)(lowLimit / 2 * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit / 2 * 100);
-                        }
-                        else if ((SBnd.Maturity - curDate).Days < 2000)
-                        {
-                            tradeDashboard.WorkingVolume = 2000;
-                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
-                        }
-                        else
-                        {
-                            tradeDashboard.WorkingVolume = 2000;
-                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                tradeDashboard.LowLimit = (int)(lowLimit * 100);
-                tradeDashboard.HightLimit = (int)(highLimit * 100);
-            }
-
-            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
-            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
-        });
-
-        if (tasksMaster.Count != 0)
-        {
-            res.AddInfo($"Updated items (strategies): {tasksMaster.Count}");
-            await Task.WhenAll(tasksMaster);
-            await Task.WhenAll(tasksSlave);
-        }
-        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
-        {
-            CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
-        }, cancellationToken);
-        res.AddInfo("Data loaded!!!");
-        return res;
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
-    {
-        static decimal Calculation(decimal L, OperatorsEnum op, decimal R)
-        {
-            return op switch
-            {
-                OperatorsEnum.Multiplication => L * R,
-                OperatorsEnum.Dividing => L / R,
-                OperatorsEnum.Plus => L + R,
-                OperatorsEnum.Minus => L - R,
-                _ => throw new NotImplementedException(),
-            };
-        }
-
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-
-        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-            return ResponseBaseModel.CreateError($"The instruments are not configured.");
-
-        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
-        if (StrategyTrades.Count == 0)
-            return ResponseBaseModel.CreateError("Dashboard - not set");
-
-        ResponseBaseModel res = new();
-        List<Task> tasksMaster = [], tasksSlave = [];
-        List<Security> sbs = SecuritiesBonds(true);
-        sbs.ForEach(security =>
-        {
-            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
-            DashboardTradeStockSharpModel tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
-
-            tradeDashboard.LowLimit = Calculation(tradeDashboard.LowLimit, req.Operator, req.Operand);
-            tradeDashboard.HightLimit = Calculation(tradeDashboard.HightLimit, req.Operator, req.Operand);
-
-            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
-            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
-        });
-
-        if (tasksMaster.Count != 0)
-        {
-            res.AddInfo($"Updated items (strategies): {tasksMaster.Count}");
-            await Task.WhenAll(tasksMaster);
-            await Task.WhenAll(tasksSlave);
-        }
-
-        lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
-        highLimit = Calculation(highLimit, req.Operator, req.Operand);
-
-        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
-        {
-            CanConnect = conLink.Connector.CanConnect,
-            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
-        }, cancellationToken);
-
-        return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
-    {
-        AboutConnectResponseModel _ac = await AboutConnection(cancellationToken: cancellationToken);
-        if (_ac.ConnectionState != ConnectionStatesEnum.Connected)
-            return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState?.DescriptionInfo()})");
-
-        await Task.WhenAll([
-                Task.Run(async () => await ClearStrategy(cancellationToken), cancellationToken),
-                Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken))
-            ]);
-
-        if (string.IsNullOrWhiteSpace(ProgramDataPath))
-            return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
-
-        if (!Directory.Exists(ProgramDataPath))
-            return ResponseBaseModel.CreateError($"Directory [{nameof(ProgramDataPath)}] - not exists");
-
-        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
-            return ResponseBaseModel.CreateError("Board - not set");
-
-        if (req.SelectedPortfolio is null)
-            return ResponseBaseModel.CreateError("Portfolio - not set");
-
-        PortfolioCurrent = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.SelectedPortfolio.ClientCode);
-
-        if (PortfolioCurrent is null)
-        {
-            await ClearStrategy(cancellationToken);
-            return ResponseBaseModel.CreateError($"Portfolio #{req.SelectedPortfolio.ClientCode} - not found");
-        }
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-
-        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-            return ResponseBaseModel.CreateError($"The instruments are not configured.");
-
-        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
-        if (StrategyTrades.Count == 0)
-            return ResponseBaseModel.CreateError("Dashboard - not set");
-
-        List<Security> bl = SecuritiesBonds(true);
-        if (!bl.Any())
-            return ResponseBaseModel.CreateError("BondList - not any");
-        ResponseBaseModel response = new();
-
-        void securityHandleAction(Security security)
-        {
-            DashboardTradeStockSharpModel[] tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
-            string msg;
-
-            if (tryFindStrategy.Length == 0)
-            {
-                msg = $"strategy #{security.Code} not found in BondList ({bl.Count} items)";
-                response.AddError(msg);
-                _logger.LogError(msg);
-                return;
-            }
-            if (tryFindStrategy.Length != 1)
-            {
-                msg = $"strategy #{security.Code} DOUBLE`s ({tryFindStrategy.Length}) found in BondList ({bl.Count} items)";
-                response.AddError(msg);
-                _logger.LogError(msg);
-                return;
-            }
-            DashboardTradeStockSharpModel currentStrategy = tryFindStrategy[0];
-
-            InstrumentTradeStockSharpViewModel[] tryFindInstrument = [.. resInstruments.Response.Where(x => x.Id == currentStrategy.Id)];
-            if (tryFindInstrument.Length == 0)
-            {
-                msg = $"instrument #{currentStrategy.Id} not found in BondList ({bl.Count} items)";
-                response.AddError(msg);
-                _logger.LogError(msg);
-                return;
-            }
-            if (tryFindInstrument.Length != 1)
-            {
-                msg = $"instrument #{currentStrategy.Id} DOUBLE`s ({tryFindInstrument.Length}) found ({resInstruments.Response.Count} items)";
-                response.AddError(msg);
-                _logger.LogError(msg);
-                return;
-            }
-            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.Offset / 100));
-
-            if (currentStrategy.IsSmall)
-                SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
-
-            if (tryFindInstrument[0].Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
-                SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-        }
-        bl.ForEach(securityHandleAction);
-
-        if (!response.Success())
-        {
-            await ClearStrategy(cancellationToken);
-            return response;
-        }
-
-        if (CurveCurrent is null || CurveCurrent.BondList.Count == 0)
-        {
-            await ClearStrategy(cancellationToken);
-            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
-        }
-
-        lock (MarketDepthSubscriptions)
-        {
-            MarketDepthSubscriptions.Clear();
-            bl.ForEach(RegisterMarketDepth);
-        }
-        void RegisterMarketDepth(Security security)
-        {
-            Subscription depthSubscription = new(DataType.MarketDepth, security);
-            conLink.Connector.Subscribe(depthSubscription);
-            MarketDepthSubscriptions.Add(depthSubscription);
-        }
-        conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
-
-        lock (_ordersForQuoteBuyReregister)
-            _ordersForQuoteBuyReregister.Clear();
-        lock (_ordersForQuoteSellReregister)
-            _ordersForQuoteSellReregister.Clear();
-
-        fileWatcher.Path = ProgramDataPath;
-        fileWatcher.NotifyFilter = NotifyFilters.LastWrite;
-        fileWatcher.Filter = "RedArrowData.db";
-        fileWatcher.Changed += OnDatabaseChanged;
-        fileWatcher.EnableRaisingEvents = true;
-
-        return ResponseBaseModel.CreateInfo("Ok");
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
-    {
-        await ClearStrategy(cancellationToken);
-        fileWatcher.Changed -= OnDatabaseChanged;
-        return ResponseBaseModel.CreateInfo("Ok");
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
-    {
-        List<Security> currentSecurities = SecuritiesBonds(true);
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await dataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
-
-        InstrumentTradeStockSharpViewModel? currInstrument = readInstrument.Response?.FirstOrDefault(x => x.Id == req.InstrumentId);
-        if (currInstrument is null)
-            return ResponseBaseModel.CreateError("current instrument not found");
-
-        SBondPositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
-        SBondSizePositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
-        SBondSmallPositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
-
-        Security currentSecurity = currentSecurities.First(sec => sec.Id == currInstrument.IdRemote);
-        string msg;
-        if (currentSecurity is null)
-        {
-            msg = $"Security - not found for instrument: {JsonConvert.SerializeObject(currInstrument, Formatting.Indented)}";
-            _logger.LogError(msg);
-            return ResponseBaseModel.CreateError(msg);
-        }
-
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-
-        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-            return ResponseBaseModel.CreateError($"The instruments are not configured.");
-
-        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
-        if (StrategyTrades.Count == 0)
-            return ResponseBaseModel.CreateError("Dashboard - not set");
-
-        int _fx = StrategyTrades.FindIndex(x => x.Id == req.InstrumentId);
-        if (_fx < 0)
-            return ResponseBaseModel.CreateError($"Instrument not set strategy: {currInstrument}");
-
-        DashboardTradeStockSharpModel currentStrategy = StrategyTrades[_fx];
-
-        InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
-
-        decimal
-            WorkVol = currentStrategy.WorkingVolume,
-            SmallBidVol = currentStrategy.SmallBidVolume,
-            SmallOfferVol = currentStrategy.SmallOfferVolume,
-            LowLimit = currentStrategy.LowLimit,
-            Highlimit = currentStrategy.HightLimit,
-            SmallOffset = currentStrategy.SmallOffset,
-            Offset = currentStrategy.Offset;
-
-        bool IsSmall = currentStrategy.IsSmall;
-        SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
-
-        if (IsSmall)
-            SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (decimal)(Highlimit - (decimal)0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
-
-        //int[] _dsc = [(int)MarkersInstrumentStockSharpEnum.IsNew];
-
-        SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (decimal)(Highlimit + (decimal)0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-
-        Subscription sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).First();
-        OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
-
-        return ResponseBaseModel.CreateInfo($"`{nameof(ResetStrategy)}` - done");
-    }
-
-    /// <inheritdoc/>
-    public async Task<ResponseBaseModel> ResetAllStrategies(ResetStrategyRequestBaseModel req, CancellationToken cancellationToken = default)
-    {
-        quoteSizeStrategyVolume = req.Size;
-        quoteStrategyVolume = req.Volume;
-
-        DeleteAllQuotesByStrategy("Size");
-        DeleteAllQuotesByStrategy("Small");
-        DeleteAllQuotesByStrategy("Quote");
-
-        lock (SBondPositionsList)
-            SBondPositionsList.Clear();
-        lock (SBondSizePositionsList)
-            SBondSizePositionsList.Clear();
-        lock (SBondSmallPositionsList)
-            SBondSmallPositionsList.Clear();
-
-        List<Security> currentSecurities = SecuritiesBonds(true);
-
-        if (!currentSecurities.Any())
-            return ResponseBaseModel.CreateError("BondList - not any");
-
-        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
-
-        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
-            return ResponseBaseModel.CreateError($"The instruments are not configured.");
-
-        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
-
-        if (StrategyTrades.Count == 0)
-            return ResponseBaseModel.CreateError("Dashboard - not set");
-
-        string msg;
-        foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
-        {
-            int _fx = StrategyTrades.FindIndex(x => x.Id == instrument.Id);
-            if (_fx < 0)
-                return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
-
-            if (StrategyTrades[_fx].ValueOperation < 1)
-                return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
-
-            if (StrategyTrades[_fx].BasePrice < 1)
-                return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
-
-            DashboardTradeStockSharpModel currentStrategy = StrategyTrades[_fx];
-
-            Security? currentSecurity = currentSecurities.FirstOrDefault(x =>
-            x.Code == currentStrategy.Code &&
-            ((x.Currency is null && currentStrategy.Currency is null) || (x.Currency is not null && currentStrategy.Currency is not null && Enum.GetName(typeof(CurrencyTypes), x.Currency) == Enum.GetName(typeof(CurrenciesTypesEnum), currentStrategy.Currency))) &&
-            x.Board.Code == currentStrategy.Board?.Code);
-
-            if (currentSecurity is null)
-            {
-                msg = $"Security - not found for strategy: {JsonConvert.SerializeObject(currentStrategy, Formatting.Indented)}";
-                _logger.LogError(msg);
-                return ResponseBaseModel.CreateError(msg);
-            }
-            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
-            decimal WorkVol = currentStrategy.WorkingVolume;
-            decimal SmallBidVol = currentStrategy.SmallBidVolume;
-            decimal SmallOfferVol = currentStrategy.SmallOfferVolume;
-            decimal LowLimit = currentStrategy.LowLimit;
-            decimal Highlimit = currentStrategy.HightLimit;
-            decimal SmallOffset = currentStrategy.SmallOffset;
-            decimal Offset = currentStrategy.Offset;
-            bool IsSmall = currentStrategy.IsSmall;
-
-            SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", LowLimit / 100,
-             Highlimit / 100, WorkVol, WorkVol, Offset / 100));
-
-            if (IsSmall)
-                SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
-
-            if (!instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
-                SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
-
-            Subscription? sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
-
-            if (sub is not null)
-                OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
-            else
-            {
-                _logger.LogError($"sub is not null");
-                return ResponseBaseModel.CreateError("sub is not null");
-            }
-        }
-        return ResponseBaseModel.CreateInfo($"done: reset for {resInstruments.Response.Count} instruments");
-    }
-
-
-    /// <inheritdoc/>
-    public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
-    {
-        if (CurveCurrent is null)
-            return Task.FromResult(ResponseBaseModel.CreateWarning("OfzCurve is null"));
-
-        _logger.LogWarning($"Curve changed: {req.YieldChange}");
-
-        CurveCurrent.BondList.ForEach(bnd =>
-        {
-            SBond? SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
-
-            if (SBnd is not null)
-            {
-                decimal yield = SBnd.GetYieldForPrice(CurveCurrent.CurveDate, bnd.ModelPrice / 100);
-                if (yield > 0)
-                {
-                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(CurveCurrent.CurveDate, yield + req.YieldChange / 10000, true), 2);
-                }
-            }
-        });
-        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(ShiftCurve)} changed: {req.YieldChange}"));
-    }
-
-
-    /// <inheritdoc/>
-    async Task ReadDashboard(int[] instrumentsIds, CancellationToken cancellationToken = default)
-    {
-        lock (StrategyTrades)
-        {
-            StrategyTrades.Clear();
-        }
-        FindStorageBaseModel _findParametersQuery = new()
-        {
-            ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
-            PropertyName = $"{GlobalStaticConstantsRoutes.Routes.TRADE_CONTROLLER_NAME}-{GlobalStaticConstantsRoutes.Routes.STRATEGY_CONTROLLER_NAME}",
-            OwnersPrimaryKeys = instrumentsIds,
-        };
-
-        FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo
-            .FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
-
-        if (findStorageRows.Length == 0)
-            return;
-
-        List<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = [.. findStorageRows.Where(x => x.PrefixPropertyName == GlobalStaticConstantsRoutes.Routes.BROKER_CONTROLLER_NAME)
-            .GroupBy(x => x.OwnerPrimaryKey)
-            .Where(x => x.Key.HasValue)];
-
-        lock (StrategyTrades)
-        {
-            StrategyTrades.AddRange(_q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)!);
-        }
-    }
-
-    /// <inheritdoc/>
     public async Task<ResponseBaseModel> Connect(ConnectRequestModel req, CancellationToken cancellationToken = default)
     {
-        BoardsCurrent?.Clear();
+        lock (BoardsCurrent)
+        {
+            BoardsCurrent.Clear();
+        }
+
         if (SecuritiesBonds(false).Any())
             return ResponseBaseModel.CreateError($"BondList is not empty!");
 
@@ -876,13 +289,650 @@ public class DriverStockSharpService(
         conLink.Connector.Disconnect();
 
         lock (AllSecurities)
+        {
             AllSecurities.Clear();
+        }
 
         ClientCodeStockSharp = null;
         SecurityCriteriaCodeFilter = null;
         LastConnectedAt = null;
 
         return ResponseBaseModel.CreateInfo("connection closed");
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseSimpleModel> InitialLoad(InitialLoadRequestModel req, CancellationToken cancellationToken = default)
+    {
+        ResponseSimpleModel res = new();
+        if (StrategyStarted)
+        {
+            res.AddError($"{nameof(StrategyStarted)}! Stop strategy for initial load");
+            return res;
+        }
+
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+        {
+            res.AddError($"The instruments are not configured.");
+            return res;
+        }
+
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        List<Task> tasks = [
+                  Task.Run(async () => quoteStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteStrategyVolume, 1000, cancellationToken)),
+                  Task.Run(async () => quoteSizeStrategyVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSizeStrategyVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteSmallStrategyBidVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyBidVolume, 2000, cancellationToken)),
+                  Task.Run(async () => quoteSmallStrategyOfferVolume = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.QuoteSmallStrategyOfferVolume, 2000, cancellationToken)),
+                  Task.Run(async () => {
+                    int[]? _boardsFilter = await storageRepo.ReadAsync<int[]>(GlobalStaticCloudStorageMetadata.BoardsDashboard, null, cancellationToken);
+                    if(_boardsFilter is not null && _boardsFilter.Length != 0)
+                    {
+                        TResponseModel<List<BoardStockSharpMetaModel>> boardDb = await dataRepo.GetBoardsAsync(_boardsFilter);
+                          lock (BoardsCurrent)
+                          {
+                              BoardsCurrent.Clear();
+                              if(boardDb.Response is not null && boardDb.Response.Count != 1)
+                                  BoardsCurrent.AddRange( boardDb.Response);
+                          }
+                    }
+                  }, cancellationToken),
+        ];
+
+        if (!BoardsCurrentAny())
+        {
+            res.AddError($"Board is null");
+            return res;
+        }
+
+        if (!StrategyStarted || string.IsNullOrWhiteSpace(ProgramDataPath))
+            tasks.Add(Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken)));
+
+        await Task.WhenAll(tasks);
+
+        if (string.IsNullOrWhiteSpace(ProgramDataPath))
+        {
+            res.AddError($"set: {nameof(ProgramDataPath)} for load Curve data!");
+            return res;
+        }
+
+        if (!Directory.Exists(ProgramDataPath))
+        {
+            res.AddError($"Directory ({nameof(ProgramDataPath)}): {ProgramDataPath} not Exists");
+            return res;
+        }
+
+        SBond? SBnd;
+        DateTime curDate;
+        decimal BndPrice = 0;
+
+        List<Security> currBonds = SecuritiesBonds(false);
+        if (!currBonds.Any())
+        {
+            res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
+            return res;
+        }
+        DateTime _gnvd = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
+        CurveCurrent = new Curve(_gnvd);
+        lock (BoardsCurrent)
+        {
+            res.Response = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, req.BigPriceDifferences, ref eventTrans);
+        }
+        if (!string.IsNullOrWhiteSpace(res.Response))
+            return res;
+
+        if (CurveCurrent.BondList.Count == 0)
+        {
+            res.AddError("OfzCurve.Length == 0");
+            return res;
+        }
+
+        curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
+        List<Task> tasksMaster = [], tasksSlave = [];
+        currBonds.ForEach(security =>
+        {
+            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
+            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
+            DashboardTradeStockSharpModel tradeDashboard;
+            lock (StrategyTrades)
+            {
+                tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
+            }
+
+            SBnd = CurveCurrent.GetNode(_sec);
+
+            if (SBnd is not null)
+                BndPrice = SBnd.ModelPrice;
+
+            tradeDashboard.BasePrice = BndPrice;
+            tradeDashboard.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
+            tradeDashboard.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
+            tradeDashboard.WorkingVolume = (long)quoteStrategyVolume;
+            tradeDashboard.SmallOffset = 0;
+            tradeDashboard.Offset = 0;
+
+            SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
+
+            if (SBnd is not null)
+            {
+                decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
+                if (yield > 0) //Regular bonds
+                {
+                    tradeDashboard.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
+
+                    if (tradeDashboard.LowLimit < 9)
+                        tradeDashboard.LowLimit = 9;
+                    if (tradeDashboard.LowLimit > lowLimit * 100)
+                        tradeDashboard.LowLimit = (int)(lowLimit * 100);
+
+                    tradeDashboard.HightLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
+
+                    if (tradeDashboard.HightLimit < 11)
+                        tradeDashboard.HightLimit = 11;
+                    if (tradeDashboard.HightLimit > highLimit * 100)
+                        tradeDashboard.HightLimit = (int)(highLimit * 100);
+
+                    if ((SBnd.Maturity - curDate).Days < 400)
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                    else if ((SBnd.Maturity - curDate).Days < 1100)
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                    else if ((SBnd.Maturity - curDate).Days < 1500)
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                    else
+                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                }
+                else
+                {
+                    if (_instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                    {
+                        if ((SBnd.Maturity - curDate).Days < 300)
+                        {
+                            tradeDashboard.WorkingVolume = 1000;
+                            tradeDashboard.LowLimit = (int)(lowLimit * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit * 100);
+                        }
+                        else
+                        {
+                            tradeDashboard.WorkingVolume = 1000;
+                            tradeDashboard.LowLimit = (int)(lowLimit * 2 * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit * 2 * 100);
+                        }
+                    }
+                    else
+                    {
+                        if ((SBnd.Maturity - curDate).Days < 500)
+                        {
+                            tradeDashboard.WorkingVolume = 2000;
+                            tradeDashboard.LowLimit = (int)(lowLimit / 2 * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit / 2 * 100);
+                        }
+                        else if ((SBnd.Maturity - curDate).Days < 2000)
+                        {
+                            tradeDashboard.WorkingVolume = 2000;
+                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
+                        }
+                        else
+                        {
+                            tradeDashboard.WorkingVolume = 2000;
+                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
+                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                tradeDashboard.LowLimit = (int)(lowLimit * 100);
+                tradeDashboard.HightLimit = (int)(highLimit * 100);
+            }
+
+            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
+            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
+        });
+
+        if (tasksMaster.Count != 0)
+        {
+            res.AddInfo($"Updated items (strategies): {tasksMaster.Count}");
+            await Task.WhenAll(tasksMaster);
+            await Task.WhenAll(tasksSlave);
+        }
+        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = conLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
+        }, cancellationToken);
+        res.AddInfo("Data loaded!!!");
+        return res;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
+    {
+        static decimal Calculation(decimal L, OperatorsEnum op, decimal R)
+        {
+            return op switch
+            {
+                OperatorsEnum.Multiplication => L * R,
+                OperatorsEnum.Dividing => L / R,
+                OperatorsEnum.Plus => L + R,
+                OperatorsEnum.Minus => L - R,
+                _ => throw new NotImplementedException(),
+            };
+        }
+
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        if (!StrategyTradesAny())
+            return ResponseBaseModel.CreateError("Dashboard - not set");
+
+        ResponseBaseModel res = new();
+        List<Task> tasksMaster = [], tasksSlave = [];
+        List<Security> sbs = SecuritiesBonds(true);
+        sbs.ForEach(security =>
+        {
+            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
+            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
+            DashboardTradeStockSharpModel tradeDashboard;
+            lock (StrategyTrades)
+            {
+                tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
+            }
+            tradeDashboard.LowLimit = Calculation(tradeDashboard.LowLimit, req.Operator, req.Operand);
+            tradeDashboard.HightLimit = Calculation(tradeDashboard.HightLimit, req.Operator, req.Operand);
+
+            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
+            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
+        });
+
+        if (tasksMaster.Count != 0)
+        {
+            res.AddInfo($"Updated items (strategies): {tasksMaster.Count}");
+            await Task.WhenAll(tasksMaster);
+            await Task.WhenAll(tasksSlave);
+        }
+
+        lowLimit = Calculation(lowLimit, req.Operator, req.Operand);
+        highLimit = Calculation(highLimit, req.Operator, req.Operand);
+
+        await eventTrans.UpdateConnectionHandle(new UpdateConnectionHandleModel()
+        {
+            CanConnect = conLink.Connector.CanConnect,
+            ConnectionState = (ConnectionStatesEnum)Enum.Parse(typeof(ConnectionStatesEnum), Enum.GetName(conLink.Connector.ConnectionState)!)
+        }, cancellationToken);
+
+        return ResponseBaseModel.CreateInfo($"ok - `{nameof(LimitsStrategiesUpdate)}`");
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> StartStrategy(StrategyStartRequestModel req, CancellationToken cancellationToken = default)
+    {
+        AboutConnectResponseModel _ac = await AboutConnection(cancellationToken: cancellationToken);
+        if (_ac.ConnectionState != ConnectionStatesEnum.Connected)
+            return ResponseBaseModel.CreateError($"{nameof(_ac.ConnectionState)}: {_ac.ConnectionState} ({_ac.ConnectionState?.DescriptionInfo()})");
+
+        await Task.WhenAll([
+                Task.Run(async () => await ClearStrategy(cancellationToken), cancellationToken),
+                Task.Run(async () => ProgramDataPath = await storageRepo.ReadAsync<string>(GlobalStaticCloudStorageMetadata.ProgramDataPathStockSharp, null, cancellationToken))
+            ]);
+
+        if (string.IsNullOrWhiteSpace(ProgramDataPath))
+            return ResponseBaseModel.CreateError($"{nameof(ProgramDataPath)} - not set");
+
+        if (!Directory.Exists(ProgramDataPath))
+            return ResponseBaseModel.CreateError($"Directory [{nameof(ProgramDataPath)}] - not exists");
+
+        if (!BoardsCurrentAny())
+            return ResponseBaseModel.CreateError("Board - not set");
+
+        if (req.SelectedPortfolio is null)
+            return ResponseBaseModel.CreateError("Portfolio - not set");
+
+        PortfolioCurrent = conLink.Connector.Portfolios.FirstOrDefault(x => x.ClientCode == req.SelectedPortfolio.ClientCode);
+
+        if (PortfolioCurrent is null)
+        {
+            await ClearStrategy(cancellationToken);
+            return ResponseBaseModel.CreateError($"Portfolio #{req.SelectedPortfolio.ClientCode} - not found");
+        }
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        if (!StrategyTradesAny())
+            return ResponseBaseModel.CreateError("Dashboard - not set");
+
+        List<Security> bl = SecuritiesBonds(true);
+        if (!bl.Any())
+            return ResponseBaseModel.CreateError("BondList - not any");
+        ResponseBaseModel response = new();
+
+        void securityHandleAction(Security security)
+        {
+            DashboardTradeStockSharpModel[] tryFindStrategy;
+            lock (StrategyTrades)
+            {
+                tryFindStrategy = [.. StrategyTrades.Where(x => x.Code == security.Code)];
+            }
+            string msg;
+
+            if (tryFindStrategy.Length == 0)
+            {
+                msg = $"strategy #{security.Code} not found in BondList ({bl.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            if (tryFindStrategy.Length != 1)
+            {
+                msg = $"strategy #{security.Code} DOUBLE`s ({tryFindStrategy.Length}) found in BondList ({bl.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            DashboardTradeStockSharpModel currentStrategy = tryFindStrategy[0];
+
+            InstrumentTradeStockSharpViewModel[] tryFindInstrument = [.. resInstruments.Response.Where(x => x.Id == currentStrategy.Id)];
+            if (tryFindInstrument.Length == 0)
+            {
+                msg = $"instrument #{currentStrategy.Id} not found in BondList ({bl.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            if (tryFindInstrument.Length != 1)
+            {
+                msg = $"instrument #{currentStrategy.Id} DOUBLE`s ({tryFindInstrument.Length}) found ({resInstruments.Response.Count} items)";
+                response.AddError(msg);
+                _logger.LogError(msg);
+                return;
+            }
+            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
+            SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", currentStrategy.LowLimit / 100, currentStrategy.HightLimit / 100, currentStrategy.ValueOperation, currentStrategy.ValueOperation, currentStrategy.Offset / 100));
+
+            if (currentStrategy.IsSmall)
+                SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)0.0301, (currentStrategy.LowLimit - (decimal)0.1) / 100, currentStrategy.SmallBidVolume, currentStrategy.SmallOfferVolume, currentStrategy.SmallOffset / 100));
+
+            if (tryFindInstrument[0].Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (currentStrategy.HightLimit + (decimal)0.1) / 100, (currentStrategy.LowLimit + currentStrategy.HightLimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+        }
+        bl.ForEach(securityHandleAction);
+
+        if (!response.Success())
+        {
+            await ClearStrategy(cancellationToken);
+            return response;
+        }
+
+        if (CurveCurrent is null || CurveCurrent.BondList.Count == 0)
+        {
+            await ClearStrategy(cancellationToken);
+            return ResponseBaseModel.CreateError("OfzCurve.Length == 0");
+        }
+
+        lock (MarketDepthSubscriptions)
+        {
+            void RegisterMarketDepth(Security security)
+            {
+                Subscription depthSubscription = new(DataType.MarketDepth, security);
+                conLink.Connector.Subscribe(depthSubscription);
+                MarketDepthSubscriptions.Add(depthSubscription);
+            }
+
+            MarketDepthSubscriptions.Clear();
+            bl.ForEach(RegisterMarketDepth);
+        }
+        conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
+
+        lock (_ordersForQuoteBuyReregister)
+            _ordersForQuoteBuyReregister.Clear();
+        lock (_ordersForQuoteSellReregister)
+            _ordersForQuoteSellReregister.Clear();
+
+        fileWatcher.Path = ProgramDataPath;
+        fileWatcher.NotifyFilter = NotifyFilters.LastWrite;
+        fileWatcher.Filter = "RedArrowData.db";
+        fileWatcher.Changed += OnDatabaseChanged;
+        fileWatcher.EnableRaisingEvents = true;
+
+        return ResponseBaseModel.CreateInfo("Ok");
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> StopStrategy(StrategyStopRequestModel req, CancellationToken cancellationToken = default)
+    {
+        await ClearStrategy(cancellationToken);
+        fileWatcher.Changed -= OnDatabaseChanged;
+        return ResponseBaseModel.CreateInfo("Ok");
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> ResetStrategy(ResetStrategyRequestModel req, CancellationToken cancellationToken = default)
+    {
+        List<Security> currentSecurities = SecuritiesBonds(true);
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> readInstrument = await dataRepo.GetInstrumentsAsync([req.InstrumentId], cancellationToken);
+
+        InstrumentTradeStockSharpViewModel? currInstrument = readInstrument.Response?.FirstOrDefault(x => x.Id == req.InstrumentId);
+        if (currInstrument is null)
+            return ResponseBaseModel.CreateError("current instrument not found");
+
+        SBondPositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
+        SBondSizePositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
+        SBondSmallPositionsList.RemoveAll(sp => sp.Sec.IdRemote == currInstrument.IdRemote);
+
+        Security currentSecurity = currentSecurities.First(sec => sec.Id == currInstrument.IdRemote);
+        string msg;
+        if (currentSecurity is null)
+        {
+            msg = $"Security - not found for instrument: {JsonConvert.SerializeObject(currInstrument, Formatting.Indented)}";
+            _logger.LogError(msg);
+            return ResponseBaseModel.CreateError(msg);
+        }
+
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        if (!StrategyTradesAny())
+            return ResponseBaseModel.CreateError("Dashboard - not set");
+
+        DashboardTradeStockSharpModel currentStrategy;
+
+        lock (StrategyTrades)
+        {
+            int _fx = StrategyTrades.FindIndex(x => x.Id == req.InstrumentId);
+            if (_fx < 0)
+                return ResponseBaseModel.CreateError($"Instrument not set strategy: {currInstrument}");
+
+            currentStrategy = StrategyTrades[_fx];
+        }
+
+        InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
+
+        decimal
+            WorkVol = currentStrategy.WorkingVolume,
+            SmallBidVol = currentStrategy.SmallBidVolume,
+            SmallOfferVol = currentStrategy.SmallOfferVolume,
+            LowLimit = currentStrategy.LowLimit,
+            Highlimit = currentStrategy.HightLimit,
+            SmallOffset = currentStrategy.SmallOffset,
+            Offset = currentStrategy.Offset;
+
+        bool IsSmall = currentStrategy.IsSmall;
+        SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", (decimal)LowLimit / 100, (decimal)Highlimit / 100, (decimal)WorkVol, (decimal)WorkVol, (decimal)Offset / 100));
+
+        if (IsSmall)
+            SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (decimal)(Highlimit - (decimal)0.1) / 100, (decimal)SmallBidVol, (decimal)SmallOfferVol, (decimal)SmallOffset / 100));
+
+        //int[] _dsc = [(int)MarkersInstrumentStockSharpEnum.IsNew];
+
+        SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (decimal)(Highlimit + (decimal)0.1) / 100, (decimal)(LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+
+        Subscription sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).First();
+        OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
+
+        return ResponseBaseModel.CreateInfo($"`{nameof(ResetStrategy)}` - done");
+    }
+
+    /// <inheritdoc/>
+    public async Task<ResponseBaseModel> ResetAllStrategies(ResetStrategyRequestBaseModel req, CancellationToken cancellationToken = default)
+    {
+        quoteSizeStrategyVolume = req.Size;
+        quoteStrategyVolume = req.Volume;
+
+        DeleteAllQuotesByStrategy("Size");
+        DeleteAllQuotesByStrategy("Small");
+        DeleteAllQuotesByStrategy("Quote");
+
+        lock (SBondPositionsList)
+            SBondPositionsList.Clear();
+        lock (SBondSizePositionsList)
+            SBondSizePositionsList.Clear();
+        lock (SBondSmallPositionsList)
+            SBondSmallPositionsList.Clear();
+
+        List<Security> currentSecurities = SecuritiesBonds(true);
+
+        if (!currentSecurities.Any())
+            return ResponseBaseModel.CreateError("BondList - not any");
+
+        TResponseModel<List<InstrumentTradeStockSharpViewModel>> resInstruments = await dataRepo.ReadTradeInstrumentsAsync(cancellationToken);
+
+        if (resInstruments.Response is null || resInstruments.Response.Count == 0)
+            return ResponseBaseModel.CreateError($"The instruments are not configured.");
+
+        await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)], cancellationToken);
+
+        if (!StrategyTradesAny())
+            return ResponseBaseModel.CreateError("Dashboard - not set");
+
+        string msg;
+        foreach (InstrumentTradeStockSharpViewModel instrument in resInstruments.Response)
+        {
+            DashboardTradeStockSharpModel currentStrategy;
+            lock (StrategyTrades)
+            {
+                int _fx = StrategyTrades.FindIndex(x => x.Id == instrument.Id);
+                if (_fx < 0)
+                    return ResponseBaseModel.CreateError($"Instrument not set: {instrument}");
+
+                if (StrategyTrades[_fx].ValueOperation < 1)
+                    return ResponseBaseModel.CreateError($"Value for instrument '{instrument}' incorrect");
+
+                if (StrategyTrades[_fx].BasePrice < 1)
+                    return ResponseBaseModel.CreateError($"Price for instrument '{instrument}' incorrect");
+
+                currentStrategy = StrategyTrades[_fx];
+            }
+
+            Security? currentSecurity = currentSecurities.FirstOrDefault(x =>
+            x.Code == currentStrategy.Code &&
+            ((x.Currency is null && currentStrategy.Currency is null) || (x.Currency is not null && currentStrategy.Currency is not null && Enum.GetName(typeof(CurrencyTypes), x.Currency) == Enum.GetName(typeof(CurrenciesTypesEnum), currentStrategy.Currency))) &&
+            x.Board.Code == currentStrategy.Board?.Code);
+
+            if (currentSecurity is null)
+            {
+                msg = $"Security - not found for strategy: {JsonConvert.SerializeObject(currentStrategy, Formatting.Indented)}";
+                _logger.LogError(msg);
+                return ResponseBaseModel.CreateError(msg);
+            }
+            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(currentSecurity);
+            decimal WorkVol = currentStrategy.WorkingVolume;
+            decimal SmallBidVol = currentStrategy.SmallBidVolume;
+            decimal SmallOfferVol = currentStrategy.SmallOfferVolume;
+            decimal LowLimit = currentStrategy.LowLimit;
+            decimal Highlimit = currentStrategy.HightLimit;
+            decimal SmallOffset = currentStrategy.SmallOffset;
+            decimal Offset = currentStrategy.Offset;
+            bool IsSmall = currentStrategy.IsSmall;
+
+            SBondPositionsList.Add(new SecurityPosition(_sec, "Quote", LowLimit / 100,
+             Highlimit / 100, WorkVol, WorkVol, Offset / 100));
+
+            if (IsSmall)
+                SBondSmallPositionsList.Add(new SecurityPosition(_sec, "Small", (decimal)(0.0301), (LowLimit - (decimal)0.1) / 100, SmallBidVol, SmallOfferVol, SmallOffset / 100));
+
+            if (!instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                SBondSizePositionsList.Add(new SecurityPosition(_sec, "Size", (Highlimit + (decimal)0.1) / 100, (LowLimit + Highlimit) / 100, quoteSizeStrategyVolume, quoteSizeStrategyVolume, 0m));
+
+            Subscription? sub = conLink.Connector.FindSubscriptions(currentSecurity, DataType.MarketDepth).Where(s => s.SubscriptionMessage.To == null && s.State.IsActive()).FirstOrDefault();
+
+            if (sub is not null)
+                OrderBookReceivedConnectorMan(sub, OderBookList[currentSecurity]);
+            else
+            {
+                _logger.LogError($"sub is not null");
+                return ResponseBaseModel.CreateError("sub is not null");
+            }
+        }
+        return ResponseBaseModel.CreateInfo($"done: reset for {resInstruments.Response.Count} instruments");
+    }
+
+
+    /// <inheritdoc/>
+    public Task<ResponseBaseModel> ShiftCurve(ShiftCurveRequestModel req, CancellationToken cancellationToken = default)
+    {
+        if (CurveCurrent is null)
+            return Task.FromResult(ResponseBaseModel.CreateWarning("OfzCurve is null"));
+
+        _logger.LogWarning($"Curve changed: {req.YieldChange}");
+
+        CurveCurrent.BondList.ForEach(bnd =>
+        {
+            SBond? SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == bnd.MicexCode);
+
+            if (SBnd is not null)
+            {
+                decimal yield = SBnd.GetYieldForPrice(CurveCurrent.CurveDate, bnd.ModelPrice / 100);
+                if (yield > 0)
+                {
+                    bnd.ModelPrice = Math.Round(100 * SBnd.GetPriceFromYield(CurveCurrent.CurveDate, yield + req.YieldChange / 10000, true), 2);
+                }
+            }
+        });
+        return Task.FromResult(ResponseBaseModel.CreateSuccess($"Ok - {nameof(ShiftCurve)} changed: {req.YieldChange}"));
+    }
+
+
+    /// <inheritdoc/>
+    async Task ReadDashboard(int[] instrumentsIds, CancellationToken cancellationToken = default)
+    {
+        lock (StrategyTrades)
+        {
+            StrategyTrades.Clear();
+        }
+        FindStorageBaseModel _findParametersQuery = new()
+        {
+            ApplicationName = GlobalStaticConstantsTransmission.TransmissionQueues.TradeInstrumentStrategyStockSharpReceive,
+            PropertyName = $"{GlobalStaticConstantsRoutes.Routes.TRADE_CONTROLLER_NAME}-{GlobalStaticConstantsRoutes.Routes.STRATEGY_CONTROLLER_NAME}",
+            OwnersPrimaryKeys = instrumentsIds,
+        };
+
+        FundedParametersModel<DashboardTradeStockSharpModel>[] findStorageRows = await storageRepo
+            .FindAsync<DashboardTradeStockSharpModel>(_findParametersQuery, cancellationToken);
+
+        if (findStorageRows.Length == 0)
+            return;
+
+        List<IGrouping<int?, FundedParametersModel<DashboardTradeStockSharpModel>>> _q = [.. findStorageRows.Where(x => x.PrefixPropertyName == GlobalStaticConstantsRoutes.Routes.BROKER_CONTROLLER_NAME)
+            .GroupBy(x => x.OwnerPrimaryKey)
+            .Where(x => x.Key.HasValue)];
+
+        lock (StrategyTrades)
+        {
+            StrategyTrades.AddRange(_q.Select(x => x.OrderByDescending(x => x.CreatedAt).First().Payload)!);
+        }
     }
 
     /// <inheritdoc/>
@@ -1078,7 +1128,8 @@ public class DriverStockSharpService(
             });
             return;
         }
-        if (BoardsCurrent is null || BoardsCurrent.Count == 0)
+
+        if (!BoardsCurrentAny())
         {
             msg = $"Boards is null || Boards.Count == 0";
             _logger.LogError(msg);
@@ -1093,7 +1144,12 @@ public class DriverStockSharpService(
 
         try
         {
-            string? _res = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, null, ref eventTrans);
+            string? _res;
+            lock (BoardsCurrent)
+            {
+                _res = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, null, ref eventTrans);
+            }
+
             if (!string.IsNullOrWhiteSpace(_res))
             {
                 msg = $"Curve.GetCurveFromDb is null";
@@ -1174,8 +1230,11 @@ public class DriverStockSharpService(
         }
 
         conLink.Connector.OrderBookReceived -= MarketDepthOrderBookHandle;
+        lock (BoardsCurrent)
+        {
+            BoardsCurrent.Clear();
+        }
 
-        BoardsCurrent?.Clear();
         PortfolioCurrent = null;
 
         lock (StrategyTrades)
@@ -1251,7 +1310,7 @@ public class DriverStockSharpService(
         }
         await ReadDashboard([.. resInstruments.Response.Select(x => x.Id)]);
 
-        if (StrategyTrades.Count == 0)
+        if (!StrategyTradesAny())
         {
             _msg = "Dashboard - not set";
 
@@ -1290,7 +1349,12 @@ public class DriverStockSharpService(
             return;
         }
 
-        DashboardTradeStockSharpModel? currentStrategy = StrategyTrades.FirstOrDefault(x => x.Id == currentInstrument.Id);
+        DashboardTradeStockSharpModel? currentStrategy;
+        lock (StrategyTrades)
+        {
+            currentStrategy = StrategyTrades.FirstOrDefault(x => x.Id == currentInstrument.Id);
+        }
+
         if (currentStrategy is null)
         {
             _msg = $"Strategy not found - {JsonConvert.SerializeObject(currentInstrument, Formatting.Indented)}";
@@ -1689,7 +1753,7 @@ public class DriverStockSharpService(
 
         await ReadDashboard([currInstrument.Id]);
 
-        if (StrategyTrades.Count == 0)
+        if (!StrategyTradesAny())
         {
             msg = "Dashboard - not set";
             await eventTrans.ToastClientShow(new()
