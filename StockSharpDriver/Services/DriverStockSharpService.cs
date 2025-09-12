@@ -694,9 +694,13 @@ public class DriverStockSharpService(
         conLink.Connector.OrderBookReceived += MarketDepthOrderBookHandle;
 
         lock (_ordersForQuoteBuyReregister)
+        {
             _ordersForQuoteBuyReregister.Clear();
+        }
         lock (_ordersForQuoteSellReregister)
+        {
             _ordersForQuoteSellReregister.Clear();
+        }
 
         fileWatcher.Path = ProgramDataPath;
         fileWatcher.NotifyFilter = NotifyFilters.LastWrite;
@@ -797,12 +801,17 @@ public class DriverStockSharpService(
         DeleteAllQuotesByStrategy("Quote");
 
         lock (SBondPositionsList)
+        {
             SBondPositionsList.Clear();
+        }
         lock (SBondSizePositionsList)
+        {
             SBondSizePositionsList.Clear();
+        }
         lock (SBondSmallPositionsList)
+        {
             SBondSmallPositionsList.Clear();
-
+        }
         List<Security> currentSecurities = SecuritiesBonds(true);
 
         if (!currentSecurities.Any())
@@ -1054,7 +1063,11 @@ public class DriverStockSharpService(
 
     async void DeleteAllQuotesByStrategy(string strategy)
     {
-        IEnumerable<Order> orders = AllOrders.Where(s => s.State == OrderStates.Active);
+        IEnumerable<Order> orders;
+        lock (AllOrders)
+        {
+            orders = AllOrders.Where(s => s.State == OrderStates.Active);
+        }
 
         if (string.IsNullOrEmpty(strategy))
         {
@@ -1243,22 +1256,29 @@ public class DriverStockSharpService(
         PortfolioCurrent = null;
 
         lock (StrategyTrades)
+        {
             StrategyTrades.Clear();
-
+        }
         lock (SBondPositionsList)
+        {
             SBondPositionsList.Clear();
-
+        }
         lock (SBondSizePositionsList)
+        {
             SBondSizePositionsList.Clear();
-
+        }
         lock (SBondSmallPositionsList)
+        {
             SBondSmallPositionsList.Clear();
-
+        }
         lock (OderBookList)
+        {
             OderBookList.Clear();
-
+        }
         lock (AllOrders)
+        {
             AllOrders.Clear();
+        }
 
         lowLimit = 0.19m;
         highLimit = 0.25m;
@@ -1271,19 +1291,6 @@ public class DriverStockSharpService(
     }
 
     #region events
-
-
-    void PositionReceivedHandle(Subscription sub, Position pos)
-    {
-        //await eventTrans.ToastClientShow(new()
-        //{
-        //    HeadTitle = $"warn [{nameof(PositionReceivedHandle)}]",
-        //    MessageText = JsonConvert.SerializeObject(pos, GlobalStaticConstants.JsonSerializerSettings),
-        //    TypeMessage = MessagesTypesEnum.Info
-        //});
-        //return;
-    }
-
     /// <inheritdoc/>
     async void OrderBookReceivedConnectorMan(Subscription subscription, IOrderBookMessage depth)
     {
@@ -1581,8 +1588,10 @@ public class DriverStockSharpService(
         _logger.LogInformation($"Call `{nameof(MarketDepthOrderBookHandle)}` > Стакан: {depth.SecurityId}, Время: {depth.ServerTime}; | Покупки (Bids): {depth.Bids.Length}, Продажи (Asks): {depth.Asks.Length}");
 
         lock (MarketDepthSubscriptions)
+        {
             if (!MarketDepthSubscriptions.Any(x => x.SecurityId == subscription.SecurityId))
                 return;
+        }
 
         await eventTrans.ToastClientShow(new()
         {
@@ -1962,7 +1971,6 @@ public class DriverStockSharpService(
         conLink.Connector.OrderReceived -= OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived -= OwnTradeReceivedHandle;
         conLink.Connector.SecurityReceived -= SecurityReceivedHandle;
-        conLink.Connector.PositionReceived -= PositionReceivedHandle;
     }
 
     void RegisterEvents()
@@ -1974,7 +1982,6 @@ public class DriverStockSharpService(
         conLink.Connector.OrderReceived += OrderReceivedHandle;
         conLink.Connector.OwnTradeReceived += OwnTradeReceivedHandle;
         conLink.Connector.SecurityReceived += SecurityReceivedHandle;
-        conLink.Connector.PositionReceived += PositionReceivedHandle;
     }
     #endregion
 }
