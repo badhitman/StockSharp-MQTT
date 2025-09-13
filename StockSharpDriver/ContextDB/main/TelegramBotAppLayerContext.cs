@@ -26,7 +26,6 @@ public abstract partial class TelegramBotAppLayerContext : DbContext
         : base(options)
     {
         FileInfo _fi = new(DbPath);
-
         if (_fi.Directory?.Exists != true)
             Directory.CreateDirectory(Path.GetDirectoryName(DbPath)!);
 

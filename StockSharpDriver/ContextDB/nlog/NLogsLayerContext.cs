@@ -28,6 +28,10 @@ public partial class NLogsLayerContext : DbContext
     public NLogsLayerContext(DbContextOptions options)
         : base(options)
     {
+        FileInfo _fi = new(DbPath);
+        if (_fi.Directory?.Exists != true)
+            Directory.CreateDirectory(Path.GetDirectoryName(DbPath)!);
+
         //#if DEBUG
         //  Database.EnsureCreated();
         //#else

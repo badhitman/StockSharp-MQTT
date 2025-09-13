@@ -26,7 +26,6 @@ public abstract partial class StockSharpAppLayerContext : DbContext
         : base(options)
     {
         FileInfo _fi = new(DbPath);
-
         if (_fi.Directory?.Exists != true)
             Directory.CreateDirectory(Path.GetDirectoryName(DbPath)!);
 
