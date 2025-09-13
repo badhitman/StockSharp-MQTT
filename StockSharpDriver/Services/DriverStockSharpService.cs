@@ -25,6 +25,7 @@ public class DriverStockSharpService(
                 IManageStockSharpService manageRepo,
                 IDataStockSharpService dataRepo,
                 IParametersStorage storageRepo,
+                StockSharpClientConfigMainModel _conf,
                 IEventsStockSharp eventTrans,
                 ConnectionLink conLink) : IDriverStockSharpService
 {
@@ -235,6 +236,8 @@ public class DriverStockSharpService(
         RegisterEvents();
         if (!string.IsNullOrWhiteSpace(SecurityCriteriaCodeFilter))
             conLink.Connector.SubscriptionsOnConnect.RemoveWhere(x => x.DataType == DataType.Securities);
+
+        conLink.Connector.LogLevel = _conf.LogLevelEcng;
 
         await conLink.Connector.ConnectAsync(cancellationToken);
 

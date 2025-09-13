@@ -26,12 +26,12 @@ public class Program
     {
         Logger logger = LogManager.GetCurrentClassLogger();
 
-        StockSharpClientConfigModel _conf = StockSharpClientConfigModel.BuildEmpty();
+        StockSharpClientConfigMainModel _conf = StockSharpClientConfigMainModel.BuildEmpty();
         IHostBuilder builderH = Host.CreateDefaultBuilder(args);
 
         string? appBasePath = Path.GetDirectoryName(TelegramBotAppLayerContext.DbPath);
         GlobalDiagnosticsContext.Set("appbasepath", appBasePath);
-         
+
         string curr_dir = Directory.GetCurrentDirectory();
         string _environmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
         string appName = typeof(Program).Assembly.GetName().Name ?? "StockSharpDriverAssemblyNameDemo";
@@ -74,7 +74,7 @@ public class Program
                 builder.AddEnvironmentVariables();
                 builder.AddCommandLine(args);
                 builder.Build();
-                //_conf.Reload(bx.Configuration.GetValue<StockSharpClientConfigModel>("StockSharpDriverConfig"));
+                //_conf.Reload(bx.Configuration.GetValue<StockSharpClientConfigMainModel>("StockSharpDriverConfig"));
             })
             .ConfigureServices((bx, services) =>
             {
@@ -145,9 +145,20 @@ public class Program
                     .AddHostedService<PollingService>()
                 ;
                 services.AddMemoryCache();
-                
+
                 ConnectionLink _connector = new();
-                _conf.Reload(bx.Configuration.GetSection("StockSharpDriverConfig").Get<StockSharpClientConfigModel>());
+                _conf.Reload(config.GetSection("StockSharpDriverConfig").Get<StockSharpClientConfigMainModel>());
+
+                string? _logLevelEcngValue = config.GetSection("StockSharpDriverConfig:LogLevelEcng").Value;
+                //_conf.LogLevelEcng
+
+                if (string.IsNullOrWhiteSpace(_logLevelEcngValue))
+                    _conf.LogLevelEcng = Ecng.Logging.LogLevels.Debug;
+                else
+                {
+                    Ecng.Logging.LogLevels? _LL = Enum.GetValues<Ecng.Logging.LogLevels>().FirstOrDefault(x => x.ToString().Equals(_logLevelEcngValue, StringComparison.OrdinalIgnoreCase));
+                    _conf.LogLevelEcng = _LL ?? Ecng.Logging.LogLevels.Debug;
+                }
 
                 services
                     .AddSingleton(sp => _conf)
@@ -161,7 +172,7 @@ public class Program
 
                 #region MQ Transmission (remote methods call)
                 services
-                    .AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName))
+                    .AddSingleton<IMQTTClient>(x => new MQttClient(x.GetRequiredService<StockSharpClientConfigMainModel>(), x.GetRequiredService<ILogger<MQttClient>>(), appName))
                 ;
                 //
                 services
