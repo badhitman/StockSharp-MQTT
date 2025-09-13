@@ -1728,8 +1728,8 @@ public class DriverStockSharpService(
             bondOutOfRangePositionLimitTraded = default;
 
         await Task.WhenAll([
-                Task.Run(async () => { bondPositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondPositionLimitTraded); }),
-                Task.Run(async () => { bondOutOfRangePositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondOutOfRangePositionLimitTraded); })
+                Task.Run(async () => { bondPositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondPositionLimitTraded, 100000); }),
+                Task.Run(async () => { bondOutOfRangePositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondOutOfRangePositionLimitTraded, 100000); })
             ]);
 
 
