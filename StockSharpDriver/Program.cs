@@ -162,6 +162,7 @@ public class Program
 
                 services
                     .AddSingleton(sp => _conf)
+                    .AddSingleton(sp => StockSharpClientConfigModel.BuildEmpty())
                     .AddSingleton(sp => _connector)
                 ;
 

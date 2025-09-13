@@ -16,5 +16,4 @@ public partial class StockSharpClientConfigMainModel : StockSharpClientConfigMod
     {
         return new StockSharpClientConfigMainModel() { Scheme = "mqtt", Port = 1883 };
     }
-
 }

@@ -1723,7 +1723,24 @@ public class DriverStockSharpService(
             }
         }
 
-        if (bondPositionTraded >= 100000 || bondOutOfRangePositionTraded >= 100000)
+        decimal
+            bondPositionLimitTraded = default,
+            bondOutOfRangePositionLimitTraded = default;
+
+        await Task.WhenAll([
+                Task.Run(async () => { bondPositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondPositionLimitTraded); }),
+                Task.Run(async () => { bondOutOfRangePositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondOutOfRangePositionLimitTraded); })
+            ]);
+
+
+        if (bondPositionLimitTraded <= 0)
+            bondPositionLimitTraded = 100000;
+
+        if (bondOutOfRangePositionLimitTraded <= 0)
+            bondOutOfRangePositionLimitTraded = 100000;
+
+
+        if (bondPositionTraded >= bondPositionLimitTraded || bondOutOfRangePositionTraded >= bondOutOfRangePositionLimitTraded)
         {
             conLink.Connector.AddWarningLog("Program suspended because of limit trade reached");
             await eventTrans.ToastClientShow(new()
