@@ -215,9 +215,6 @@ namespace StockSharpDriver.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("Role", "UserId")
-                        .IsUnique();
-
                     b.ToTable("RolesUsers");
                 });
 

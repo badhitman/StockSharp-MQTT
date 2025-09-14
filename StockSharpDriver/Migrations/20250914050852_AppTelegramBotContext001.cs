@@ -238,12 +238,6 @@ namespace StockSharpDriver.Migrations
                 columns: new[] { "MessageTelegramId", "ChatId", "FromId" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_RolesUsers_Role_UserId",
-                table: "RolesUsers",
-                columns: new[] { "Role", "UserId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_RolesUsers_UserId",
                 table: "RolesUsers",
                 column: "UserId");
