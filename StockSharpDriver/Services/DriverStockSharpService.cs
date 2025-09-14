@@ -1112,7 +1112,7 @@ public class DriverStockSharpService(
             TypeMessage = MessagesTypesEnum.Info,
             MessageText = msg
         });
-
+        
         if (CurveCurrent is null)
         {
             msg = $"Curve is null";
@@ -1710,7 +1710,7 @@ public class DriverStockSharpService(
                     OrderBookReceivedHandle(sub, OderBookList[tr.Order.Security]);
             }
 
-            if ((!string.IsNullOrWhiteSpace(tr.Order.Comment)) && (tr.Order.Comment.Contains("OfR", StringComparison.OrdinalIgnoreCase)))
+            if (!string.IsNullOrWhiteSpace(tr.Order.Comment) && tr.Order.Comment.Contains("OfR", StringComparison.OrdinalIgnoreCase))
             {
                 bondOutOfRangePositionTraded += Math.Abs(tr.Trade.Volume);
                 conLink.Connector.AddWarningLog("New trade done in bond name (OfrStrategy) ={0}, size = {1}", tr.Order.Security, tr.Trade.Volume);
@@ -1731,14 +1731,6 @@ public class DriverStockSharpService(
                 Task.Run(async () => { bondPositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondPositionLimitTraded, 100000); }),
                 Task.Run(async () => { bondOutOfRangePositionLimitTraded = await storageRepo.ReadAsync<decimal>(GlobalStaticCloudStorageMetadata.BondOutOfRangePositionLimitTraded, 100000); })
             ]);
-
-
-        if (bondPositionLimitTraded <= 0)
-            bondPositionLimitTraded = 100000;
-
-        if (bondOutOfRangePositionLimitTraded <= 0)
-            bondOutOfRangePositionLimitTraded = 100000;
-
 
         if (bondPositionTraded >= bondPositionLimitTraded || bondOutOfRangePositionTraded >= bondOutOfRangePositionLimitTraded)
         {

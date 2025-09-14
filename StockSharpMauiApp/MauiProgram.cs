@@ -53,9 +53,6 @@ public static class MauiProgram
             ;
 
         builder.Services
-                   .AddSingleton<IEventsStockSharp, EventsStockSharpTransmission>()
-               ;
-        builder.Services
             .RegisterEventNotify<UpdateConnectionHandleModel>()
             .RegisterEventNotify<PortfolioStockSharpViewModel>()
             .RegisterEventNotify<InstrumentTradeStockSharpViewModel>()

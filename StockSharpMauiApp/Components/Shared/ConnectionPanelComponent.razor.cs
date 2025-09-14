@@ -27,9 +27,6 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     IDataStockSharpService DataRepo { get; set; } = default!;
 
     [Inject]
-    IEventsStockSharp EventsNotifyRepo { get; set; } = default!;
-
-    [Inject]
     IEventNotifyReceive<PortfolioStockSharpViewModel> PortfolioEventRepo { get; set; } = default!;
 
     [Inject]
@@ -147,9 +144,7 @@ public partial class ConnectionPanelComponent : StockSharpBaseComponent
     protected override async Task Connect()
     {
         await Task.WhenAll([Task.Run(ReadBoards), Task.Run(base.Connect)]);
-
-        if (AboutConnection is not null)
-            await EventsNotifyRepo.UpdateConnectionHandle(new UpdateConnectionHandleModel() { CanConnect = AboutConnection.CanConnect, ConnectionState = AboutConnection.ConnectionState });
+                
         await SetBusyAsync(false);
     }
 

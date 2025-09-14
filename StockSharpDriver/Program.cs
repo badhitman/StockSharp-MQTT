@@ -150,7 +150,6 @@ public class Program
                 _conf.Reload(config.GetSection("StockSharpDriverConfig").Get<StockSharpClientConfigMainModel>());
 
                 string? _logLevelEcngValue = config.GetSection("StockSharpDriverConfig:LogLevelEcng").Value;
-                //_conf.LogLevelEcng
 
                 if (string.IsNullOrWhiteSpace(_logLevelEcngValue))
                     _conf.LogLevelEcng = Ecng.Logging.LogLevels.Debug;
@@ -178,6 +177,7 @@ public class Program
                 //
                 services
                     .AddSingleton<IEventsStockSharp, EventsStockSharpTransmission>()
+                    .AddSingleton<IEventsNotify, EventsNotifyStockSharpTransmission>()
                 ;
 
                 services.StockSharpRegisterMqListeners();
