@@ -13,11 +13,11 @@ namespace StockSharpDriver;
 public static class MyHelper
 {
     /// <inheritdoc/>
-    public static DateTime GetNextWorkingDay(DateTime date, int daynumber, string DbName)
+    public static DateTime GetNextWorkingDay(DateTime date, int dayNumber, string DbName)
     {
         DateTime dt = new();
 
-        if (daynumber < 0)
+        if (dayNumber < 0)
         {
             return dt;
         }
@@ -57,7 +57,7 @@ public static class MyHelper
                 }
             }
 
-            for (int i = 0; i < daynumber; i++)
+            for (int i = 0; i < dayNumber; i++)
             {
                 if (reader.Read())
                     dt = reader.GetDateTime(reader.GetOrdinal("TradeDate")).Date;

@@ -374,8 +374,8 @@ public class DriverStockSharpService(
             res.AddError($"!{nameof(SecuritiesBonds)}().Any()");
             return res;
         }
-        DateTime _gnvd = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
-        CurveCurrent = new Curve(_gnvd);
+        curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, Path.Combine(ProgramDataPath, "RedArrowData.db"));
+        CurveCurrent = new Curve(curDate);
         lock (BoardsCurrent)
         {
             res.Response = CurveCurrent.GetCurveFromDb(Path.Combine(ProgramDataPath, "RedArrowData.db"), conLink.Connector, BoardsCurrent, req.BigPriceDifferences, ref eventTrans);
@@ -389,7 +389,6 @@ public class DriverStockSharpService(
             return res;
         }
 
-        curDate = MyHelper.GetNextWorkingDay(DateTime.Today, 1, ProgramDataPath + "RedArrowData.db");
         List<Task> tasksMaster = [], tasksSlave = [];
         currBonds.ForEach(security =>
         {
@@ -513,14 +512,14 @@ public class DriverStockSharpService(
     /// <inheritdoc/>
     public async Task<ResponseBaseModel> LimitsStrategiesUpdate(LimitsStrategiesUpdateRequestModel req, CancellationToken cancellationToken = default)
     {
-        static decimal Calculation(decimal L, OperatorsEnum op, decimal R)
+        static decimal Calculation(decimal masterValue, OperatorsEnum op, decimal slaveValue)
         {
             return op switch
             {
-                OperatorsEnum.Multiplication => L * R,
-                OperatorsEnum.Dividing => L / R,
-                OperatorsEnum.Plus => L + R,
-                OperatorsEnum.Minus => L - R,
+                OperatorsEnum.Multiplication => masterValue * slaveValue,
+                OperatorsEnum.Dividing => masterValue / slaveValue,
+                OperatorsEnum.Plus => masterValue + slaveValue,
+                OperatorsEnum.Minus => masterValue - slaveValue,
                 _ => throw new NotImplementedException(),
             };
         }

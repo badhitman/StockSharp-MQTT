@@ -79,7 +79,7 @@ else
     </MudTd>
     <MudTd Class="@_opClass">
         <div class="input-group input-group-sm">
-            <button @onclick=ResetTrade title="reset" disabled="@(!Available)" class="btn btn-outline-success bi bi-recycle @($"trade-instrument-{Instrument.Id}-row")" type="button"></button>
+            <button @onclick=ResetTrade title="reset" disabled="@(!Available || AboutConnection?.Curve is null)" class="btn btn-outline-success bi bi-recycle @($"trade-instrument-{Instrument.Id}-row")" type="button"></button>
         </div>
     </MudTd>
 }
