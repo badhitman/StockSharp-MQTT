@@ -390,109 +390,111 @@ public class DriverStockSharpService(
         }
 
         List<Task> tasksMaster = [], tasksSlave = [];
-        currBonds.ForEach(security =>
+        lock (StrategyTrades)
         {
-            InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
-            InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
-            DashboardTradeStockSharpModel tradeDashboard;
-            lock (StrategyTrades)
-            {
-                tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
-            }
-
-            SBnd = CurveCurrent.GetNode(_sec);
-
-            if (SBnd is not null)
-                BndPrice = SBnd.ModelPrice;
-
-            tradeDashboard.BasePrice = BndPrice;
-            tradeDashboard.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
-            tradeDashboard.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
-            tradeDashboard.WorkingVolume = (long)quoteStrategyVolume;
-            tradeDashboard.SmallOffset = 0;
-            tradeDashboard.Offset = 0;
             lock (SBondList)
             {
-                SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
-            }
-
-            if (SBnd is not null)
-            {
-                decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
-                if (yield > 0) //Regular bonds
+                currBonds.ForEach(security =>
                 {
-                    tradeDashboard.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
+                    InstrumentTradeStockSharpModel _sec = new InstrumentTradeStockSharpModel().Bind(security);
+                    InstrumentTradeStockSharpViewModel _instrument = resInstruments.Response.First(x => x.IdRemote == _sec.IdRemote);
+                    DashboardTradeStockSharpModel tradeDashboard;
 
-                    if (tradeDashboard.LowLimit < 9)
-                        tradeDashboard.LowLimit = 9;
-                    if (tradeDashboard.LowLimit > lowLimit * 100)
+                    tradeDashboard = StrategyTrades.FirstOrDefault(x => x.Id.Equals(_instrument.Id)) ?? new() { Id = _instrument.Id };
+
+                    SBnd = CurveCurrent.GetNode(_sec);
+
+                    if (SBnd is not null)
+                        BndPrice = SBnd.ModelPrice;
+
+                    tradeDashboard.BasePrice = BndPrice;
+                    tradeDashboard.SmallBidVolume = (long)quoteSmallStrategyBidVolume;
+                    tradeDashboard.SmallOfferVolume = (long)quoteSmallStrategyOfferVolume;
+                    tradeDashboard.WorkingVolume = (long)quoteStrategyVolume;
+                    tradeDashboard.SmallOffset = 0;
+                    tradeDashboard.Offset = 0;
+
+                    SBnd = SBondList.FirstOrDefault(s => s.UnderlyingSecurity.Code == security.Code);
+
+                    if (SBnd is not null)
+                    {
+                        decimal yield = SBnd.GetYieldForPrice(curDate, BndPrice / 100);
+                        if (yield > 0) //Regular bonds
+                        {
+                            tradeDashboard.LowLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + lowYieldLimit / 10000, true)) * 10000);
+
+                            if (tradeDashboard.LowLimit < 9)
+                                tradeDashboard.LowLimit = 9;
+                            if (tradeDashboard.LowLimit > lowLimit * 100)
+                                tradeDashboard.LowLimit = (int)(lowLimit * 100);
+
+                            tradeDashboard.HightLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
+
+                            if (tradeDashboard.HightLimit < 11)
+                                tradeDashboard.HightLimit = 11;
+                            if (tradeDashboard.HightLimit > highLimit * 100)
+                                tradeDashboard.HightLimit = (int)(highLimit * 100);
+
+                            if ((SBnd.Maturity - curDate).Days < 400)
+                                tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                            else if ((SBnd.Maturity - curDate).Days < 1100)
+                                tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                            else if ((SBnd.Maturity - curDate).Days < 1500)
+                                tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                            else
+                                tradeDashboard.WorkingVolume = quoteStrategyVolume;
+                        }
+                        else
+                        {
+                            if (_instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
+                            {
+                                if ((SBnd.Maturity - curDate).Days < 300)
+                                {
+                                    tradeDashboard.WorkingVolume = 1000;
+                                    tradeDashboard.LowLimit = (int)(lowLimit * 100);
+                                    tradeDashboard.HightLimit = (int)(highLimit * 100);
+                                }
+                                else
+                                {
+                                    tradeDashboard.WorkingVolume = 1000;
+                                    tradeDashboard.LowLimit = (int)(lowLimit * 2 * 100);
+                                    tradeDashboard.HightLimit = (int)(highLimit * 2 * 100);
+                                }
+                            }
+                            else
+                            {
+                                if ((SBnd.Maturity - curDate).Days < 500)
+                                {
+                                    tradeDashboard.WorkingVolume = 2000;
+                                    tradeDashboard.LowLimit = (int)(lowLimit / 2 * 100);
+                                    tradeDashboard.HightLimit = (int)(highLimit / 2 * 100);
+                                }
+                                else if ((SBnd.Maturity - curDate).Days < 2000)
+                                {
+                                    tradeDashboard.WorkingVolume = 2000;
+                                    tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
+                                    tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
+                                }
+                                else
+                                {
+                                    tradeDashboard.WorkingVolume = 2000;
+                                    tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
+                                    tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
                         tradeDashboard.LowLimit = (int)(lowLimit * 100);
-
-                    tradeDashboard.HightLimit = (int)((BndPrice / 100 - SBnd.GetPriceFromYield(curDate, yield + highYieldLimit / 10000, true)) * 10000);
-
-                    if (tradeDashboard.HightLimit < 11)
-                        tradeDashboard.HightLimit = 11;
-                    if (tradeDashboard.HightLimit > highLimit * 100)
                         tradeDashboard.HightLimit = (int)(highLimit * 100);
-
-                    if ((SBnd.Maturity - curDate).Days < 400)
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                    else if ((SBnd.Maturity - curDate).Days < 1100)
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                    else if ((SBnd.Maturity - curDate).Days < 1500)
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                    else
-                        tradeDashboard.WorkingVolume = quoteStrategyVolume;
-                }
-                else
-                {
-                    if (_instrument.Markers!.Any(x => x.MarkerDescriptor == MarkersInstrumentStockSharpEnum.Illiquid))
-                    {
-                        if ((SBnd.Maturity - curDate).Days < 300)
-                        {
-                            tradeDashboard.WorkingVolume = 1000;
-                            tradeDashboard.LowLimit = (int)(lowLimit * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit * 100);
-                        }
-                        else
-                        {
-                            tradeDashboard.WorkingVolume = 1000;
-                            tradeDashboard.LowLimit = (int)(lowLimit * 2 * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit * 2 * 100);
-                        }
                     }
-                    else
-                    {
-                        if ((SBnd.Maturity - curDate).Days < 500)
-                        {
-                            tradeDashboard.WorkingVolume = 2000;
-                            tradeDashboard.LowLimit = (int)(lowLimit / 2 * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit / 2 * 100);
-                        }
-                        else if ((SBnd.Maturity - curDate).Days < 2000)
-                        {
-                            tradeDashboard.WorkingVolume = 2000;
-                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
-                        }
-                        else
-                        {
-                            tradeDashboard.WorkingVolume = 2000;
-                            tradeDashboard.LowLimit = (int)(lowLimit / 1.5m * 100);
-                            tradeDashboard.HightLimit = (int)(highLimit / 1.5m * 100);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                tradeDashboard.LowLimit = (int)(lowLimit * 100);
-                tradeDashboard.HightLimit = (int)(highLimit * 100);
-            }
 
-            tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
-            tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
-        });
+                    tasksMaster.Add(Task.Run(async () => { await storageRepo.SaveAsync(tradeDashboard, GlobalStaticCloudStorageMetadata.TradeInstrumentStrategyStockSharp(tradeDashboard.Id), true); }));
+                    tasksSlave.Add(Task.Run(async () => { await eventTrans.DashboardTradeUpdate(tradeDashboard); }));
+                });
+            }
+        }
 
         if (tasksMaster.Count != 0)
         {
@@ -1111,7 +1113,7 @@ public class DriverStockSharpService(
             TypeMessage = MessagesTypesEnum.Info,
             MessageText = msg
         });
-        
+
         if (CurveCurrent is null)
         {
             msg = $"Curve is null";
